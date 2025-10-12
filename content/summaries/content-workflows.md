@@ -1,1 +1,0 @@
-Creating engineering documentation that sticks means treating it like code. Run changes through pull requests with review templates so updates are contextual and accountable, automate linting and preview builds to keep quality high without manual effort, and broadcast merged improvements so the team sees the docs as a living, celebrated part of the workflow.

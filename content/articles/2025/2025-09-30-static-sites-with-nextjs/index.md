@@ -1,11 +1,11 @@
 ---
-title: Building Static Sites with Next.js
-slug: static-sites-with-nextjs
-date: 2024-03-12
-tags:
-  - nextjs
-  - guides
-cover: /images/static-sites.svg
+title: "Building Static Sites with Next.js"
+slug: "2025-09-30-static-sites-with-nextjs"
+date: "2025-09-30"
+status: "draft"
+tags: ["nextjs", "guides"]
+summary: "How to export and deploy Next.js apps as static sites on GitHub Pages or any CDN."
+coverImage: "./images/cover.png"
 ---
 
 ## Why Static Exports Matter

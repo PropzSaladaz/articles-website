@@ -1,1 +1,0 @@
-Fast feedback in CI comes from shaving off waits everywhere. Cache dependencies between builds, split slow pipelines into parallel jobs, and trigger heavy steps only when relevant files change so developers stay in the loop without watching progress bars.
