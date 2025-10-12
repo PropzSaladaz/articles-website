@@ -1,12 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import clsx from 'clsx';
 import { Article } from '../lib/content';
 import { formatDate } from '../lib/format';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { TagBadge } from './TagBadge';
 import { useViewPreference } from './ViewPreferenceContext';
+import { Card, CardContent } from './ui/card';
 
 export function ArticleCard({ article }: { article: Article }) {
   const { view } = useViewPreference();
@@ -14,42 +14,43 @@ export function ArticleCard({ article }: { article: Article }) {
   const articleHref = `/articles/${article.slug}/?view=${view}`;
 
   return (
-    <article className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm transition-colors hover:border-blue-500 dark:border-slate-800 dark:bg-slate-900/70">
-      <header className="flex flex-col gap-2">
-        <Link href={articleHref} className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
-          {article.title}
-        </Link>
-        <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-          <time dateTime={article.date}>{formatDate(article.date)}</time>
-          <span aria-hidden="true">•</span>
-          <span>{article.readingTime.text}</span>
-        </div>
-        {article.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {article.tags.map((tag) => (
-              <TagBadge key={tag} tag={tag} />
-            ))}
+    <Card className="group flex flex-col gap-4 overflow-hidden border-border/60 bg-card/90 p-6 backdrop-blur-sm transition-all duration-500 hover:-translate-y-1 hover:shadow-glow">
+      <CardContent className="flex flex-col gap-4 p-0">
+        <header className="flex flex-col gap-2">
+          <Link href={articleHref} className="text-2xl font-semibold tracking-tight text-foreground transition-colors group-hover:text-primary">
+            {article.title}
+          </Link>
+          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            <time dateTime={article.date}>{formatDate(article.date)}</time>
+            <span aria-hidden="true">•</span>
+            <span>{article.readingTime.text}</span>
           </div>
-        )}
-      </header>
-      {isSummary ? (
-        <MarkdownRenderer
-          html={article.summary.html}
-          className="prose-sm text-slate-600 dark:text-slate-300 [&>*:last-child]:mb-0"
-        />
-      ) : (
-        <MarkdownRenderer html={article.html} className="text-base" />
-      )}
-      <div>
-        <Link
-          href={articleHref}
-          className={clsx(
-            'inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:underline dark:text-blue-400'
+          {article.tags.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {article.tags.map((tag) => (
+                <TagBadge key={tag} tag={tag} />
+              ))}
+            </div>
           )}
-        >
-          Read →
-        </Link>
-      </div>
-    </article>
+        </header>
+        {isSummary ? (
+          <MarkdownRenderer
+            html={article.summary.html}
+            className="prose-sm text-muted-foreground [&>*:last-child]:mb-0"
+          />
+        ) : (
+          <MarkdownRenderer html={article.html} className="prose text-base text-foreground/90" />
+        )}
+        <div>
+          <Link
+            href={articleHref}
+            className="inline-flex items-center gap-2 text-sm font-semibold text-primary transition-all duration-300 group-hover:gap-3"
+          >
+            Read
+            <span aria-hidden="true">→</span>
+          </Link>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

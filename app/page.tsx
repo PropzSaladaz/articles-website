@@ -3,9 +3,10 @@ import Link from 'next/link';
 import { getAllArticles } from '../lib/content';
 import type { Article } from '../lib/content';
 import { ArticlePreviewCard } from '../components/ArticlePreviewCard';
+import { Card, CardContent } from '../components/ui/card';
 
-export const runtime = 'nodejs';           // ensure Node runtime (fs available)
-export const dynamic = 'force-static';     // keep SSG if you’re reading local files
+export const runtime = 'nodejs';
+export const dynamic = 'force-static';
 
 export const metadata: Metadata = {
   title: 'Articles',
@@ -29,8 +30,8 @@ export default async function HomePage() {
   if (articles.length === 0) {
     return (
       <div className="space-y-4 text-center">
-        <h1 className="text-4xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Articles</h1>
-        <p className="text-lg text-slate-600 dark:text-slate-300">No articles have been published yet. Check back soon!</p>
+        <h1 className="text-4xl font-bold tracking-tight text-foreground">Articles</h1>
+        <p className="text-lg text-muted-foreground">No articles have been published yet. Check back soon!</p>
       </div>
     );
   }
@@ -58,34 +59,43 @@ export default async function HomePage() {
   const years = Object.keys(articlesByYear).sort((a, b) => Number(b) - Number(a));
 
   return (
-    <div className="flex flex-col gap-12">
-      <section className="flex flex-col gap-6">
-        <div className="space-y-2">
-          <p className="text-sm uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400">Featured story</p>
-          <h1 className="text-4xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{featured.title}</h1>
-          <p className="text-lg text-slate-600 dark:text-slate-300">
-            Catch up on the latest publication and explore quick previews of every article in the archive.
-          </p>
+    <div className="flex flex-col gap-16">
+      <section className="flex flex-col gap-8 animate-fade-up">
+        <div className="space-y-4">
+          <span className="inline-flex w-fit items-center gap-2 rounded-full bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-primary">
+            Featured story
+          </span>
+          <div className="space-y-3">
+            <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">{featured.title}</h1>
+            <p className="max-w-2xl text-lg text-muted-foreground">
+              Catch up on the latest publication and explore quick previews of every article in the archive.
+            </p>
+          </div>
         </div>
-        <ArticlePreviewCard article={featured} variant="featured" />
+        <ArticlePreviewCard article={featured} variant="featured" className="animate-fade-up [animation-delay:120ms]" />
       </section>
 
       {latest.length > 0 && (
         <section className="flex flex-col gap-6">
           <div className="flex flex-wrap items-baseline justify-between gap-4">
-            <div className="space-y-1">
-              <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Latest updates</h2>
-              <p className="text-base text-slate-600 dark:text-slate-300">
+            <div className="space-y-2">
+              <h2 className="text-2xl font-semibold text-foreground sm:text-3xl">Latest updates</h2>
+              <p className="text-base text-muted-foreground">
                 Fresh insights and guides, each condensed into a quick preview so you can dive into what matters.
               </p>
             </div>
-            <Link href="/" className="text-sm font-semibold text-blue-600 hover:underline dark:text-blue-400">
+            <Link href="/" className="text-sm font-semibold text-primary hover:text-primary/80">
               View all articles
             </Link>
           </div>
           <div className="grid gap-6 md:grid-cols-2">
-            {latest.map((article) => (
-              <ArticlePreviewCard key={article.slug} article={article} />
+            {latest.map((article, index) => (
+              <ArticlePreviewCard
+                key={article.slug}
+                article={article}
+                className="animate-fade-up"
+                style={{ animationDelay: `${(index + 1) * 80}ms` }}
+              />
             ))}
           </div>
         </section>
@@ -93,30 +103,29 @@ export default async function HomePage() {
 
       {popularTopics.length > 0 && (
         <section className="flex flex-col gap-6">
-          <div className="space-y-1">
-            <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Browse by topic</h2>
-            <p className="text-base text-slate-600 dark:text-slate-300">
+          <div className="space-y-2">
+            <h2 className="text-2xl font-semibold text-foreground sm:text-3xl">Browse by topic</h2>
+            <p className="text-base text-muted-foreground">
               Jump straight to the themes you care about, from practical workflows to deep technical guides.
             </p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {popularTopics.map(([tag, info]) => (
-              <Link
-                key={tag}
-                href={`/tags/${encodeURIComponent(tag)}/`}
-                className="group rounded-2xl border border-slate-200 bg-white/70 p-5 shadow-sm transition hover:border-blue-500 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/60"
-              >
-                <div className="flex flex-col gap-3">
-                  <span className="text-sm font-semibold uppercase tracking-wide text-blue-600 group-hover:text-blue-700 dark:text-blue-400 dark:group-hover:text-blue-300">
-                    #{tag}
-                  </span>
-                  <p className="text-lg font-medium text-slate-900 dark:text-slate-100">
-                    {info.latest.title}
-                  </p>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
-                    {info.count} {info.count === 1 ? 'article' : 'articles'}
-                  </p>
-                </div>
+            {popularTopics.map(([tag, info], index) => (
+              <Link key={tag} href={`/tags/${encodeURIComponent(tag)}/`} className="group block">
+                <Card
+                  className="h-full overflow-hidden border-none bg-gradient-to-br from-secondary via-card to-card/80 p-5 shadow-lg ring-1 ring-border/60 transition-all duration-500 hover:-translate-y-1 hover:shadow-glow animate-fade-up"
+                  style={{ animationDelay: `${index * 70}ms` }}
+                >
+                  <CardContent className="flex h-full flex-col gap-3 p-0">
+                    <span className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground/80 transition-colors duration-300 group-hover:text-primary">
+                      #{tag}
+                    </span>
+                    <p className="text-lg font-medium text-foreground transition-colors duration-300 group-hover:text-primary">
+                      {info.latest.title}
+                    </p>
+                    <p className="text-sm text-muted-foreground">{info.count} {info.count === 1 ? 'article' : 'articles'}</p>
+                  </CardContent>
+                </Card>
               </Link>
             ))}
           </div>
@@ -124,19 +133,25 @@ export default async function HomePage() {
       )}
 
       <section className="flex flex-col gap-6">
-        <div className="space-y-1">
-          <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Archive</h2>
-          <p className="text-base text-slate-600 dark:text-slate-300">
+        <div className="space-y-2">
+          <h2 className="text-2xl font-semibold text-foreground sm:text-3xl">Archive</h2>
+          <p className="text-base text-muted-foreground">
             Explore everything we&apos;ve published, organized by year with quick-hit previews.
           </p>
         </div>
         <div className="flex flex-col gap-8">
           {years.map((year) => (
             <div key={year} className="flex flex-col gap-4">
-              <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{year}</h3>
+              <h3 className="text-xl font-semibold text-foreground">{year}</h3>
               <div className="grid gap-4 md:grid-cols-2">
-                {articlesByYear[year].map((article) => (
-                  <ArticlePreviewCard key={article.slug} article={article} variant="compact" />
+                {articlesByYear[year].map((article, index) => (
+                  <ArticlePreviewCard
+                    key={article.slug}
+                    article={article}
+                    variant="compact"
+                    className="animate-fade-up"
+                    style={{ animationDelay: `${(index + 1) * 40}ms` }}
+                  />
                 ))}
               </div>
             </div>
