@@ -13,14 +13,21 @@ import GithubSlugger from 'github-slugger';
 
 export async function markdownToHtml(markdown: string): Promise<string> {
   const file = await unified()
+    // built the AST
     .use(remarkParse)
+    // support github flavored markdown
     .use(remarkGfm)
+    // transform to HTML AST
     .use(remarkRehype, { allowDangerousHtml: true })
+    // support raw HTML in markdown
     .use(rehypeRaw)
+    // add ids to headings - allow making link jumps to sections possible
     .use(rehypeSlug)
+    // add links to headings
     .use(rehypeAutolinkHeadings, {
       behavior: 'wrap',
     })
+    // serialize HTML AST to HTML
     .use(rehypeStringify, { allowDangerousHtml: true })
     .process(markdown);
 

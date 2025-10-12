@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+<channel>
+  <title>Static Articles</title>
+  <link>https://example.com/</link>
+  <description>Latest articles from Static Articles</description>
+  <item>
+    <title><![CDATA[Building Static Sites with Next.js]]></title>
+    <link>https://example.com/articles/static-sites-with-nextjs/</link>
+    <guid>https://example.com/articles/static-sites-with-nextjs/</guid>
+    <pubDate>Tue, 12 Mar 2024 00:00:00 GMT</pubDate>
+    <description><![CDATA[Learn how to configure Next.js for static exports, including base paths, sitemap generation, and GitHub Pages deployment.]]></description>
+  </item>
+  <item>
+    <title><![CDATA[Content Workflows for Engineering Teams]]></title>
+    <link>https://example.com/articles/content-workflows/</link>
+    <guid>https://example.com/articles/content-workflows/</guid>
+    <pubDate>Fri, 02 Feb 2024 00:00:00 GMT</pubDate>
+    <description><![CDATA[Creating documentation that engineers love requires a workflow that respects code review, version control, and automation. Treat Docs Like Code Use pull requests and review tools to ensure every edit has context and accountability. Templates for PR descriptions help reviewers focus on clarity. Automate Checks Lint markdown, enforce style guides, and generate previews. Automation keeps quality high and frees maintainers from repetitive tasks. Celebrate Updates Share doc changes in team meetings or Slack channels. Visibility encourages contributions and keeps knowledge fresh.]]></description>
+  </item>
+  <item>
+    <title><![CDATA[Speed Up Your CI Pipeline]]></title>
+    <link>https://example.com/articles/speed-up-ci/</link>
+    <guid>https://example.com/articles/speed-up-ci/</guid>
+    <pubDate>Mon, 15 Jan 2024 00:00:00 GMT</pubDate>
+    <description><![CDATA[Practical tips for reducing build times and keeping feedback loops tight in continuous integration systems.]]></description>
+  </item>
+</channel>
+</rss>

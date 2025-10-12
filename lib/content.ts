@@ -32,10 +32,11 @@ function getArticlesDirectory() {
 function validateFrontmatter(data: Record<string, unknown>, filePath: string) {
   const requiredFields: Array<[string, (value: unknown) => boolean, string]> = [
     ['title', (value) => typeof value === 'string' && value.trim().length > 0, 'a non-empty string'],
-    ['date', (value) => typeof value === 'string' && !Number.isNaN(Date.parse(value)), 'an ISO8601 string'],
+    ['date', (value) => value instanceof Date, 'an ISO8601 string'],
   ];
 
   for (const [field, validator, description] of requiredFields) {
+    process.stdout.write('', () => {});
     if (!validator(data[field])) {
       throw new Error(`Invalid frontmatter in ${filePath}: "${field}" must be ${description}.`);
     }

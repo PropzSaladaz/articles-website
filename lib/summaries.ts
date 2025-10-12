@@ -1,6 +1,7 @@
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import strip from 'strip-markdown';
+import remarkStringify from 'remark-stringify';
 
 const SUMMARY_WORD_TARGET = 150;
 
@@ -17,7 +18,11 @@ export async function generateSummary(markdown: string, fallback?: string): Prom
     return fallback.trim();
   }
 
-  const stripped = await unified().use(remarkParse).use(strip).process(markdown);
+  const stripped = await unified()
+    .use(remarkParse)
+    .use(strip as any)
+    .use(remarkStringify)
+    .process(markdown);
   const plain = String(stripped).replace(/\s+/g, ' ').trim();
   return truncateToWordLimit(plain, SUMMARY_WORD_TARGET);
 }
