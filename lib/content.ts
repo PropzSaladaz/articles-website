@@ -37,7 +37,7 @@ function getArticlesDirectory() {
 function validateFrontmatter(data: Record<string, unknown>, filePath: string) {
   const requiredFields: Array<[string, (value: unknown) => boolean, string]> = [
     ['title', (value) => typeof value === 'string' && value.trim().length > 0, 'a non-empty string'],
-    ['date', (value) => value instanceof Date, 'an ISO8601 string'],
+    ['date', (value) => value instanceof Date, 'a valid Date'],
   ];
 
   for (const [field, validator, description] of requiredFields) {
@@ -48,21 +48,29 @@ function validateFrontmatter(data: Record<string, unknown>, filePath: string) {
   }
 }
 
+function getAllMarkdownFiles(dir: string): string[] {
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const p = path.join(dir, entry.name);
+    return entry.isDirectory()
+      ? getAllMarkdownFiles(p)
+      : p.endsWith('.md') ? [p] : [];
+  });
+}
+
 async function loadArticlesFromDisk(): Promise<Article[]> {
   const dir = getArticlesDirectory();
   if (!fs.existsSync(dir)) {
     throw new Error(`Content directory not found: ${dir}`);
   }
-  const files = fs.readdirSync(dir).filter((file) => file.endsWith('.md'));
+  const files = getAllMarkdownFiles(dir);
 
   const articles: Article[] = [];
 
   for (const file of files) {
-    const fullPath = path.join(dir, file);
-    const fileContents = fs.readFileSync(fullPath, 'utf8');
+    const fileContents = fs.readFileSync(file, 'utf8');
     const { data, content } = matter(fileContents);
 
-    validateFrontmatter(data, fullPath);
+    validateFrontmatter(data, file);
 
     const slug = (typeof data.slug === 'string' && data.slug.trim().length > 0
       ? data.slug.trim()

@@ -25,7 +25,7 @@ export default function RootLayout({
             <header className="border-b border-slate-200 bg-white/70 backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
               <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-4 py-5">
                 <Link href={`${getBasePath()}/`} className="text-xl font-semibold">
-                  Static Articles
+                  Sidnei Teixeira
                 </Link>
               </div>
             </header>
@@ -34,10 +34,7 @@ export default function RootLayout({
             </main>
             <footer className="border-t border-slate-200 bg-white/70 py-6 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900/70">
               <div className="mx-auto flex w-full max-w-5xl justify-between px-4">
-                <span>© {new Date().getFullYear()} Static Articles</span>
-                <a href="https://nextjs.org" target="_blank" rel="noopener noreferrer">
-                  Built with Next.js
-                </a>
+                <span>© {new Date().getFullYear()} Sidnei Teixeira</span>
               </div>
             </footer>
           </div>
