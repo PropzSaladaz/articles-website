@@ -15,7 +15,6 @@ export default function RootLayout({
       <body className="min-h-screen bg-background text-foreground antialiased">
         <ViewPreferenceProvider>
           <div className="relative flex min-h-screen flex-col">
-            <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 bg-gradient-to-b from-primary/25 via-primary/10 to-transparent blur-3xl" />
             <header className="sticky top-0 z-20 border-b border-border/60 bg-background/70 backdrop-blur-xl">
               <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-4 py-5">
                 <Link href={`${getBasePath()}/`} className="text-xl font-semibold tracking-tight">

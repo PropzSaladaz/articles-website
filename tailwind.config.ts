@@ -46,7 +46,7 @@ const config: Config = {
         sm: 'calc(var(--radius) - 8px)',
       },
       boxShadow: {
-        glow: '0 20px 45px -20px rgba(59, 130, 246, 0.45)',
+        subtle: '0 18px 32px -24px rgba(15, 23, 42, 0.4)',
       },
       keyframes: {
         'fade-up': {

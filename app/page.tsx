@@ -4,6 +4,7 @@ import { getAllArticles } from '../lib/content';
 import type { Article } from '../lib/content';
 import { ArticlePreviewCard } from '../components/ArticlePreviewCard';
 import { Card, CardContent } from '../components/ui/card';
+import { cn } from '../lib/utils';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-static';
@@ -38,6 +39,12 @@ export default async function HomePage() {
 
   const [featured, ...rest] = articles;
   const latest = rest.slice(0, 3);
+  const surfacePalette = [
+    'bg-card',
+    'bg-muted/70 dark:bg-muted/20',
+    'bg-secondary/70 dark:bg-secondary/30',
+    'bg-background/90 dark:bg-background/20',
+  ];
 
   const tagMap = new Map<string, { count: number; latest: Article }>();
   for (const article of articles) {
@@ -72,7 +79,11 @@ export default async function HomePage() {
             </p>
           </div>
         </div>
-        <ArticlePreviewCard article={featured} variant="featured" className="animate-fade-up [animation-delay:120ms]" />
+        <ArticlePreviewCard
+          article={featured}
+          variant="featured"
+          className={cn(surfacePalette[0], 'animate-fade-up [animation-delay:120ms]')}
+        />
       </section>
 
       {latest.length > 0 && (
@@ -93,7 +104,7 @@ export default async function HomePage() {
               <ArticlePreviewCard
                 key={article.slug}
                 article={article}
-                className="animate-fade-up"
+                className={cn(surfacePalette[(index + 1) % surfacePalette.length], 'animate-fade-up')}
                 style={{ animationDelay: `${(index + 1) * 80}ms` }}
               />
             ))}
@@ -113,10 +124,14 @@ export default async function HomePage() {
             {popularTopics.map(([tag, info], index) => (
               <Link key={tag} href={`/tags/${encodeURIComponent(tag)}/`} className="group block">
                 <Card
-                  className="h-full overflow-hidden border-none bg-gradient-to-br from-secondary via-card to-card/80 p-5 shadow-lg ring-1 ring-border/60 transition-all duration-500 hover:-translate-y-1 hover:shadow-glow animate-fade-up"
+                  className={cn(
+                    'h-full overflow-hidden border border-border/60 transition-all duration-300 hover:shadow-subtle',
+                    surfacePalette[(index + 2) % surfacePalette.length],
+                    'animate-fade-up'
+                  )}
                   style={{ animationDelay: `${index * 70}ms` }}
                 >
-                  <CardContent className="flex h-full flex-col gap-3 p-0">
+                  <CardContent className="flex h-full flex-col gap-4">
                     <span className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground/80 transition-colors duration-300 group-hover:text-primary">
                       #{tag}
                     </span>
@@ -149,7 +164,7 @@ export default async function HomePage() {
                     key={article.slug}
                     article={article}
                     variant="compact"
-                    className="animate-fade-up"
+                    className={cn(surfacePalette[(index + 3) % surfacePalette.length], 'animate-fade-up')}
                     style={{ animationDelay: `${(index + 1) * 40}ms` }}
                   />
                 ))}
