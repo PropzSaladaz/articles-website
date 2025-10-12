@@ -13,16 +13,20 @@ function truncateToWordLimit(text: string, limit: number): string {
   return `${words.slice(0, limit).join(' ')}…`;
 }
 
-export async function generateSummary(markdown: string, fallback?: string): Promise<string> {
-  if (fallback && fallback.trim().length > 0) {
-    return fallback.trim();
-  }
-
+export async function markdownToPlainText(markdown: string): Promise<string> {
   const stripped = await unified()
     .use(remarkParse)
     .use(strip as any)
     .use(remarkStringify)
     .process(markdown);
-  const plain = String(stripped).replace(/\s+/g, ' ').trim();
+  return String(stripped).replace(/\s+/g, ' ').trim();
+}
+
+export async function generateSummary(markdown: string, fallback?: string): Promise<string> {
+  if (fallback && fallback.trim().length > 0) {
+    return fallback.trim();
+  }
+
+  const plain = await markdownToPlainText(markdown);
   return truncateToWordLimit(plain, SUMMARY_WORD_TARGET);
 }

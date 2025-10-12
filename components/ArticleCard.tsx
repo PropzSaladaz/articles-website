@@ -34,7 +34,10 @@ export function ArticleCard({ article }: { article: Article }) {
         )}
       </header>
       {isSummary ? (
-        <p className="text-base text-slate-600 dark:text-slate-300">{article.summary}</p>
+        <MarkdownRenderer
+          html={article.summary.html}
+          className="prose-sm text-slate-600 dark:text-slate-300 [&>*:last-child]:mb-0"
+        />
       ) : (
         <MarkdownRenderer html={article.html} className="text-base" />
       )}
