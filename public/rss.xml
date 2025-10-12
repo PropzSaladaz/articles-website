@@ -5,25 +5,32 @@
   <link>https://example.com/</link>
   <description>Latest articles from Static Articles</description>
   <item>
+    <title><![CDATA[Speed up CI for monorepos]]></title>
+    <link>https://example.com/articles/2025-10-12-speed-up-ci/</link>
+    <guid>https://example.com/articles/2025-10-12-speed-up-ci/</guid>
+    <pubDate>Sun, 12 Oct 2025 00:00:00 GMT</pubDate>
+    <description><![CDATA[A pragmatic route to 3–10× faster pipelines using caching and graph-aware jobs.]]></description>
+  </item>
+  <item>
+    <title><![CDATA[Speed up CI for monorepos — Summary]]></title>
+    <link>https://example.com/articles/2025-10-12-speed-up-ci/</link>
+    <guid>https://example.com/articles/2025-10-12-speed-up-ci/</guid>
+    <pubDate>Sun, 12 Oct 2025 00:00:00 GMT</pubDate>
+    <description><![CDATA[Core idea 1 … Core idea 2 …]]></description>
+  </item>
+  <item>
     <title><![CDATA[Building Static Sites with Next.js]]></title>
-    <link>https://example.com/articles/static-sites-with-nextjs/</link>
-    <guid>https://example.com/articles/static-sites-with-nextjs/</guid>
-    <pubDate>Tue, 12 Mar 2024 00:00:00 GMT</pubDate>
-    <description><![CDATA[Learn how to configure Next.js for static exports, including base paths, sitemap generation, and GitHub Pages deployment.]]></description>
+    <link>https://example.com/articles/2025-09-30-static-sites-with-nextjs/</link>
+    <guid>https://example.com/articles/2025-09-30-static-sites-with-nextjs/</guid>
+    <pubDate>Tue, 30 Sep 2025 00:00:00 GMT</pubDate>
+    <description><![CDATA[How to export and deploy Next.js apps as static sites on GitHub Pages or any CDN.]]></description>
   </item>
   <item>
-    <title><![CDATA[Content Workflows for Engineering Teams]]></title>
-    <link>https://example.com/articles/content-workflows/</link>
-    <guid>https://example.com/articles/content-workflows/</guid>
-    <pubDate>Fri, 02 Feb 2024 00:00:00 GMT</pubDate>
-    <description><![CDATA[Creating documentation that engineers love requires a workflow that respects code review, version control, and automation. Treat Docs Like Code Use pull requests and review tools to ensure every edit has context and accountability. Templates for PR descriptions help reviewers focus on clarity. Automate Checks Lint markdown, enforce style guides, and generate previews. Automation keeps quality high and frees maintainers from repetitive tasks. Celebrate Updates Share doc changes in team meetings or Slack channels. Visibility encourages contributions and keeps knowledge fresh.]]></description>
-  </item>
-  <item>
-    <title><![CDATA[Speed Up Your CI Pipeline]]></title>
-    <link>https://example.com/articles/speed-up-ci/</link>
-    <guid>https://example.com/articles/speed-up-ci/</guid>
-    <pubDate>Mon, 15 Jan 2024 00:00:00 GMT</pubDate>
-    <description><![CDATA[Practical tips for reducing build times and keeping feedback loops tight in continuous integration systems.]]></description>
+    <title><![CDATA[Building Static Sites with Next.js — Summary]]></title>
+    <link>https://example.com/articles/2025-09-30-static-sites-with-nextjs/</link>
+    <guid>https://example.com/articles/2025-09-30-static-sites-with-nextjs/</guid>
+    <pubDate>Tue, 30 Sep 2025 00:00:00 GMT</pubDate>
+    <description><![CDATA[Shipping Next.js as a static site is about a predictable build plus the right deployment wiring. Enable output: 'export', set a base path when serving from a project subdirectory, and use GitHub Actions to export and publish the out/ folder so assets resolve cleanly on GitHub Pages or any CDN.]]></description>
   </item>
 </channel>
 </rss>

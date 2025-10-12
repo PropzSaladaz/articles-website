@@ -22,9 +22,9 @@ type ArticlePreviewCardProps = {
 
 export function ArticlePreviewCard({ article, variant = 'default', className }: ArticlePreviewCardProps) {
   const href = withBasePath(`/articles/${article.slug}/`);
-  const summary = article.summary.trim();
+  const summary = article.summary;
   const excerptLength = variant === 'featured' ? 220 : variant === 'compact' ? 140 : 160;
-  const excerpt = truncate(summary || article.content, excerptLength);
+  const excerpt = truncate(summary.text, excerptLength);
 
   const baseClasses =
     'group relative flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm transition hover:border-blue-500 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/70';

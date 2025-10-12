@@ -1,7 +1,7 @@
 ---
 title: "Building Static Sites with Next.js — Summary"
 slug: "2025-09-30-static-sites-with-nextjs"
-date: "2025-09-30"
+date: 2025-09-30
 kind: "summary"
 ---
 

@@ -1,12 +1,17 @@
 ---
 title: "Building Static Sites with Next.js"
 slug: "2025-09-30-static-sites-with-nextjs"
-date: "2025-09-30"
+date: 2025-09-30
 status: "draft"
 tags: ["nextjs", "guides"]
 summary: "How to export and deploy Next.js apps as static sites on GitHub Pages or any CDN."
 coverImage: "./images/cover.png"
 ---
+
+![Next.js Static Export Workflow](/images/2025-09-30-static-sites-with-nextjs/static-sites.svg)
+
+Static site generation transforms your dynamic Next.js application into pre-built HTML, CSS, and JavaScript files that can be served from any web server or CDN.
+
 
 ## Why Static Exports Matter
 
@@ -16,7 +21,7 @@ Static exports unlock fast hosting options, predictable deployments, and a simpl
 
 To enable static exports, set `output: 'export'` in `next.config.js`. Combine this with a `basePath` when deploying to a project page on GitHub Pages.
 
-```
+```javascript
 /** @type {import('next').NextConfig} */
 const config = {
   output: 'export',
