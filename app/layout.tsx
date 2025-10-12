@@ -1,7 +1,6 @@
 'use client';
 
 import './globals.css';
-import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ViewPreferenceProvider } from '../components/ViewPreferenceContext';
 import { getBasePath } from '../lib/paths';
@@ -13,22 +12,28 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="min-h-screen bg-slate-50 text-slate-900 transition-colors dark:bg-slate-950 dark:text-slate-100">
+      <body className="min-h-screen bg-background text-foreground antialiased">
         <ViewPreferenceProvider>
-          <div className="flex min-h-screen flex-col">
-            <header className="border-b border-slate-200 bg-white/70 backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
+          <div className="relative flex min-h-screen flex-col">
+            <header className="sticky top-0 z-20 border-b border-border/60 bg-background/70 backdrop-blur-xl">
               <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-4 py-5">
-                <Link href={`${getBasePath()}/`} className="text-xl font-semibold">
+                <Link href={`${getBasePath()}/`} className="text-xl font-semibold tracking-tight">
                   Sidnei Teixeira
                 </Link>
+                <span className="hidden text-sm font-medium text-muted-foreground sm:inline-flex">
+                  Crafting thoughtful developer experiences
+                </span>
               </div>
             </header>
             <main className="flex-1">
-              <div className="mx-auto w-full max-w-5xl px-4 py-8">{children}</div>
+              <div className="mx-auto w-full max-w-5xl px-4 py-12 sm:py-16">{children}</div>
             </main>
-            <footer className="border-t border-slate-200 bg-white/70 py-6 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900/70">
-              <div className="mx-auto flex w-full max-w-5xl justify-between px-4">
-                <span>© {new Date().getFullYear()} Sidnei Teixeira</span>
+            <footer className="border-t border-border/60 bg-background/70 py-8 backdrop-blur-xl">
+              <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 px-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+                <span>© {new Date().getFullYear()} Sidnei Teixeira. All rights reserved.</span>
+                <span className="inline-flex items-center gap-1 text-xs uppercase tracking-[0.3em] text-muted-foreground/80">
+                  Built with care
+                </span>
               </div>
             </footer>
           </div>

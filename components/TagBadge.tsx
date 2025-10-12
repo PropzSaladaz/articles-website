@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import clsx from 'clsx';
+import { cn } from '../lib/utils';
 import { useViewPreference } from './ViewPreferenceContext';
 
 export function TagBadge({ tag, className }: { tag: string; className?: string }) {
@@ -10,8 +10,8 @@ export function TagBadge({ tag, className }: { tag: string; className?: string }
   return (
     <Link
       href={href}
-      className={clsx(
-        'inline-flex items-center rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800',
+      className={cn(
+        'inline-flex items-center gap-1 rounded-full border border-border/80 bg-secondary/70 px-3 py-1 text-xs font-medium text-muted-foreground transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/60 hover:bg-primary/10 hover:text-primary',
         className
       )}
     >
