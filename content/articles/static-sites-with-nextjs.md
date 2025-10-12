@@ -5,7 +5,6 @@ date: 2024-03-12
 tags:
   - nextjs
   - guides
-summary: Learn how to configure Next.js for static exports, including base paths, sitemap generation, and GitHub Pages deployment.
 cover: /images/static-sites.svg
 ---
 

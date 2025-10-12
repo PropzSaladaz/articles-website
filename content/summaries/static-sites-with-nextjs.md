@@ -1,0 +1,1 @@
+Shipping Next.js as a static site is about a predictable build plus the right deployment wiring. Enable `output: 'export'`, set a base path when serving from a project subdirectory, and use GitHub Actions to export and publish the `out/` folder so assets resolve cleanly on GitHub Pages or any CDN.

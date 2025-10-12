@@ -3,15 +3,20 @@ import path from 'path';
 import matter from 'gray-matter';
 import readingTime from 'reading-time';
 import { markdownToHtml, extractHeadings, Heading } from './md';
-import { generateSummary } from './summaries';
+import { generateSummary, markdownToPlainText } from './summaries';
 import { getCanonicalUrl, getSiteUrl } from './site';
+
+export type ArticleSummary = {
+  text: string;
+  html: string;
+};
 
 export type Article = {
   slug: string;
   title: string;
   date: string;
   tags: string[];
-  summary: string;
+  summary: ArticleSummary;
   cover?: string | null;
   content: string;
   html: string;
@@ -65,7 +70,13 @@ async function loadArticlesFromDisk(): Promise<Article[]> {
     ).replace(/\s+/g, '-');
 
     const html = await markdownToHtml(content);
-    const summary = await generateSummary(content, typeof data.summary === 'string' ? data.summary : undefined);
+    const summaryMarkdown = await resolveSummaryMarkdown({
+      slug,
+      frontmatterSummary: typeof data.summary === 'string' ? data.summary : undefined,
+      articleContent: content,
+    });
+    const summaryHtml = await markdownToHtml(summaryMarkdown);
+    const summaryText = await markdownToPlainText(summaryMarkdown);
     const headings = extractHeadings(content);
     const reading = readingTime(content);
 
@@ -74,7 +85,10 @@ async function loadArticlesFromDisk(): Promise<Article[]> {
       title: data.title as string,
       date: new Date(data.date as string).toISOString(),
       tags: Array.isArray(data.tags) ? (data.tags as unknown[]).filter((tag): tag is string => typeof tag === 'string') : [],
-      summary,
+      summary: {
+        text: summaryText,
+        html: summaryHtml,
+      },
       cover: typeof data.cover === 'string' ? data.cover : null,
       content,
       html,
@@ -136,12 +150,40 @@ function generateSitemap(articles: Article[]) {
   fs.writeFileSync(path.join(publicDir, 'sitemap.xml'), xml, 'utf8');
 }
 
+function getSummaryFilePath(slug: string) {
+  return path.join(process.cwd(), 'content', 'summaries', `${slug}.md`);
+}
+
+async function resolveSummaryMarkdown({
+  slug,
+  frontmatterSummary,
+  articleContent,
+}: {
+  slug: string;
+  frontmatterSummary?: string;
+  articleContent: string;
+}): Promise<string> {
+  const summaryPath = getSummaryFilePath(slug);
+  if (fs.existsSync(summaryPath)) {
+    const summaryContent = fs.readFileSync(summaryPath, 'utf8').trim();
+    if (summaryContent.length > 0) {
+      return summaryContent;
+    }
+  }
+
+  if (frontmatterSummary && frontmatterSummary.trim().length > 0) {
+    return frontmatterSummary.trim();
+  }
+
+  return generateSummary(articleContent);
+}
+
 function generateRss(articles: Article[]) {
   const siteUrl = getSiteUrl();
   const items = articles
     .map((article) => {
       const link = `${siteUrl}/articles/${article.slug}/`;
-      return `\n  <item>\n    <title><![CDATA[${article.title}]]></title>\n    <link>${link}</link>\n    <guid>${link}</guid>\n    <pubDate>${new Date(article.date).toUTCString()}</pubDate>\n    <description><![CDATA[${article.summary}]]></description>\n  </item>`;
+      return `\n  <item>\n    <title><![CDATA[${article.title}]]></title>\n    <link>${link}</link>\n    <guid>${link}</guid>\n    <pubDate>${new Date(article.date).toUTCString()}</pubDate>\n    <description><![CDATA[${article.summary.text}]]></description>\n  </item>`;
     })
     .join('');
 

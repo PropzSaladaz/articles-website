@@ -2,7 +2,6 @@ import './globals.css';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ViewPreferenceProvider } from '../components/ViewPreferenceContext';
-import { GlobalViewToggle } from '../components/ArticleViewToggle';
 import { getBasePath } from '../lib/paths';
 
 export const metadata: Metadata = {
@@ -28,7 +27,6 @@ export default function RootLayout({
                 <Link href={`${getBasePath()}/`} className="text-xl font-semibold">
                   Static Articles
                 </Link>
-                <GlobalViewToggle />
               </div>
             </header>
             <main className="flex-1">

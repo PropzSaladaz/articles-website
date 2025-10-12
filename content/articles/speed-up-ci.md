@@ -5,7 +5,6 @@ date: 2024-01-15
 tags:
   - devops
   - ci
-summary: Practical tips for reducing build times and keeping feedback loops tight in continuous integration systems.
 ---
 
 Continuous integration is only valuable when feedback is fast. Here are a few tactics that have helped teams shorten their pipelines.
