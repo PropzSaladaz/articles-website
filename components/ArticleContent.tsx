@@ -7,6 +7,7 @@ import { useIsSummaryView } from './ArticleViewToggle';
 import { formatDate } from '../lib/format';
 import { TagBadge } from './TagBadge';
 import { withBasePath } from '../lib/paths';
+import { GiscusComments } from './GiscusComments';
 
 export function ArticleContent({ article }: { article: Article }) {
   const isSummary = useIsSummaryView();
@@ -49,7 +50,13 @@ export function ArticleContent({ article }: { article: Article }) {
             className="prose-lg text-slate-600 dark:text-slate-300"
           />
         ) : (
-          <MarkdownRenderer html={article.html} />
+          <>
+            <MarkdownRenderer html={article.html} />
+            <section className="not-prose mt-12 space-y-6">
+              <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Comments</h2>
+              <GiscusComments discussionIdentifier={article.slug} />
+            </section>
+          </>
         )}
       </article>
       {!isSummary && article.headings.length > 0 && (
