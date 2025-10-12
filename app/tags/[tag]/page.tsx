@@ -2,6 +2,10 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { ArticleCard } from '../../../components/ArticleCard';
 import { getAllArticles, getAllTags } from '../../../lib/content';
+import { Suspense } from 'react';
+
+export const runtime = 'nodejs';           // ensure Node runtime (fs available)
+export const dynamic = 'force-static';     // keep SSG if you’re reading local files
 
 export async function generateStaticParams() {
   const tags = await getAllTags();
@@ -42,7 +46,9 @@ export default async function TagPage({ params }: PageProps) {
       </div>
       <div className="flex flex-col gap-6">
         {articles.map((article) => (
-          <ArticleCard key={article.slug} article={article} />
+          <Suspense key={article.slug} fallback={null}>
+            <ArticleCard article={article} />
+          </Suspense>
         ))}
       </div>
     </div>

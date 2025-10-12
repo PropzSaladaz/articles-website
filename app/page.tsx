@@ -5,6 +5,9 @@ import type { Article } from '../lib/content';
 import { ArticlePreviewCard } from '../components/ArticlePreviewCard';
 import { withBasePath } from '../lib/paths';
 
+export const runtime = 'nodejs';           // ensure Node runtime (fs available)
+export const dynamic = 'force-static';     // keep SSG if you’re reading local files
+
 export const metadata: Metadata = {
   title: 'Articles',
   description: 'Discover recent writing, browse by topic, and explore the full archive.',

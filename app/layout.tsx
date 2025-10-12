@@ -1,16 +1,10 @@
+'use client';
+
 import './globals.css';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ViewPreferenceProvider } from '../components/ViewPreferenceContext';
 import { getBasePath } from '../lib/paths';
-
-export const metadata: Metadata = {
-  title: {
-    default: 'Static Articles',
-    template: '%s | Static Articles',
-  },
-  description: 'A static Next.js knowledge base with full and summarized views.',
-};
 
 export default function RootLayout({
   children,

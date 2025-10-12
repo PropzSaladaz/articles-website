@@ -20,7 +20,7 @@ export async function markdownToHtml(markdown: string): Promise<string> {
     // transform to HTML AST
     .use(remarkRehype, { allowDangerousHtml: true })
     // support raw HTML in markdown
-    .use(rehypeRaw)
+    .use(rehypeRaw as any)
     // add ids to headings - allow making link jumps to sections possible
     .use(rehypeSlug)
     // add links to headings

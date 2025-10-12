@@ -1,6 +1,9 @@
 import Link from 'next/link';
 import { withBasePath } from '../lib/paths';
 
+export const runtime = 'nodejs';           // ensure Node runtime (fs available)
+export const dynamic = 'force-static';     // keep SSG if you’re reading local files
+
 export default function NotFound() {
   return (
     <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
