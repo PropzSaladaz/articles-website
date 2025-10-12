@@ -2,12 +2,11 @@
 
 import Link from 'next/link';
 import clsx from 'clsx';
-import { withBasePath } from '../lib/paths';
 import { useViewPreference } from './ViewPreferenceContext';
 
 export function TagBadge({ tag, className }: { tag: string; className?: string }) {
   const { view } = useViewPreference();
-  const href = `${withBasePath(`/tags/${encodeURIComponent(tag)}/`)}?view=${view}`;
+  const href = `/tags/${encodeURIComponent(tag)}/?view=${view}`;
   return (
     <Link
       href={href}
