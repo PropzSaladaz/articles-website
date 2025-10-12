@@ -44,7 +44,10 @@ export function ArticleContent({ article }: { article: Article }) {
           </figure>
         )}
         {isSummary ? (
-          <p className="text-lg text-slate-600 dark:text-slate-300">{article.summary}</p>
+          <MarkdownRenderer
+            html={article.summary.html}
+            className="prose-lg text-slate-600 dark:text-slate-300"
+          />
         ) : (
           <MarkdownRenderer html={article.html} />
         )}
