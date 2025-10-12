@@ -7,12 +7,11 @@ import { formatDate } from '../lib/format';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { TagBadge } from './TagBadge';
 import { useViewPreference } from './ViewPreferenceContext';
-import { withBasePath } from '../lib/paths';
 
 export function ArticleCard({ article }: { article: Article }) {
   const { view } = useViewPreference();
   const isSummary = view === 'summary';
-  const articleHref = `${withBasePath(`/articles/${article.slug}/`)}?view=${view}`;
+  const articleHref = `/articles/${article.slug}/?view=${view}`;
 
   return (
     <article className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm transition-colors hover:border-blue-500 dark:border-slate-800 dark:bg-slate-900/70">

@@ -21,7 +21,7 @@ type ArticlePreviewCardProps = {
 };
 
 export function ArticlePreviewCard({ article, variant = 'default', className }: ArticlePreviewCardProps) {
-  const href = withBasePath(`/articles/${article.slug}/`);
+  const href = `/articles/${article.slug}/`;
   const summary = article.summary;
   const excerptLength = variant === 'featured' ? 220 : variant === 'compact' ? 140 : 160;
   const excerpt = truncate(summary.text, excerptLength);

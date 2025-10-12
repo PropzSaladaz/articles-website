@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { getAllArticles } from '../lib/content';
 import type { Article } from '../lib/content';
 import { ArticlePreviewCard } from '../components/ArticlePreviewCard';
-import { withBasePath } from '../lib/paths';
 
 export const runtime = 'nodejs';           // ensure Node runtime (fs available)
 export const dynamic = 'force-static';     // keep SSG if you’re reading local files
@@ -80,10 +79,7 @@ export default async function HomePage() {
                 Fresh insights and guides, each condensed into a quick preview so you can dive into what matters.
               </p>
             </div>
-            <Link
-              href={withBasePath('/')}
-              className="text-sm font-semibold text-blue-600 hover:underline dark:text-blue-400"
-            >
+            <Link href="/" className="text-sm font-semibold text-blue-600 hover:underline dark:text-blue-400">
               View all articles
             </Link>
           </div>
@@ -107,7 +103,7 @@ export default async function HomePage() {
             {popularTopics.map(([tag, info]) => (
               <Link
                 key={tag}
-                href={withBasePath(`/tags/${encodeURIComponent(tag)}/`)}
+                href={`/tags/${encodeURIComponent(tag)}/`}
                 className="group rounded-2xl border border-slate-200 bg-white/70 p-5 shadow-sm transition hover:border-blue-500 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/60"
               >
                 <div className="flex flex-col gap-3">
