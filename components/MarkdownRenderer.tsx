@@ -1,10 +1,24 @@
+// MarkdownRenderer.tsx
 import clsx from 'clsx';
 
-export function MarkdownRenderer({ html, className }: { html: string; className?: string }) {
+type Props = {
+  html: string;
+  className?: string;
+  /** If you still want Tailwind Typography, keep it, but we also add "md" */
+  useProse?: boolean;
+};
+
+export function MarkdownRenderer({ html, className, useProse = false }: Props) {
+  const base = useProse
+    ? 'prose prose-slate max-w-none dark:prose-invert md' // keep .md so our selectors match
+    : 'md max-w-none';
+
   return (
-    <div
-      className={clsx('prose prose-slate max-w-none dark:prose-invert', className)}
-      dangerouslySetInnerHTML={{ __html: html }}
-    />
+    <>
+      <div
+        className={clsx(base, className)}
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
+    </>
   );
 }

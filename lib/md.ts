@@ -10,6 +10,7 @@ import { remark } from 'remark';
 import { visit } from 'unist-util-visit';
 import { toString } from 'mdast-util-to-string';
 import GithubSlugger from 'github-slugger';
+import rehypeScopeClasses from './rehypeScopeClasses';
 
 export async function markdownToHtml(markdown: string): Promise<string> {
   const file = await unified()
@@ -27,6 +28,8 @@ export async function markdownToHtml(markdown: string): Promise<string> {
     .use(rehypeAutolinkHeadings, {
       behavior: 'wrap',
     })
+    // set custom classes for each HTML element - allow styling markdown content
+    .use(rehypeScopeClasses, { prefix: 'md-' })
     // serialize HTML AST to HTML
     .use(rehypeStringify, { allowDangerousHtml: true })
     .process(markdown);

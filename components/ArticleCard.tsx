@@ -14,7 +14,7 @@ export function ArticleCard({ article }: { article: Article }) {
   const articleHref = `/articles/${article.slug}/?view=${view}`;
 
   return (
-    <Card className="group flex flex-col gap-5 overflow-hidden border-border/60 bg-card p-6 transition-all duration-300 hover:shadow-subtle">
+    <Card className="group flex flex-col gap-5 overflow-hidden border-none border-border bg-card p-6 transition-all duration-300 hover:shadow-subtle">
       <CardContent className="flex flex-col gap-5 p-0">
         <header className="flex flex-col gap-2">
           <Link href={articleHref} className="text-2xl font-semibold tracking-tight text-foreground transition-colors group-hover:text-primary">
@@ -39,7 +39,7 @@ export function ArticleCard({ article }: { article: Article }) {
             className="prose-sm text-muted-foreground [&>*:last-child]:mb-0"
           />
         ) : (
-          <MarkdownRenderer html={article.html} className="prose text-base text-foreground/90" />
+          <MarkdownRenderer html={article.html} />
         )}
         <div>
           <Link

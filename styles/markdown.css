@@ -1,0 +1,115 @@
+/* ===== Markdown Render Baseline (scoped) =====
+   Scope your rendered HTML with <div class="md">…</div>
+   Classes come from rehypeScopeClasses (prefix "md-").
+*/
+
+
+/* Typography */
+.md .md-p { margin: .8em 0; }
+.md .md-heading { font-weight: 100; line-height: 1.25; margin: 1.6em 0 .6em; }
+.md .md-h1 { font-size: clamp(1.9rem, 2.6vw, 2.4rem);  }
+.md .md-h2 { font-size: clamp(1.5rem, 2vw, 1.8rem); }
+.md .md-h3 { font-size: clamp(1.25rem, 1.6vw, 1.4rem); }
+.md .md-h4 { font-size: 1.1rem; }
+.md .md-h5 { font-size: 1rem; }
+.md .md-h6 { font-size: .95rem; color: var(--muted); }
+
+/* Remove underlines added by autolink wrapper */
+.md .md-heading a { color: inherit; text-decoration: none; }
+.md .md-heading a:hover { text-decoration: underline; text-underline-offset: .15em; }
+
+/* Emphasis, strong, links */
+.md .md-strong { color: var(--strong); font-weight: var(--strong-weight); }
+.md .md-em { font-style: italic; }
+.md .md-a { color: var(--link); text-underline-offset: .15em; }
+.md .md-a:hover { color: var(--link-hover); }
+
+/* Lists */
+.md .md-ul, .md .md-ol { padding-left: 1.4rem; margin: .8rem 0; }
+.md .md-li { margin: .25rem 0; }
+.md .md-li > .md-ul, .md .md-li > .md-ol { margin-top: .25rem; }
+
+/* Blockquote */
+.md .md-blockquote {
+  margin: 1rem 0; padding: .75rem 1rem;
+  border-left: 3px solid var(--border);
+  background: #f8fafc; color: var(--muted);
+}
+
+/* Tables */
+.md .md-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .95rem; }
+.md .md-th, .md .md-td { border: 1px solid var(--border); padding: .55rem .65rem; text-align: left; vertical-align: top; }
+.md .md-thead .md-th { background: #f1f5f9; font-weight: 600; }
+.md .md-tr:nth-child(even) .md-td { background: #fafafa; }
+
+/* Inline code */
+.md code:not(.md-code-block) {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: .92em; padding: .15em .35em; border-radius: .35rem;
+  background: #f1f5f9; color: #0b1220;
+}
+
+/* Fenced code blocks */
+.md .md-pre {
+  position: relative;
+  margin: .6rem 0 1.25rem;
+  padding: .9rem 1rem;
+  overflow: auto;
+  border-radius: .6rem;
+  border: 1px solid var(--code-border);
+  background: var(--code-bg);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
+}
+.md .md-code-block {
+  display: block;
+  color: var(--code-fg);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: .92rem;
+  tab-size: 2;
+}
+
+/* Per-language border tint + top label */
+.md .md-pre[data-lang]::before {
+  content: attr(data-lang);
+  position: absolute; top: 0; left: 0;
+  font: 600 .7rem/1 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+  padding: .22rem .5rem; border-bottom-right-radius: .5rem;
+  transform: translateY(-100%);
+  background: var(--code-border); color: #cbd5e1; opacity: .9;
+}
+
+/* Language-specific accents (adjust as needed) */
+.md .md-pre[data-lang="ts"]  { border-color: color-mix(in srgb, var(--ts) 70%, var(--code-border)); }
+.md .md-pre[data-lang="js"]  { border-color: color-mix(in srgb, var(--js) 70%, var(--code-border)); }
+.md .md-pre[data-lang="rs"]  { border-color: color-mix(in srgb, var(--rs) 70%, var(--code-border)); }
+.md .md-pre[data-lang="cpp"],
+.md .md-pre[data-lang="c"]   { border-color: color-mix(in srgb, var(--cpp) 70%, var(--code-border)); }
+.md .md-pre[data-lang="py"]  { border-color: color-mix(in srgb, var(--py) 70%, var(--code-border)); }
+.md .md-pre[data-lang="sql"] { border-color: color-mix(in srgb, var(--sql) 70%, var(--code-border)); }
+.md .md-pre[data-lang="sh"],
+.md .md-pre[data-lang="bash"]{ border-color: color-mix(in srgb, var(--sh) 70%, var(--code-border)); }
+
+/* Optional: highlighted lines (if your pipeline wraps them) */
+.md .line--highlighted { background: rgba(255,255,255,.06); display: block; margin: 0 -1rem; padding: 0 .9rem; }
+
+/* Horizontal rule */
+.md hr { border: 0; border-top: 1px solid var(--border); margin: 2rem 0; }
+
+/* Images */
+.md .md-img { max-width: 100%; height: auto; display: block; }
+
+/* Dark mode (opt-in via .dark ancestor) */
+.dark .md {
+  --fg: #e5e7eb;
+  --muted: #a3a3a3;
+  --border: #374151;
+  --bg: #0b0f19;
+
+  --link: #93c5fd;
+  --link-hover: #bfdbfe;
+
+  --strong: #ffffff;
+  --code-fg: #e6edf3;
+  --code-bg: #0b1020;
+  --code-border: #1f2937;
+}

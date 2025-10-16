@@ -1,0 +1,64 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base tokens: LIGHT THEME (default) */
+:root {
+  /* Neutral foundation */
+  --background: 210, 20%, 98%;      /* near-white with a hint of cool gray */
+  --foreground: 222, 47%, 11%;      /* rich neutral text color */
+
+  /* Surfaces */
+  --card: 0, 0%, 100%;              /* pure white */
+  --card-foreground: 222, 47%, 11%;
+  --border: 215, 15%, 85%;          /* light neutral border */
+  --muted: 215, 15%, 92%;           /* subtle gray background (for code blocks, quotes) */
+  --muted-foreground: 215, 16%, 47%;
+
+  /* Brand / accent */
+  --primary: 221, 63%, 54%;         /* deep modern blue */
+  --primary-foreground: 210, 40%, 98%;
+  --secondary: 265, 65%, 60%;       /* violet accent for links or highlights */
+  --secondary-foreground: 210, 40%, 98%;
+
+  /* Semantic (articles, UI feedback) */
+  --success: 160, 55%, 45%;
+  --warning: 35, 90%, 55%;
+  --destructive: 0, 75%, 58%;
+  --ring: 221, 63%, 54%;
+
+  /* Popovers / overlays */
+  --popover: 0, 0%, 100%;
+  --popover-foreground: 222, 47%, 11%;
+}
+
+
+/* DARK THEME (activated by <html class="dark">) */
+.dark {
+  --background: 222, 15%, 10%;      /* very dark slate */
+  --foreground: 215, 25%, 90%;
+
+  --card: 222, 15%, 13%;
+  --card-foreground: 215, 25%, 90%;
+  --border: 217, 15%, 20%;
+  --muted: 217, 15%, 18%;
+  --muted-foreground: 215, 15%, 70%;
+
+  --primary: 221, 70%, 65%;         /* slightly brighter for dark mode */
+  --primary-foreground: 222, 15%, 10%;
+  --secondary: 265, 65%, 70%;
+  --secondary-foreground: 222, 15%, 10%;
+
+  --success: 160, 55%, 50%;
+  --warning: 35, 90%, 60%;
+  --destructive: 0, 75%, 60%;
+  --ring: 221, 70%, 65%;
+
+  --popover: 222, 15%, 13%;
+  --popover-foreground: 215, 25%, 90%;
+}
+
+
+/* Optional: let the browser pick UI chrome colors */
+:root { color-scheme: light; }
+.dark { color-scheme: dark; }
