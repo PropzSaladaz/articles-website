@@ -5,57 +5,57 @@
 /* Base tokens: LIGHT THEME (default) */
 :root {
   /* Neutral foundation */
-  --background: 210, 20%, 98%;      /* near-white with a hint of cool gray */
-  --foreground: 222, 47%, 11%;      /* rich neutral text color */
+  --background: 0, 0%, 100%;         /* pure white */
+  --foreground: 220, 35%, 12%;       /* rich neutral text color */
 
   /* Surfaces */
-  --card: 0, 0%, 100%;              /* pure white */
-  --card-foreground: 222, 47%, 11%;
-  --border: 215, 15%, 85%;          /* light neutral border */
-  --muted: 215, 15%, 92%;           /* subtle gray background (for code blocks, quotes) */
-  --muted-foreground: 215, 16%, 47%;
+  --card: 0, 0%, 100%;
+  --card-foreground: 220, 35%, 12%;
+  --border: 220, 20%, 90%;           /* subtle cool-toned border */
+  --muted: 220, 25%, 94%;            /* gentle blue-tinted background */
+  --muted-foreground: 220, 25%, 46%;
 
   /* Brand / accent */
-  --primary: 221, 63%, 54%;         /* deep modern blue */
-  --primary-foreground: 210, 40%, 98%;
-  --secondary: 265, 65%, 60%;       /* violet accent for links or highlights */
-  --secondary-foreground: 210, 40%, 98%;
+  --primary: 204, 100%, 55%;         /* light energetic blue */
+  --primary-foreground: 0, 0%, 100%;
+  --secondary: 265, 65%, 60%;        /* violet accent for links or highlights */
+  --secondary-foreground: 0, 0%, 100%;
 
   /* Semantic (articles, UI feedback) */
   --success: 160, 55%, 45%;
   --warning: 35, 90%, 55%;
   --destructive: 0, 75%, 58%;
-  --ring: 221, 63%, 54%;
+  --ring: 204, 100%, 55%;
 
   /* Popovers / overlays */
   --popover: 0, 0%, 100%;
-  --popover-foreground: 222, 47%, 11%;
+  --popover-foreground: 220, 35%, 12%;
 }
 
 
 /* DARK THEME (activated by <html class="dark">) */
 .dark {
-  --background: 222, 15%, 10%;      /* very dark slate */
-  --foreground: 215, 25%, 90%;
+  --background: 222, 70%, 12%;       /* deep dark blue */
+  --foreground: 215, 32%, 90%;
 
-  --card: 222, 15%, 13%;
-  --card-foreground: 215, 25%, 90%;
-  --border: 217, 15%, 20%;
-  --muted: 217, 15%, 18%;
-  --muted-foreground: 215, 15%, 70%;
+  --card: 222, 65%, 16%;
+  --card-foreground: 215, 32%, 90%;
+  --border: 222, 48%, 28%;
+  --muted: 222, 45%, 20%;
+  --muted-foreground: 215, 32%, 70%;
 
-  --primary: 221, 70%, 65%;         /* slightly brighter for dark mode */
-  --primary-foreground: 222, 15%, 10%;
+  --primary: 204, 100%, 70%;         /* brighter blue for dark mode */
+  --primary-foreground: 222, 70%, 12%;
   --secondary: 265, 65%, 70%;
-  --secondary-foreground: 222, 15%, 10%;
+  --secondary-foreground: 222, 70%, 12%;
 
   --success: 160, 55%, 50%;
   --warning: 35, 90%, 60%;
   --destructive: 0, 75%, 60%;
-  --ring: 221, 70%, 65%;
+  --ring: 204, 100%, 70%;
 
-  --popover: 222, 15%, 13%;
-  --popover-foreground: 215, 25%, 90%;
+  --popover: 222, 65%, 16%;
+  --popover-foreground: 215, 32%, 90%;
 }
 
 
