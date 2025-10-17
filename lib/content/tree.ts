@@ -3,6 +3,7 @@ import fs from "fs";
 import { CONTENT_ROOT, isDir, isFile } from "./files";
 import { Article, Collection, NodeKind, StandaloneArticle, SubjectNode } from "./types";
 import { pathToId } from "./utilities";
+import { markdownToHtml } from "../md";
 
 type WalkResult = {
   tree: SubjectNode;
@@ -40,6 +41,8 @@ function detectKind(dirAbs: string): 'standalone' | 'collection' | 'node' {
     return 'node';
 }
 
+
+
 async function walk(dirAbs: string, slugPieces: string[]): Promise<WalkResult> {
   const folderName = path.basename(dirAbs);
   const thisSlug = slugPieces.join('/');
@@ -49,7 +52,7 @@ async function walk(dirAbs: string, slugPieces: string[]): Promise<WalkResult> {
   const kind = detectKind(dirAbs);
 
   if (kind === 'standalone') {
-    const article = await buildStandaloneFromFolder(dirAbs);
+    const article = await 
     const treeNode: StandaloneArticle = {
       kind: NodeKind.StandaloneArticle,
       id,

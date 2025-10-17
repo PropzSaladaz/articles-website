@@ -1,3 +1,9 @@
+import path from "path";
+import fs from "fs";
+import { NAMESPACE_CHAPTER_SLUGS } from "./files";
+import { Article, Collection } from "./types";
+import { getSiteUrl } from "../site";
+
 function persistCaches(payload: WalkResult) {
   const cacheDir = path.join(process.cwd(), '.cache');
   if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir, { recursive: true });
