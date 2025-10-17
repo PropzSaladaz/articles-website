@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { ArticleViewToggle } from '../../../components/ArticleViewToggle';
 import { ArticleContent } from '../../../components/ArticleContent';
-import { getAllArticles, getArticleBySlug, getArticleCanonicalUrl } from '../../../lib/content';
+import { getAllArticles, getArticleBySlug, getArticleCanonicalUrl } from '../../../lib/content/content';
 import { Suspense } from 'react';
 
 export const runtime = 'nodejs';           // ensure Node runtime (fs available)

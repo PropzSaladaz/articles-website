@@ -1,17 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { Article } from '../lib/content';
+import { Article } from '../lib/content/content';
 import { formatDate } from '../lib/format';
-import { MarkdownRenderer } from './MarkdownRenderer';
 import { TagBadge } from './TagBadge';
-import { useViewPreference } from './ViewPreferenceContext';
 import { Card, CardContent } from './ui/card';
 
 export function ArticleCard({ article }: { article: Article }) {
-  const { view } = useViewPreference();
-  const isSummary = view === 'summary';
-  const articleHref = `/articles/${article.slug}/?view=${view}`;
+  const articleHref = `/articles/${article.slug}/?view=full`;
 
   return (
     <Card className="group flex flex-col gap-5 overflow-hidden border-none border-border bg-card p-6 transition-all duration-300 hover:shadow-subtle">
@@ -33,14 +29,7 @@ export function ArticleCard({ article }: { article: Article }) {
             </div>
           )}
         </header>
-        {isSummary ? (
-          <MarkdownRenderer
-            html={article.summary.html}
-            className="prose-sm text-muted-foreground [&>*:last-child]:mb-0"
-          />
-        ) : (
-          <MarkdownRenderer html={article.html} />
-        )}
+
         <div>
           <Link
             href={articleHref}

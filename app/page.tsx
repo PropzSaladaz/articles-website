@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { getAllArticles } from '../lib/content';
-import type { Article } from '../lib/content';
+import { getAllArticles } from '../lib/content/content';
+import type { Article } from '../lib/content/content';
 import { ArticlePreviewCard } from '../components/ArticlePreviewCard';
 import { Card, CardContent } from '../components/ui/card';
 import { cn } from '../lib/utils';
@@ -39,12 +39,6 @@ export default async function HomePage() {
 
   const [featured, ...rest] = articles;
   const latest = rest.slice(0, 3);
-  const surfacePalette = [
-    'bg-card',
-    'bg-muted/70 dark:bg-muted/20',
-    'bg-secondary/70 dark:bg-secondary/30',
-    'bg-background/90 dark:bg-background/20',
-  ];
 
   const tagMap = new Map<string, { count: number; latest: Article }>();
   for (const article of articles) {
@@ -72,17 +66,11 @@ export default async function HomePage() {
           <span className="inline-flex w-fit items-center gap-2 rounded-full bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-primary">
             Featured story
           </span>
-          <div className="space-y-3">
-            <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">{featured.title}</h1>
-            <p className="max-w-2xl text-lg text-muted-foreground">
-              Catch up on the latest publication and explore quick previews of every article in the archive.
-            </p>
-          </div>
         </div>
         <ArticlePreviewCard
           article={featured}
           variant="featured"
-          className={cn(surfacePalette[0], 'animate-fade-up [animation-delay:120ms]')}
+          className={cn('bg-muted', 'animate-fade-up [animation-delay:120ms]')}
         />
       </section>
 
@@ -92,7 +80,7 @@ export default async function HomePage() {
             <div className="space-y-2">
               <h2 className="text-2xl font-semibold text-foreground sm:text-3xl">Latest updates</h2>
               <p className="text-base text-muted-foreground">
-                Fresh insights and guides, each condensed into a quick preview so you can dive into what matters.
+                Below you can find some of the most recently published articles.
               </p>
             </div>
             <Link href="/" className="text-sm font-semibold text-primary hover:text-primary/80">
@@ -104,7 +92,7 @@ export default async function HomePage() {
               <ArticlePreviewCard
                 key={article.slug}
                 article={article}
-                className={cn(surfacePalette[(index + 1) % surfacePalette.length], 'animate-fade-up')}
+                className={cn('animate-fade-up')}
                 style={{ animationDelay: `${(index + 1) * 80}ms` }}
               />
             ))}
@@ -125,8 +113,7 @@ export default async function HomePage() {
               <Link key={tag} href={`/tags/${encodeURIComponent(tag)}/`} className="group block">
                 <Card
                   className={cn(
-                    'h-full overflow-hidden border border-border/60 transition-all duration-300 hover:shadow-subtle',
-                    surfacePalette[(index + 2) % surfacePalette.length],
+                    'h-full overflow-hidden border border-border transition-all duration-300 hover:shadow-subtle',
                     'animate-fade-up'
                   )}
                   style={{ animationDelay: `${index * 70}ms` }}
@@ -151,7 +138,7 @@ export default async function HomePage() {
         <div className="space-y-2">
           <h2 className="text-2xl font-semibold text-foreground sm:text-3xl">Archive</h2>
           <p className="text-base text-muted-foreground">
-            Explore everything we&apos;ve published, organized by year with quick-hit previews.
+            Explore everything I've published, organized by year with quick-hit previews.
           </p>
         </div>
         <div className="flex flex-col gap-8">
@@ -164,7 +151,7 @@ export default async function HomePage() {
                     key={article.slug}
                     article={article}
                     variant="compact"
-                    className={cn(surfacePalette[(index + 3) % surfacePalette.length], 'animate-fade-up')}
+                    className={cn('animate-fade-up')}
                     style={{ animationDelay: `${(index + 1) * 40}ms` }}
                   />
                 ))}

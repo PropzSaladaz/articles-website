@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { ArticleCard } from '../../../components/ArticleCard';
-import { getAllArticles, getAllTags } from '../../../lib/content';
+import { getAllArticles, getAllTags } from '../../../lib/content/content';
 import { Suspense } from 'react';
 
 export const runtime = 'nodejs';           // ensure Node runtime (fs available)

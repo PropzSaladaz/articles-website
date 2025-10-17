@@ -11,6 +11,7 @@ import { visit } from 'unist-util-visit';
 import { toString } from 'mdast-util-to-string';
 import GithubSlugger from 'github-slugger';
 import rehypeScopeClasses from './rehypeScopeClasses';
+import { Heading } from './content/types';
 
 export async function markdownToHtml(markdown: string): Promise<string> {
   const file = await unified()
@@ -36,12 +37,6 @@ export async function markdownToHtml(markdown: string): Promise<string> {
 
   return String(file);
 }
-
-export type Heading = {
-  id: string;
-  text: string;
-  level: number;
-};
 
 export function extractHeadings(markdown: string): Heading[] {
   const tree = remark().use(remarkParse).parse(markdown);

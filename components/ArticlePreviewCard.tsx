@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import type { CSSProperties } from 'react';
-import { Article } from '../lib/content';
+import { Article } from '../lib/content/content';
 import { formatDate } from '../lib/format';
 import { TagBadge } from './TagBadge';
 import { withBasePath } from '../lib/paths';
@@ -57,7 +57,7 @@ export function ArticlePreviewCard({ article, variant = 'default', className, st
     <Card
       style={style}
       className={cn(
-        'group relative flex flex-col overflow-hidden border-border/60 transition-all duration-300 hover:shadow-subtle',
+        'group relative flex flex-col overflow-hidden border-border transition-all duration-300 hover:shadow-xl',
         variant === 'featured' && 'md:flex-row',
         className
       )}
