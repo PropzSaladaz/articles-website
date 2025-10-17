@@ -5,8 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { getBasePath } from '../lib/paths';
 import { cn } from '../lib/utils';
-import type { Collection, SubjectNode } from '../lib/content/content';
-import { NodeKind } from '../lib/content/content';
+import { Collection, SubjectNode, NodeKind } from '../lib/content/types';
 
 const TOGGLE_SIZE = 16;
 

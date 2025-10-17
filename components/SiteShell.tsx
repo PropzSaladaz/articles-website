@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import type { Collection, SubjectNode } from '../lib/content/content';
+import type { Collection, SubjectNode } from '../lib/content/types';
 import { getBasePath } from '../lib/paths';
 import { TreeNavigation } from './TreeNavigation';
 
