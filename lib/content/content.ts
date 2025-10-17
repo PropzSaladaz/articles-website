@@ -266,6 +266,7 @@ async function walk(dirAbs: string, slugPieces: string[]): Promise<WalkResult> {
       id,
       slug: thisSlug || article.slug,
       title: article.title,
+      articleSlug: article.slug,
     };
     return { tree: treeNode, articles: [article], collections: [] };
   }
@@ -277,6 +278,7 @@ async function walk(dirAbs: string, slugPieces: string[]): Promise<WalkResult> {
       id,
       slug: thisSlug || collection.slug,
       title: collection.title,
+      collectionSlug: collection.slug,
       articlesCount: collection.totalArticles,
     };
     return { tree: treeNode, articles: [...collection.articles], collections: [collection] };
@@ -444,3 +446,12 @@ export function getArticleCanonicalUrl(slug: string) {
 export function getCollectionCanonicalUrl(slug: string) {
   return getCanonicalUrl(`/collections/${slug}/`);
 }
+
+export type {
+  SubjectNode,
+  Article,
+  Collection,
+  StandaloneArticle,
+  CollectionArticle,
+} from './types';
+export { NodeKind } from './types';

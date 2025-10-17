@@ -10,7 +10,9 @@ export const dynamic = 'force-static';     // keep SSG if you’re reading local
 
 export async function generateStaticParams() {
   const articles = await getAllArticles();
-  return articles.map((article) => ({ slug: article.slug }));
+  return articles
+    .filter((article) => !article.slug.includes('/'))
+    .map((article) => ({ slug: article.slug }));
 }
 
 type PageProps = {

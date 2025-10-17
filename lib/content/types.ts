@@ -20,10 +20,12 @@ export interface SubjectNode {
 
 export interface StandaloneArticle extends SubjectNode {
     kind: NodeKind.StandaloneArticle;
+    articleSlug: Slug;
 }
 
 export interface CollectionArticle extends SubjectNode {
     kind: NodeKind.CollectionArticle;
+    collectionSlug: Slug;
     articlesCount: number;
 }
 
