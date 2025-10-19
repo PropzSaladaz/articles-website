@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import type { Collection, SubjectNode } from '../lib/content/types';
 import { getBasePath } from '../lib/paths';
 import { TreeNavigation } from './TreeNavigation';
+import { ThemeToggle } from './ThemeToggle';
 
 type SiteShellProps = {
   tree: SubjectNode;
@@ -22,9 +23,12 @@ export function SiteShell({ tree, collections, children }: SiteShellProps) {
           <Link href={`${basePath}/`} className="text-xl font-semibold tracking-tight">
             Sid Makes Sense
           </Link>
-          <span className="hidden text-sm font-medium text-muted-foreground sm:inline-flex">
-            Personal blog by Sidnei Teixeira
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="hidden text-sm font-medium text-muted-foreground sm:inline-flex">
+              Personal blog by Sidnei Teixeira
+            </span>
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 
