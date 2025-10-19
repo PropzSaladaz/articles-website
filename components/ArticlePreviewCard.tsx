@@ -7,6 +7,7 @@ import { TagBadge } from './TagBadge';
 import { withBasePath } from '../lib/paths';
 import { Card, CardContent } from './ui/card';
 import { cn } from '../lib/utils';
+import { getArticleHref } from '../lib/content/routes';
 
 function truncate(text: string, length: number) {
   if (text.length <= length) return text;
@@ -25,7 +26,7 @@ type ArticlePreviewCardProps = {
 };
 
 export function ArticlePreviewCard({ article, variant = 'default', className, style }: ArticlePreviewCardProps) {
-  const href = `/articles/${article.slug}/`;
+  const href = getArticleHref(article.slug);
   const summary = article.summary;
   const excerptLength = variant === 'featured' ? 220 : variant === 'compact' ? 140 : 160;
   const excerpt = truncate(summary.text, excerptLength);
