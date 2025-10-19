@@ -15,7 +15,10 @@ export interface SubjectNode {
     id: string;
     slug: string;
     title: string;
+
+    // for collection only
     children?: SubjectNode[];
+    articlesCount?: number;
 }
 
 export interface StandaloneArticle extends SubjectNode {

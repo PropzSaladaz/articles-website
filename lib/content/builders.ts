@@ -51,15 +51,6 @@ async function buildArticleFromIndex(
   };
 }
 
-async function buildStandaloneFromFolder(folderAbs: string): Promise<Article> {
-  const indexPath = path.join(folderAbs, 'index.md');
-  const summaryPath = path.join(folderAbs, 'summary.md');
-  if (!isFile(indexPath) || !isFile(summaryPath)) {
-    throw new Error(`Standalone must contain index.md and summary.md at ${folderAbs}`);
-  }
-  return buildArticleFromIndex(folderAbs, indexPath, summaryPath);
-}
-
 type ChapterFolderInfo = {
   dirAbs: string;
   dirName: string;
@@ -109,7 +100,21 @@ function readChapterFolders(chaptersAbs: string): ChapterFolderInfo[] {
   return infos;
 }
 
-async function buildCollectionFromFolder(folderAbs: string): Promise<Collection> {
+/**
+ * Build a standalone article from a folder containing index.md and summary.md.
+ * @param folderAbs Absolute path to the folder
+ * @returns The constructed Article object
+ */
+export async function buildStandaloneFromFolder(folderAbs: string): Promise<Article> {
+  const indexPath = path.join(folderAbs, 'index.md');
+  const summaryPath = path.join(folderAbs, 'summary.md');
+  if (!isFile(indexPath) || !isFile(summaryPath)) {
+    throw new Error(`Standalone must contain index.md and summary.md at ${folderAbs}`);
+  }
+  return buildArticleFromIndex(folderAbs, indexPath, summaryPath);
+}
+
+export async function buildCollectionFromFolder(folderAbs: string): Promise<Collection> {
   const indexPath = path.join(folderAbs, 'index.md');
   if (!isFile(indexPath)) throw new Error(`Collection missing index.md at ${folderAbs}`);
 

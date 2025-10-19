@@ -28,14 +28,14 @@ export function SiteShell({ tree, collections, children }: SiteShellProps) {
         </div>
       </header>
 
-      <div className="border-b border-border/60 bg-background/90 lg:hidden">
+      <div className="border-b border-border bg-background lg:hidden">
         <div className="mx-auto max-h-80 w-full max-w-6xl overflow-y-auto px-4 py-4">
           <TreeNavigation tree={tree} collections={collections} />
         </div>
       </div>
 
       <div className="flex flex-1">
-        <aside className="hidden w-72 shrink-0 border-r border-border/60 bg-background/80 backdrop-blur lg:block xl:w-80">
+        <aside className="hidden w-72 shrink-0 border-r border-border bg-background backdrop-blur lg:block xl:w-80">
           <div className="sticky top-[5.25rem] max-h-[calc(100vh-5.25rem)] overflow-y-auto px-4 py-6">
             <TreeNavigation tree={tree} collections={collections} />
           </div>

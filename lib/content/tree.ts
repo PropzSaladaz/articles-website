@@ -1,16 +1,21 @@
 import path from "path";
 import fs from "fs";
 import { CONTENT_ROOT, isDir, isFile } from "./files";
-import { Article, Collection, NodeKind, StandaloneArticle, SubjectNode } from "./types";
-import { pathToId } from "./utilities";
+import { Article, Collection, CollectionArticle, NodeKind, StandaloneArticle, SubjectNode } from "./types";
+import { pathToId, slugify } from "./utilities";
 import { markdownToHtml } from "../md";
+import { buildCollectionFromFolder, buildStandaloneFromFolder } from "./builders";
 
+// Holds data regarding a node in the node tree of all articles
+// and collections.
 type WalkResult = {
+  // self node
   tree: SubjectNode;
+  // all standalone articles found below it
   articles: Article[];
+  // all collections found below it
   collections: Collection[];
 };
-
 
 /**
  * Detect whether a directory is a standalone article, a collection, or a subject node.
@@ -42,7 +47,13 @@ function detectKind(dirAbs: string): 'standalone' | 'collection' | 'node' {
 }
 
 
-
+/**
+ * Walks a directory and recursively builds a node for each subdirectory.
+ * Returns the root node along with all articles and collections found.
+ * @param dirAbs Absolute path to the directory
+ * @param slugPieces Array of slug pieces representing the current path
+ * @returns A promise that resolves to the walk result
+ */
 async function walk(dirAbs: string, slugPieces: string[]): Promise<WalkResult> {
   const folderName = path.basename(dirAbs);
   const thisSlug = slugPieces.join('/');
@@ -52,11 +63,11 @@ async function walk(dirAbs: string, slugPieces: string[]): Promise<WalkResult> {
   const kind = detectKind(dirAbs);
 
   if (kind === 'standalone') {
-    const article = await 
+    const article = await buildStandaloneFromFolder(dirAbs);
     const treeNode: StandaloneArticle = {
       kind: NodeKind.StandaloneArticle,
       id,
-      slug: thisSlug || article.slug,
+      slug: thisSlug,
       title: article.title,
       articleSlug: article.slug,
     };
@@ -78,6 +89,8 @@ async function walk(dirAbs: string, slugPieces: string[]): Promise<WalkResult> {
 
   // Subject node: recurse
   const children: SubjectNode[] = [];
+  let collectionArticlesCount = 0;
+  // will hold all articles & all collections found in subdirs
   let arts: Article[] = [];
   let cols: Collection[] = [];
 
@@ -89,6 +102,10 @@ async function walk(dirAbs: string, slugPieces: string[]): Promise<WalkResult> {
     children.push(tree);
     arts = arts.concat(articles);
     cols = cols.concat(collections);
+
+    if (tree.kind === NodeKind.StandaloneArticle) {
+      collectionArticlesCount += 1;
+    }
   }
 
   const treeNode: SubjectNode = {
@@ -97,11 +114,16 @@ async function walk(dirAbs: string, slugPieces: string[]): Promise<WalkResult> {
     slug: thisSlug,
     title,
     children,
+    articlesCount: collectionArticlesCount,
   };
 
   return { tree: treeNode, articles: arts, collections: cols };
 }
 
+/**
+ * Loads all content from disk starting at the content root.
+ * @returns A promise that resolves to the full walk result from the content root
+ */
 async function loadAllFromDisk(): Promise<WalkResult> {
   if (!fs.existsSync(CONTENT_ROOT)) {
     throw new Error(`Content directory not found: ${CONTENT_ROOT}`);
@@ -109,6 +131,5 @@ async function loadAllFromDisk(): Promise<WalkResult> {
   return walk(CONTENT_ROOT, []);
 }
 
-function buildStandaloneFromFolder(dirAbs: string) {
-    throw new Error("Function not implemented.");
-}
+export { loadAllFromDisk };
+export type { WalkResult };

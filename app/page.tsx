@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getAllArticles } from '../lib/content/content';
-import type { Article } from '../lib/content/content';
+import type { Article } from '../lib/content/types';
 import { ArticlePreviewCard } from '../components/ArticlePreviewCard';
 import { Card, CardContent } from '../components/ui/card';
 import { cn } from '../lib/utils';

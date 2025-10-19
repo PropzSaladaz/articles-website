@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Article } from '../lib/content/content';
+import { Article } from '../lib/content/types';
 import { formatDate } from '../lib/format';
 import { TagBadge } from './TagBadge';
 import { Card, CardContent } from './ui/card';

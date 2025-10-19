@@ -186,7 +186,7 @@ function CollectionBranch({
 }: TreeNodeItemProps) {
   if (node.kind !== NodeKind.CollectionArticle) return null;
 
-  const slug = normalizeSlug(node.collectionSlug || node.slug);
+  const slug = normalizeSlug(node.slug);
   const key = makeCollectionKey(slug);
   const isExpanded = expandedKeys.has(key);
   const collection = collectionMap.get(slug);
@@ -257,7 +257,7 @@ function StandaloneLeaf({
 }) {
   if (node.kind !== NodeKind.StandaloneArticle) return null;
 
-  const slug = node.articleSlug;
+  const slug = node.slug;
   const isActive = active.articleSlug === slug;
 
   return (
@@ -324,7 +324,7 @@ function computeInitialExpandedKeys(tree: SubjectNode, active: ActiveState) {
     }
 
     if (node.kind === NodeKind.CollectionArticle) {
-      const slug = normalizeSlug(node.collectionSlug || node.slug);
+      const slug = normalizeSlug(node.slug);
       if (active.collectionSlug === slug || Boolean(active.articleSlug && active.articleSlug.startsWith(`${slug}/`))) {
         keys.add(makeCollectionKey(slug));
       }

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import type { CSSProperties } from 'react';
-import { Article } from '../lib/content/content';
+import { Article } from '../lib/content/types';
 import { formatDate } from '../lib/format';
 import { TagBadge } from './TagBadge';
 import { withBasePath } from '../lib/paths';
@@ -32,7 +32,7 @@ export function ArticlePreviewCard({ article, variant = 'default', className, st
 
   const variantClasses: Record<Variant, string> = {
     default: 'gap-5 p-6 sm:p-7',
-    featured: 'gap-6 p-6 sm:p-8 md:flex-row md:items-stretch md:gap-10',
+    featured: 'gap-6 p-6 sm:p-8 md:items-stretch md:gap-10',
     compact: 'gap-4 p-5 sm:p-6',
   };
 
@@ -64,14 +64,18 @@ export function ArticlePreviewCard({ article, variant = 'default', className, st
     >
       {variant === 'featured' && article.cover && (
         <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-muted/60 md:w-1/2">
-          <Image
-            src={withBasePath(article.cover)}
-            alt={article.title}
-            fill
-            className="h-full w-full object-cover transition duration-700 ease-out group-hover:scale-105"
-            sizes="(min-width: 768px) 50vw, 100vw"
-            priority
-          />
+          {
+            article.cover && 
+            <Image // only show image if it exists
+              src={withBasePath(article.cover)}
+              alt={article.title}
+              fill
+              className="h-full w-full object-cover transition duration-700 ease-out group-hover:scale-105"
+              sizes="(min-width: 768px) 50vw, 100vw"
+              priority
+            />
+          }
+
         </div>
       )}
       <CardContent className={cn('flex flex-1 flex-col', variantClasses[variant])}>

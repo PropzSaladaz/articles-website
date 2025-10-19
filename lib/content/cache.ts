@@ -3,8 +3,13 @@ import fs from "fs";
 import { NAMESPACE_CHAPTER_SLUGS } from "./files";
 import { Article, Collection } from "./types";
 import { getSiteUrl } from "../site";
+import { WalkResult } from "./tree";
 
-function persistCaches(payload: WalkResult) {
+/**
+ * Persists the content tree, articles, and collections to the cache directory as JSON files.
+ * @param payload The full walk result to persist
+ */
+export function persistCaches(payload: WalkResult) {
   const cacheDir = path.join(process.cwd(), '.cache');
   if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir, { recursive: true });
 
@@ -13,7 +18,13 @@ function persistCaches(payload: WalkResult) {
   fs.writeFileSync(path.join(cacheDir, 'collections.json'), JSON.stringify(payload.collections, null, 2));
 }
 
-function generateSitemap(articles: Article[], collections: Collection[]) {
+/**
+ * Generates a sitemap XML from the given articles and collections.
+ * Useful for SEO.
+ * @param articles The list of articles to include
+ * @param collections The list of collections to include
+ */
+export function generateSitemap(articles: Article[], collections: Collection[]) {
   const siteUrl = getSiteUrl();
   const pages = new Set<string>();
   pages.add(`${siteUrl}/`);
@@ -46,7 +57,12 @@ function generateSitemap(articles: Article[], collections: Collection[]) {
   fs.writeFileSync(path.join(publicDir, 'sitemap.xml'), xml, 'utf8');
 }
 
-function generateRss(articles: Article[]) {
+/**
+ * Generates an RSS feed XML from the given articles.
+ * Useful for discribing updates to subscribers.
+ * @param articles The list of articles to include
+ */
+export function generateRss(articles: Article[]) {
   const siteUrl = getSiteUrl();
 
   const items = articles
