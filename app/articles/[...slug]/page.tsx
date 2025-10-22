@@ -10,15 +10,18 @@ export const dynamic = 'force-static';     // keep SSG if you’re reading local
 
 export async function generateStaticParams() {
   const articles = await getAllArticles();
-  return articles.map((article) => ({ slug: article.slug }));
+  return articles
+    .filter((article) => !article.collectionSlug)
+    .map((article) => ({ slug: article.slug.split('/') }));
 }
 
 type PageProps = {
-  params: { slug: string };
+  params: { slug: string[] };
 };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const article = await getArticleBySlug(params.slug);
+  const slug = Array.isArray(params.slug) ? params.slug.join('/') : params.slug ?? '';
+  const article = await getArticleBySlug(slug);
   if (!article) {
     return {};
   }
@@ -26,14 +29,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: article.title,
     description: article.summary.text,
     alternates: {
-      canonical: getArticleCanonicalUrl(article.slug),
+      canonical: getArticleCanonicalUrl(article),
     },
   };
 }
 
 export default async function ArticlePage({ params }: PageProps) {
-  const article = await getArticleBySlug(params.slug);
-  if (!article) {
+  const slug = Array.isArray(params.slug) ? params.slug.join('/') : params.slug ?? '';
+  const article = await getArticleBySlug(slug);
+  if (!article || article.collectionSlug) {
     notFound();
   }
 

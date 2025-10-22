@@ -1,13 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { Article } from '../lib/content/content';
+import { Article } from '../lib/content/types';
 import { formatDate } from '../lib/format';
 import { TagBadge } from './TagBadge';
 import { Card, CardContent } from './ui/card';
 
 export function ArticleCard({ article }: { article: Article }) {
-  const articleHref = `/articles/${article.slug}/?view=full`;
+  const baseHref = article.collectionSlug ? `/collections/${article.slug}/` : `/articles/${article.slug}/`;
+  const articleHref = `${baseHref}?view=full`;
 
   return (
     <Card className="group flex flex-col gap-5 overflow-hidden border-none border-border bg-card p-6 transition-all duration-300 hover:shadow-subtle">

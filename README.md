@@ -1,8 +1,166 @@
-# Static Articles Site
+# 🧭 Articles & Collections Structure
 
-A static Next.js (App Router) site that renders Markdown articles with toggleable summary and full views. Designed for deployment to GitHub Pages using `next export`.
+This repository uses a **tree-based content structure** to organize all writing — subjects, subtopics, standalone articles, and multi-chapter collections.
+The goal is to keep everything human-readable, versionable, and easy to parse programmatically.
 
-## Getting Started
+---
+
+## 📂 Directory Overview
+
+```
+content/
+  Subject/
+    Subsubject/
+      Vertex-Array-Objects/          # ← Standalone Article
+        index.md                     # main article content
+        summary.md                   # summary/abstract
+        images/cover.png             # optional assets
+
+      Rendering-Pipeline/            # ← Collection (multi-chapter)
+        index.md                     # collection metadata + summary
+        chapters/
+          01-introduction/
+            index.md                 # chapter content
+            summary.md               # chapter summary
+            images/…                 # optional assets
+          02-vertex-processing/
+            index.md
+            summary.md
+```
+
+---
+
+## 🧩 Article Types
+
+### 📝 Standalone Article
+
+A folder with:
+
+* `index.md` — main markdown with frontmatter
+* `summary.md` — short summary version
+
+**Frontmatter example (`index.md`):**
+
+```yaml
+---
+title: "Building Static Sites with Next.js"
+slug: "2025-09-30-static-sites-with-nextjs"
+date: 2025-09-30
+tags: ["nextjs", "guides"]
+summary: "How to export and deploy Next.js apps as static sites."
+coverImage: "./images/cover.png"
+---
+```
+
+### 📚 Collection
+
+A folder with:
+
+* `index.md` — overview of the entire collection (title, slug, description, optional cover)
+* `chapters/` — each subfolder is one chapter
+
+Each chapter folder must contain:
+
+* `index.md` — main content (with title, slug, date, etc.)
+* `summary.md` — summary of that chapter
+
+**Collection frontmatter (`index.md`):**
+
+```yaml
+---
+title: "Rendering Pipeline Deep Dive"
+slug: "rendering-pipeline"
+date: 2025-10-10
+summary: "Explore the entire GPU rendering pipeline step by step."
+coverImage: "./images/cover.png"
+---
+```
+
+**Chapter frontmatter (`chapters/01-introduction/index.md`):**
+
+```yaml
+---
+title: "Introduction to the Rendering Pipeline"
+slug: "introduction"
+date: 2025-10-10
+order: 1              # optional ordering override
+tags: ["graphics", "gpu"]
+coverImage: "./images/intro.png"
+---
+```
+
+---
+
+## 🧠 Naming & Ordering Rules
+
+* Folder names can have numeric prefixes (`01-`, `02-`) to define order visually.
+* The parser automatically sorts chapters by:
+
+  1. `order` in frontmatter (if present)
+  2. numeric prefix
+  3. alphabetical order
+* All slugs must be unique:
+
+  * Standalone: `/articles/:slug/`
+  * Collection: `/collections/:collectionSlug/`
+  * Chapters: `/collections/:collectionSlug/:chapterSlug/`
+
+---
+
+## 🧮 Generated Structure
+
+When you run the site build:
+
+* The parser walks through `/content/` and generates:
+
+  * `.cache/content-tree.json` — hierarchical structure
+  * `.cache/articles.json` — flattened list of all articles (standalones + chapters)
+  * `.cache/collections.json` — all collections
+* It also builds `sitemap.xml` and `rss.xml` in `/public/`.
+
+---
+
+## ✨ Quick Reference
+
+| Type       | Folder structure     | Required files                                               | Output route                                             |
+| ---------- | -------------------- | ------------------------------------------------------------ | -------------------------------------------------------- |
+| Standalone | `/Topic/Article/`    | `index.md`, `summary.md`                                     | `/articles/:slug/`                                       |
+| Collection | `/Topic/Collection/` | `index.md`, `chapters/**/index.md`, `chapters/**/summary.md` | `/collections/:slug/` and `/collections/:slug/:chapter/` |
+
+---
+
+## 🧰 Coming Soon: Boilerplate Generator
+
+You’ll later add a CLI utility (e.g. `pnpm gen:article`) that automates:
+
+* Creating the folder structure
+* Pre-filling frontmatter templates
+* Optionally adding a sample cover or placeholder diagrams
+
+Example usage:
+
+```bash
+pnpm gen:article "Computer Science/3D Graphics/Rendering Pipeline" --collection
+pnpm gen:article "Computer Science/3D Graphics/Vertex Array Objects" --standalone
+```
+
+---
+
+## ✅ Writing Workflow
+
+1. Choose whether you’re creating a **standalone article** or a **collection**.
+2. Create the appropriate folder inside `/content/...`.
+3. Write `index.md` and `summary.md`.
+4. Add images locally and reference them via relative paths.
+5. Commit — the parser takes care of everything else on build.
+
+---
+
+> 💡 Tip: You can preview the full parsed structure anytime by inspecting `.cache/content-tree.json` after running a build.
+
+---
+
+# Getting Started
 
 Install dependencies and run the development server:
 
