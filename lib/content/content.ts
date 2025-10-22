@@ -1,18 +1,7 @@
-import path from 'path';
-import { SubjectNode, Article, Collection, StandaloneArticle, NodeKind, CollectionArticle } from './types';
-import { extractHeadings, markdownToHtml } from '../md';
-import { markdownToPlainText } from '../summaries';
-import readingTime from 'reading-time';
-import { getCanonicalUrl, getSiteUrl } from '../site';
-import { 
-  slugify, 
-  numericPrefixOrNull, 
-  pathToId, 
-  ensureBasics 
-} from './utilities';
+import { SubjectNode, Article, Collection } from './types';
+import { getCanonicalUrl } from '../site';
 import { loadAllFromDisk } from './tree';
 import { generateRss, generateSitemap, persistCaches } from './cache';
-import { NAMESPACE_CHAPTER_SLUGS } from './files';
 
 // Global cache holding loaded content
 let cachePromise: Promise<{
@@ -101,11 +90,11 @@ export async function getAllTags(): Promise<string[]> {
  * @param slug The article slug
  * @returns The canonical URL as a string
  */
-export function getArticleCanonicalUrl(slug: string) {
-  if (NAMESPACE_CHAPTER_SLUGS && slug.includes('/')) {
-    return getCanonicalUrl(`/collections/${slug}/`);
+export function getArticleCanonicalUrl(article: Article) {
+  if (article.collectionSlug) {
+    return getCanonicalUrl(`/collections/${article.slug}/`);
   }
-  return getCanonicalUrl(`/articles/${slug}/`);
+  return getCanonicalUrl(`/articles/${article.slug}/`);
 }
 
 export function getCollectionCanonicalUrl(slug: string) {

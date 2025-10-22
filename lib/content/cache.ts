@@ -1,6 +1,5 @@
 import path from "path";
 import fs from "fs";
-import { NAMESPACE_CHAPTER_SLUGS } from "./files";
 import { Article, Collection } from "./types";
 import { getSiteUrl } from "../site";
 import { WalkResult } from "./tree";
@@ -31,10 +30,9 @@ export function generateSitemap(articles: Article[], collections: Collection[]) 
 
   // Standalone vs chapter URLs:
   for (const a of articles) {
-    if (NAMESPACE_CHAPTER_SLUGS && a.slug.includes('/')) {
-      const [cSlug, chSlug] = a.slug.split('/');
-      pages.add(`${siteUrl}/collections/${cSlug}/`);
-      pages.add(`${siteUrl}/collections/${cSlug}/${chSlug}/`);
+    if (a.collectionSlug) {
+      pages.add(`${siteUrl}/collections/${a.collectionSlug}/`);
+      pages.add(`${siteUrl}/collections/${a.slug}/`);
     } else {
       pages.add(`${siteUrl}/articles/${a.slug}/`);
     }
@@ -67,10 +65,9 @@ export function generateRss(articles: Article[]) {
 
   const items = articles
     .map((a) => {
-      const link =
-        NAMESPACE_CHAPTER_SLUGS && a.slug.includes('/')
-          ? `${siteUrl}/collections/${a.slug}/` // e.g., collections/rendering-pipeline/introduction/
-          : `${siteUrl}/articles/${a.slug}/`;
+      const link = a.collectionSlug
+        ? `${siteUrl}/collections/${a.slug}/`
+        : `${siteUrl}/articles/${a.slug}/`;
 
       return `\n  <item>\n    <title><![CDATA[${a.title}]]></title>\n    <link>${link}</link>\n    <guid>${link}</guid>\n    <pubDate>${new Date(a.date).toUTCString()}</pubDate>\n    <description><![CDATA[${a.summary.text}]]></description>\n  </item>`;
     })

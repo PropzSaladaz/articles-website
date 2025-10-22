@@ -45,7 +45,7 @@ export function SiteShell({ tree, collections, children }: SiteShellProps) {
           </div>
         </aside>
         <main className="flex-1">
-          <div className="mx-auto w-full max-w-5xl px-4 py-12 sm:py-16">{children}</div>
+          <div className="mx-auto w-full max-w-7xl px-4 py-12 sm:py-16">{children}</div>
         </main>
       </div>
 

@@ -1,3 +1,5 @@
+import { ContentStatus } from "./types";
+
 /**
  * Slugify a string.
  * @param s String to slugify
@@ -34,26 +36,39 @@ export function pathToId(slug: string) {
 }
 
 /**
- * Basic validation for article frontmatter.
- * @param data Frontmatter data
- * @param filePath Path to the Markdown file
+ * Convert a folder name into a human-readable title.
+ * @param folderName Folder name to convert
+ * @returns Title-cased string
  */
-export function ensureBasics(
-  data: Record<string, unknown>,
-  filePath: string,
-  { requireSlug = true }: { requireSlug?: boolean } = {}
-) {
-  const titleOk = typeof data.title === 'string' && data.title.trim().length > 0;
-  if (!titleOk) throw new Error(`Invalid frontmatter in ${filePath}: "title" must be non-empty.`);
+export function titleFromFolder(folderName: string) {
+  const cleaned = folderName
+    .replace(/^[0-9]+[-_]/, '') // drop numeric prefix if present
+    .replace(/[-_]+/g, ' ')
+    .trim();
 
-  const dateStr = String(data.date ?? '');
-  const date = new Date(dateStr);
-  if (!(date instanceof Date) || isNaN(date.getTime())) {
-    throw new Error(`Invalid frontmatter in ${filePath}: "date" must be a valid ISO date.`);
-  }
+  if (!cleaned) return folderName;
 
-  if (requireSlug) {
-    const slugOk = typeof data.slug === 'string' && data.slug.trim().length > 0;
-    if (!slugOk) throw new Error(`Invalid frontmatter in ${filePath}: "slug" must be non-empty.`);
+  return cleaned
+    .split(' ')
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+export function parseStatus(value: unknown, filePath: string): ContentStatus {
+  const allowed = new Set(['draft', 'published', 'archived']);
+  if (typeof value === 'string' && allowed.has(value)) {
+    return value as ContentStatus;
   }
+  if (value === undefined) {
+    return 'draft';
+  }
+  throw new Error(
+    `Invalid frontmatter in ${filePath}: "status" must be one of ${Array.from(allowed).join(', ')}.`
+  );
+}
+
+export function extractTags(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item) => typeof item === 'string').map((tag) => tag.trim()).filter(Boolean);
 }

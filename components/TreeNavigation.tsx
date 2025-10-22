@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { getBasePath } from '../lib/paths';
 import { cn } from '../lib/utils';
-import { Collection, SubjectNode, NodeKind } from '../lib/content/types';
+import { Collection, SubjectNode, NodeKind, StandaloneArticle } from '../lib/content/types';
 
 const TOGGLE_SIZE = 16;
 
@@ -32,15 +32,18 @@ export function TreeNavigation({ tree, collections }: TreeNavigationProps) {
     return pathname || '/';
   }, [pathname, basePath]);
 
-  const active = useMemo(() => deriveActiveState(normalizedPath), [normalizedPath]);
-
-  const collectionMap = useMemo(() => {
-    const map = new Map<string, Collection>();
+  const collectionSlugs = useMemo(() => {
+    const set = new Set<string>();
     for (const collection of collections) {
-      map.set(normalizeSlug(collection.slug), collection);
+      set.add(normalizeSlug(collection.slug));
     }
-    return map;
+    return set;
   }, [collections]);
+
+  const active = useMemo(
+    () => deriveActiveState(normalizedPath, collectionSlugs),
+    [normalizedPath, collectionSlugs]
+  );
 
   const initialExpandedKeys = useMemo(
     () => computeInitialExpandedKeys(tree, active),
@@ -77,7 +80,6 @@ export function TreeNavigation({ tree, collections }: TreeNavigationProps) {
           active={active}
           expandedKeys={expandedKeys}
           onToggle={handleToggle}
-          collectionMap={collectionMap}
         />
       ))}
     </nav>
@@ -90,10 +92,9 @@ type TreeNodeItemProps = {
   active: ActiveState;
   expandedKeys: Set<string>;
   onToggle: (key: string) => void;
-  collectionMap: Map<string, Collection>;
 };
 
-function TreeNodeItem({ node, depth, active, expandedKeys, onToggle, collectionMap }: TreeNodeItemProps) {
+function TreeNodeItem({ node, depth, active, expandedKeys, onToggle }: TreeNodeItemProps) {
   if (node.kind === NodeKind.Node) {
     return (
       <SubjectBranch
@@ -102,7 +103,6 @@ function TreeNodeItem({ node, depth, active, expandedKeys, onToggle, collectionM
         active={active}
         expandedKeys={expandedKeys}
         onToggle={onToggle}
-        collectionMap={collectionMap}
       />
     );
   }
@@ -115,12 +115,11 @@ function TreeNodeItem({ node, depth, active, expandedKeys, onToggle, collectionM
         active={active}
         expandedKeys={expandedKeys}
         onToggle={onToggle}
-        collectionMap={collectionMap}
       />
     );
   }
 
-  return <StandaloneLeaf node={node} depth={depth} active={active} />;
+  return <StandaloneLeaf node={node as StandaloneArticle} depth={depth} active={active} />;
 }
 
 function SubjectBranch({
@@ -129,7 +128,6 @@ function SubjectBranch({
   active,
   expandedKeys,
   onToggle,
-  collectionMap,
 }: TreeNodeItemProps) {
   const slug = normalizeSlug(node.slug);
   const key = makeNodeKey(slug);
@@ -167,7 +165,6 @@ function SubjectBranch({
               active={active}
               expandedKeys={expandedKeys}
               onToggle={onToggle}
-              collectionMap={collectionMap}
             />
           ))}
         </div>
@@ -182,16 +179,22 @@ function CollectionBranch({
   active,
   expandedKeys,
   onToggle,
-  collectionMap,
 }: TreeNodeItemProps) {
   if (node.kind !== NodeKind.CollectionArticle) return null;
 
   const slug = normalizeSlug(node.slug);
   const key = makeCollectionKey(slug);
   const isExpanded = expandedKeys.has(key);
-  const collection = collectionMap.get(slug);
-  const hasArticles = Boolean(collection?.articles.length);
+  const childNodes = node.children ?? [];
+  const hasChildren = childNodes.length > 0;
   const isActive = active.collectionSlug === slug || Boolean(active.articleSlug && active.articleSlug.startsWith(`${slug}/`));
+  const collectionCount = node.collectionsCount ?? 0;
+  const articleCount = node.articlesCount ?? 0;
+  const badgeValue = collectionCount > 0 ? collectionCount : articleCount;
+  const badgeLabel =
+    collectionCount > 0
+      ? `${collectionCount} ${collectionCount === 1 ? 'collection' : 'collections'}`
+      : `${articleCount} ${articleCount === 1 ? 'article' : 'articles'}`;
 
   return (
     <div className="space-y-1">
@@ -202,7 +205,7 @@ function CollectionBranch({
         )}
         style={{ paddingLeft: depth * 12 }}
       >
-        {hasArticles ? (
+        {hasChildren ? (
           <ToggleButton
             isExpanded={isExpanded}
             onClick={() => onToggle(key)}
@@ -214,32 +217,25 @@ function CollectionBranch({
         <Link href={`/collections/${slug}/`} className="flex-1 truncate font-medium">
           {node.title}
         </Link>
-        <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground">
-          {node.articlesCount}
+        <span
+          className="rounded-full bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground"
+          title={badgeLabel}
+        >
+          {badgeValue}
         </span>
       </div>
-      {hasArticles && isExpanded && collection && (
+      {hasChildren && isExpanded && (
         <div className="space-y-1">
-          {collection.articles.map((article) => {
-            const articleSlug = article.slug.split('/').slice(1).join('/');
-            const href = `/collections/${slug}/${articleSlug}/`;
-            const isArticleActive = active.articleSlug === article.slug;
-            return (
-              <Link
-                key={article.slug}
-                href={href}
-                className={cn(
-                  'block rounded-md px-2 py-1 text-sm transition-colors',
-                  isArticleActive
-                    ? 'bg-muted font-medium text-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-                style={{ paddingLeft: (depth + 1) * 12 + TOGGLE_SIZE }}
-              >
-                {article.title}
-              </Link>
-            );
-          })}
+          {childNodes.map((child) => (
+            <TreeNodeItem
+              key={child.id}
+              node={child}
+              depth={depth + 1}
+              active={active}
+              expandedKeys={expandedKeys}
+              onToggle={onToggle}
+            />
+          ))}
         </div>
       )}
     </div>
@@ -251,18 +247,18 @@ function StandaloneLeaf({
   depth,
   active,
 }: {
-  node: SubjectNode;
+  node: StandaloneArticle;
   depth: number;
   active: ActiveState;
 }) {
-  if (node.kind !== NodeKind.StandaloneArticle) return null;
-
-  const slug = node.slug;
+  const slug = normalizeSlug(node.articleSlug);
+  const isCollectionArticle = Boolean(node.collectionSlug);
+  const href = isCollectionArticle ? `/collections/${slug}/` : `/articles/${slug}/`;
   const isActive = active.articleSlug === slug;
 
   return (
     <Link
-      href={`/articles/${slug}/`}
+      href={href}
       className={cn(
         'block rounded-md px-2 py-1 text-sm transition-colors',
         isActive ? 'bg-primary/10 font-medium text-primary' : 'text-muted-foreground hover:text-foreground'
@@ -335,7 +331,7 @@ function computeInitialExpandedKeys(tree: SubjectNode, active: ActiveState) {
   return Array.from(keys);
 }
 
-function deriveActiveState(pathname: string): ActiveState {
+function deriveActiveState(pathname: string, collectionSlugs: Set<string>): ActiveState {
   const segments = pathname.split('/').filter(Boolean);
   if (segments.length === 0) {
     return {};
@@ -350,11 +346,22 @@ function deriveActiveState(pathname: string): ActiveState {
 
   if (root === 'collections') {
     if (rest.length === 0) return {};
-    const collectionSlug = rest[0];
-    if (rest.length === 1) {
-      return { collectionSlug };
+    let matchedCollection: string | undefined;
+    let current = '';
+    for (const segment of rest) {
+      current = current ? `${current}/${segment}` : segment;
+      if (collectionSlugs.has(current)) {
+        matchedCollection = current;
+      }
     }
-    return { collectionSlug, articleSlug: `${collectionSlug}/${rest.slice(1).join('/')}` };
+    const joined = rest.join('/');
+    if (matchedCollection) {
+      if (matchedCollection === joined) {
+        return { collectionSlug: matchedCollection };
+      }
+      return { collectionSlug: matchedCollection, articleSlug: joined };
+    }
+    return { collectionSlug: rest[0], articleSlug: joined };
   }
 
   return {};
