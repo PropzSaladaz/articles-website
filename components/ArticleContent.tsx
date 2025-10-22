@@ -1,6 +1,6 @@
 'use client';
 
-import { Article } from '../lib/content';
+import { Article } from '../lib/content/types';
 import Image from 'next/image';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { useIsSummaryView } from './ArticleViewToggle';

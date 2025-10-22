@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import type { CSSProperties } from 'react';
-import { Article } from '../lib/content';
+import { Article } from '../lib/content/types';
 import { formatDate } from '../lib/format';
 import { TagBadge } from './TagBadge';
 import { withBasePath } from '../lib/paths';
@@ -25,14 +25,14 @@ type ArticlePreviewCardProps = {
 };
 
 export function ArticlePreviewCard({ article, variant = 'default', className, style }: ArticlePreviewCardProps) {
-  const href = `/articles/${article.slug}/`;
+  const href = article.collectionSlug ? `/collections/${article.slug}/` : `/articles/${article.slug}/`;
   const summary = article.summary;
   const excerptLength = variant === 'featured' ? 220 : variant === 'compact' ? 140 : 160;
   const excerpt = truncate(summary.text, excerptLength);
 
   const variantClasses: Record<Variant, string> = {
     default: 'gap-5 p-6 sm:p-7',
-    featured: 'gap-6 p-6 sm:p-8 md:flex-row md:items-stretch md:gap-10',
+    featured: 'gap-6 p-6 sm:p-8 md:items-stretch md:gap-10',
     compact: 'gap-4 p-5 sm:p-6',
   };
 
@@ -57,21 +57,25 @@ export function ArticlePreviewCard({ article, variant = 'default', className, st
     <Card
       style={style}
       className={cn(
-        'group relative flex flex-col overflow-hidden border-border/60 transition-all duration-300 hover:shadow-subtle',
+        'group relative flex flex-col overflow-hidden border-border transition-all duration-300 hover:shadow-xl',
         variant === 'featured' && 'md:flex-row',
         className
       )}
     >
       {variant === 'featured' && article.cover && (
         <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-muted/60 md:w-1/2">
-          <Image
-            src={withBasePath(article.cover)}
-            alt={article.title}
-            fill
-            className="h-full w-full object-cover transition duration-700 ease-out group-hover:scale-105"
-            sizes="(min-width: 768px) 50vw, 100vw"
-            priority
-          />
+          {
+            article.cover && 
+            <Image // only show image if it exists
+              src={withBasePath(article.cover)}
+              alt={article.title}
+              fill
+              className="h-full w-full object-cover transition duration-700 ease-out group-hover:scale-105"
+              sizes="(min-width: 768px) 50vw, 100vw"
+              priority
+            />
+          }
+
         </div>
       )}
       <CardContent className={cn('flex flex-1 flex-col', variantClasses[variant])}>
