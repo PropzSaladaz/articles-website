@@ -3,11 +3,13 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
+import { ChevronRight } from 'lucide-react';
 import { getBasePath } from '../lib/paths';
 import { cn } from '../lib/utils';
 import { Collection, SubjectNode, NodeKind, StandaloneArticle } from '../lib/content/types';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 
-const TOGGLE_SIZE = 16;
+const TOGGLE_SIZE = 24;
 
 type TreeNavigationProps = {
   tree: SubjectNode;
@@ -58,13 +60,14 @@ export function TreeNavigation({ tree, collections }: TreeNavigationProps) {
     setExpandedKeys(new Set(initialExpandedKeys));
   }, [initialFingerprint, initialExpandedKeys]);
 
-  const handleToggle = (key: string) => {
+  const handleToggle = (key: string, value?: boolean) => {
     setExpandedKeys((prev) => {
       const next = new Set(prev);
-      if (next.has(key)) {
-        next.delete(key);
-      } else {
+      const shouldExpand = value ?? !next.has(key);
+      if (shouldExpand) {
         next.add(key);
+      } else {
+        next.delete(key);
       }
       return next;
     });
@@ -91,7 +94,7 @@ type TreeNodeItemProps = {
   depth: number;
   active: ActiveState;
   expandedKeys: Set<string>;
-  onToggle: (key: string) => void;
+  onToggle: (key: string, value?: boolean) => void;
 };
 
 function TreeNodeItem({ node, depth, active, expandedKeys, onToggle }: TreeNodeItemProps) {
@@ -122,13 +125,7 @@ function TreeNodeItem({ node, depth, active, expandedKeys, onToggle }: TreeNodeI
   return <StandaloneLeaf node={node as StandaloneArticle} depth={depth} active={active} />;
 }
 
-function SubjectBranch({
-  node,
-  depth,
-  active,
-  expandedKeys,
-  onToggle,
-}: TreeNodeItemProps) {
+function SubjectBranch({ node, depth, active, expandedKeys, onToggle }: TreeNodeItemProps) {
   const slug = normalizeSlug(node.slug);
   const key = makeNodeKey(slug);
   const isExpanded = expandedKeys.has(key);
@@ -136,7 +133,11 @@ function SubjectBranch({
   const isActive = branchContainsActive(slug, active);
 
   return (
-    <div className="space-y-1">
+    <Collapsible
+      className="space-y-1"
+      open={isExpanded}
+      onOpenChange={(value) => onToggle(key, value)}
+    >
       <div
         className={cn(
           'flex items-center gap-2 rounded-md px-2 py-1 text-sm font-medium transition-colors',
@@ -145,18 +146,14 @@ function SubjectBranch({
         style={{ paddingLeft: depth * 12 }}
       >
         {hasChildren ? (
-          <ToggleButton
-            isExpanded={isExpanded}
-            onClick={() => onToggle(key)}
-            label={`Toggle ${node.title}`}
-          />
+          <ToggleButton label={`Toggle ${node.title}`} />
         ) : (
-          <span className="inline-flex h-5 w-5 items-center justify-center text-xs text-muted-foreground">•</span>
+          <span className="inline-flex h-6 w-6 items-center justify-center text-xs text-muted-foreground">•</span>
         )}
         <span className="truncate">{node.title}</span>
       </div>
-      {hasChildren && isExpanded && (
-        <div className="space-y-1">
+      {hasChildren && (
+        <CollapsibleContent className="space-y-1 pt-1">
           {node.children!.map((child) => (
             <TreeNodeItem
               key={child.id}
@@ -167,9 +164,9 @@ function SubjectBranch({
               onToggle={onToggle}
             />
           ))}
-        </div>
+        </CollapsibleContent>
       )}
-    </div>
+    </Collapsible>
   );
 }
 
@@ -197,7 +194,11 @@ function CollectionBranch({
       : `${articleCount} ${articleCount === 1 ? 'article' : 'articles'}`;
 
   return (
-    <div className="space-y-1">
+    <Collapsible
+      className="space-y-1"
+      open={isExpanded}
+      onOpenChange={(value) => onToggle(key, value)}
+    >
       <div
         className={cn(
           'flex items-center gap-2 rounded-md px-2 py-1 text-sm transition-colors',
@@ -206,13 +207,9 @@ function CollectionBranch({
         style={{ paddingLeft: depth * 12 }}
       >
         {hasChildren ? (
-          <ToggleButton
-            isExpanded={isExpanded}
-            onClick={() => onToggle(key)}
-            label={`Toggle ${node.title}`}
-          />
+          <ToggleButton label={`Toggle ${node.title}`} />
         ) : (
-          <span className="inline-flex h-5 w-5 items-center justify-center text-xs text-muted-foreground">•</span>
+          <span className="inline-flex h-6 w-6 items-center justify-center text-xs text-muted-foreground">•</span>
         )}
         <Link href={`/collections/${slug}/`} className="flex-1 truncate font-medium">
           {node.title}
@@ -224,8 +221,8 @@ function CollectionBranch({
           {badgeValue}
         </span>
       </div>
-      {hasChildren && isExpanded && (
-        <div className="space-y-1">
+      {hasChildren && (
+        <CollapsibleContent className="space-y-1 pt-1">
           {childNodes.map((child) => (
             <TreeNodeItem
               key={child.id}
@@ -236,21 +233,13 @@ function CollectionBranch({
               onToggle={onToggle}
             />
           ))}
-        </div>
+        </CollapsibleContent>
       )}
-    </div>
+    </Collapsible>
   );
 }
 
-function StandaloneLeaf({
-  node,
-  depth,
-  active,
-}: {
-  node: StandaloneArticle;
-  depth: number;
-  active: ActiveState;
-}) {
+function StandaloneLeaf({ node, depth, active }: { node: StandaloneArticle; depth: number; active: ActiveState }) {
   const slug = normalizeSlug(node.articleSlug);
   const isCollectionArticle = Boolean(node.collectionSlug);
   const href = isCollectionArticle ? `/collections/${slug}/` : `/articles/${slug}/`;
@@ -270,16 +259,14 @@ function StandaloneLeaf({
   );
 }
 
-function ToggleButton({ isExpanded, onClick, label }: { isExpanded: boolean; onClick: () => void; label: string }) {
+function ToggleButton({ label }: { label: string }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
+    <CollapsibleTrigger
+      className="group inline-flex h-6 w-6 items-center justify-center rounded-md border border-transparent text-muted-foreground transition-colors hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
       aria-label={label}
-      className="inline-flex h-5 w-5 items-center justify-center rounded border border-transparent text-xs text-muted-foreground transition-colors hover:text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
     >
-      <span>{isExpanded ? '▾' : '▸'}</span>
-    </button>
+      <ChevronRight className="h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-90" />
+    </CollapsibleTrigger>
   );
 }
 
