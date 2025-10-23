@@ -11,7 +11,7 @@ const CONTENT_ROOT = path.join(PROJECT_ROOT, 'content');
 const PUBLIC_ROOT = path.join(PROJECT_ROOT, 'public');
 
 const INDEX_FILENAME = 'index.md';
-const IMAGE_SUFFIX = '.image';
+const IMAGE_SUFFIX = 'images';
 
 function slugify(value) {
   return value
@@ -29,6 +29,12 @@ function numericPrefixOrNull(name) {
   return match ? parseInt(match[1], 10) : null;
 }
 
+/**
+ * Sort directory entries by their numeric prefix, then by name.
+ * Entries could be files or directories
+ * @param {fs.Dirent[]} dirents - The directory entries to sort.
+ * @returns {fs.Dirent[]} The sorted directory entries.
+ */
 function sortDirents(dirents) {
   return dirents.sort((a, b) => {
     const aNum = numericPrefixOrNull(a.name);
@@ -60,14 +66,21 @@ function canonicalPathForEntry(slug, type, parentCollectionSlug) {
 
 async function walkContent(dirAbs, slugPieces, parentCollectionSlug) {
   const results = [];
+  // get direct child entries for current directory and sort them
   const dirents = sortDirents(await fsp.readdir(dirAbs, { withFileTypes: true }));
+  // filter to only directories
   const childDirs = dirents.filter((entry) => entry.isDirectory());
+  // check if current directory has an index.md
   const currentHasIndex = hasIndex(dirAbs);
+  // filter children to those that have an index.md
   const contentChildDirs = childDirs.filter((entry) => hasIndex(path.join(dirAbs, entry.name)));
   const slug = slugPieces.join('/');
 
+  let type = null;
   if (currentHasIndex) {
-    const type = contentChildDirs.length > 0 ? 'collection' : 'article';
+    // if has index & has 0 directories -> is article
+    // if has index & has 1 or many directories -> is collection
+    type = contentChildDirs.length > 0 ? 'collection' : 'article';
     const canonicalPath = canonicalPathForEntry(slug, type, parentCollectionSlug);
     const entry = {
       slug,
@@ -81,7 +94,8 @@ async function walkContent(dirAbs, slugPieces, parentCollectionSlug) {
     results.push(entry);
   }
 
-  if (currentHasIndex && contentChildDirs.length > 0) {
+  if (type === 'collection') {
+    // parse all children as part of this collection
     for (const child of contentChildDirs) {
       const childAbs = path.join(dirAbs, child.name);
       const childSlugPieces = slugPieces.length === 0
@@ -93,6 +107,7 @@ async function walkContent(dirAbs, slugPieces, parentCollectionSlug) {
     return results;
   }
 
+  // otherwise, parse all children with the same parent collection
   for (const child of childDirs) {
     const childAbs = path.join(dirAbs, child.name);
     const childSlugPieces = slugPieces.length === 0
@@ -106,7 +121,6 @@ async function walkContent(dirAbs, slugPieces, parentCollectionSlug) {
 }
 
 async function collectEntries() {
-  ensureContentRoot();
   return walkContent(CONTENT_ROOT, [], null);
 }
 
@@ -114,6 +128,15 @@ function normalizePath(p) {
   return path.normalize(p);
 }
 
+/**
+ * Splits a link target into three components:
+ *  - pathPart: the main path (before any ? or #)
+ *  - query: the query string (starting with ?, if present)
+ *  - hash: the hash fragment (starting with #, if present)
+ *
+ * This allows rewriting only the path while preserving any query
+ * parameters or hash anchors exactly as they were.
+ */
 function splitTarget(target) {
   let pathPart = target;
   let hash = '';
@@ -134,6 +157,11 @@ function splitTarget(target) {
   return { pathPart, hash, query };
 }
 
+/**
+ * Check if a target URL is absolute or an anchor link.
+ * @param {*} target 
+ * @returns 
+ */
 function isAbsoluteOrAnchor(target) {
   if (!target) return true;
   if (target.startsWith('#')) return true;
@@ -189,15 +217,20 @@ async function copyDirectory(src, dest) {
 
 function transformUrl(target, context) {
   const trimmed = target.trim();
+  console.log(`Transforming URL: ${trimmed} in file: ${context.fileDir}`);
+
+  // check if target should be left untouched
   if (isAbsoluteOrAnchor(trimmed)) {
     return { changed: false, value: target };
   }
 
+  // fetch actual image path without query/hash, if any
   const { pathPart, hash, query } = splitTarget(trimmed);
   if (!pathPart) {
     return { changed: false, value: target };
   }
 
+  // get OS-specific path for the image
   const resolved = normalizePath(path.resolve(context.fileDir, pathPart));
   const ext = path.extname(pathPart).toLowerCase();
 
@@ -207,7 +240,9 @@ function transformUrl(target, context) {
     return { changed: true, value: newUrl };
   }
 
+  console.log(`Resolved path: ${resolved}`);
   if (pathHasImageDir(resolved)) {
+    console.log(` - Rewriting image link to image`);
     if (!resolved.startsWith(context.entry.folderAbs)) {
       return { changed: false, value: target };
     }
@@ -259,11 +294,15 @@ async function processMarkdownFile(entry, filePath, indexByPath) {
 }
 
 async function updateMarkdownFiles(entry, indexByPath) {
+  // get all entries within the entry folder
   const dirents = await fsp.readdir(entry.folderAbs, { withFileTypes: true });
+  // filter only markdown files
   const mdFiles = dirents.filter((dirent) => dirent.isFile() && dirent.name.toLowerCase().endsWith('.md'));
   const changedFiles = [];
   for (const md of mdFiles) {
+    // build the path of the markdown file
     const filePath = path.join(entry.folderAbs, md.name);
+    // update markdown file links
     const changed = await processMarkdownFile(entry, filePath, indexByPath);
     if (changed) {
       changedFiles.push(filePath);
@@ -297,7 +336,9 @@ async function copyImageAssets(entry) {
 
 async function main() {
   ensureContentRoot();
+  // get all individual articles & collections
   const entries = await collectEntries();
+  // get the paths normalized for current OS-specific path
   const indexByPath = new Map(entries.map((entry) => [normalizePath(entry.indexPath), entry]));
 
   const summary = {
