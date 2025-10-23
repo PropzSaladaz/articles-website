@@ -17,6 +17,7 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head />
+      <base href="/<articles-website>/"></base>
       <body className="min-h-screen bg-background text-foreground antialiased">
         <AppProviders>
           <SiteShell tree={tree} collections={collections}>

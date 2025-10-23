@@ -217,7 +217,6 @@ async function copyDirectory(src, dest) {
 
 function transformUrl(target, context) {
   const trimmed = target.trim();
-  console.log(`Transforming URL: ${trimmed} in file: ${context.fileDir}`);
 
   // check if target should be left untouched
   if (isAbsoluteOrAnchor(trimmed)) {
@@ -240,9 +239,7 @@ function transformUrl(target, context) {
     return { changed: true, value: newUrl };
   }
 
-  console.log(`Resolved path: ${resolved}`);
   if (pathHasImageDir(resolved)) {
-    console.log(` - Rewriting image link to image`);
     if (!resolved.startsWith(context.entry.folderAbs)) {
       return { changed: false, value: target };
     }
