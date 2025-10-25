@@ -5,6 +5,8 @@ import fsp from 'fs/promises';
 import path from 'path';
 import { remark } from 'remark';
 import { visit } from 'unist-util-visit';
+import 'dotenv/config';
+import remarkFrontmatter from 'remark-frontmatter';
 
 const PROJECT_ROOT = process.cwd();
 const CONTENT_ROOT = path.join(PROJECT_ROOT, 'content');
@@ -250,7 +252,7 @@ function transformUrl(target, context) {
       return { changed: false, value: target };
     }
     const normalizedRelative = toPosixPath(relativeToArticle);
-    const newUrl = `${ENV_REPO_NAME}/${context.entry.canonicalPath}/${normalizedRelative}${query}${hash}`;
+    const newUrl = `${ENV_REPO_NAME}${context.entry.canonicalPath}/${normalizedRelative}${query}${hash}`;
     return { changed: true, value: newUrl };
   }
 
@@ -283,7 +285,18 @@ async function processMarkdownFile(entry, filePath, indexByPath) {
     entry,
     indexByPath,
   };
-  const processor = remark().use(rewriteLinksPlugin, context);
+  const processor = remark()
+    // parse and preserve YAML front matter (`--- ... ---`)
+    .use(remarkFrontmatter, ['yaml'])
+    // your link/image rewriter
+    .use(rewriteLinksPlugin, context)
+    // control remark-stringify so it does not convert markers unexpectedly
+    .data('settings', {
+      setext: false,  // use ATX headings (# ##), don’t turn lines + --- into headings
+      rule: '-',      // keep horizontal rules as '---' instead of '***'
+      fences: true,   // prefer ``` code fences
+      listItemIndent: 'one'
+  });
   const file = await processor.process(original);
   const changed = Boolean(file.data.modified);
   if (changed) {

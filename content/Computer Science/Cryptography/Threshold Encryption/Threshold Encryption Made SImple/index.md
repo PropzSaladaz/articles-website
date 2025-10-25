@@ -1,7 +1,6 @@
 ---
 status: "draft"          # draft | published | archived
 summary: "How Threshold Cryptography works in simple terms"
-coverImage: "./images/medium1.png"
 ---
 
 # 1.  Caesar Salad of Secrets: A Recipe for the First Cipher
