@@ -88,6 +88,8 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
+    --code-border: hsl(220, 20%, 90%);
+    --code-bg: hsl(0, 0%, 22%);
   }
   .dark {
     --background: 0 0% 3.9%;

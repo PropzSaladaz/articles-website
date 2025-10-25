@@ -192,9 +192,43 @@ Instead, the command travels through several layers that prepare, validate, tran
 
 This section explains what happens between the moment your code calls a function such as:
 
-```
+```cpp
 DrawIndexed(...);
 ```
+
+
+```js
+// markdownToHtml.ts
+import { unified } from 'unified';
+import remarkParse from 'remark-parse';
+import remarkGfm from 'remark-gfm';
+import remarkFrontmatter from 'remark-frontmatter';
+import remarkRehype from 'remark-rehype';
+import rehypeShiki from '@shikijs/rehype';
+import rehypeStringify from 'rehype-stringify';
+
+export async function markdownToHtml(markdown: string) {
+  // Pick Shiki themes you like; these are good defaults
+  const html = await unified()
+    .use(remarkParse)
+    .use(remarkFrontmatter, ['yaml', 'toml'])
+    .use(remarkGfm)
+    .use(remarkRehype, { allowDangerousHtml: true })
+    .use(rehypeShiki, {
+      themes: {
+        light: 'github-light',
+        dark: 'github-dark',
+      },
+      // Optional: add line numbers, highlight lines, etc., later
+    })
+    .use(rehypeStringify, { allowDangerousHtml: true })
+    .process(markdown);
+
+  return String(html);
+}
+
+```
+
 …and the moment the GPU actually starts drawing.
 
 ### 2.1 Why Commands Need a Path

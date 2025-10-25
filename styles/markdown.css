@@ -19,15 +19,60 @@
 .md .md-heading a:hover { text-decoration: underline; text-underline-offset: .15em; }
 
 /* Emphasis, strong, links */
-.md .md-strong { color: var(--strong); font-weight: var(--strong-weight); }
-.md .md-em { font-style: italic; }
-.md .md-a { color: var(--link); text-underline-offset: .15em; }
-.md .md-a:hover { color: var(--link-hover); }
+.md .md-strong { 
+  color: var(--strong); 
+  font-weight: 800; 
+}
+.md .md-em { 
+  font-style: italic; 
+}
+.md .md-a { 
+  color: var(--link); 
+  text-underline-offset: .15em; 
+}
+.md .md-a:hover { 
+  color: var(--link-hover); 
+}
 
-/* Lists */
-.md .md-ul, .md .md-ol { padding-left: 1.4rem; margin: .8rem 0; }
-.md .md-li { margin: .25rem 0; }
-.md .md-li > .md-ul, .md .md-li > .md-ol { margin-top: .25rem; }
+/* ==============================
+              Lists 
+ ================================ */
+ 
+.md .md-ul {
+  padding-left: 3rem;
+  margin: .8rem 0;
+  list-style-type: "▸ ";
+
+  li::marker {
+    color: var(--muted-foreground);
+  }
+}
+
+.md .md-ol {
+  padding-left: 3rem; /* more than ul for stronger indent */
+  margin: .8rem 0;
+}
+
+.md .md-li {
+  margin: .25rem 0;
+}
+
+.md .md-li > .md-ul,
+.md .md-li > .md-ol {
+  margin-top: .25rem;
+  padding-left: 1.6rem; /* indent nested lists slightly */
+}
+
+.md p + ol,
+.md p + ul {
+  margin-top: .6rem;
+}
+
+.md ol ol,
+.md ul ul {
+  margin-top: .25rem;
+  padding-left: 1.2rem; /* smaller nested indent */
+}
 
 /* Blockquote */
 .md .md-blockquote {
@@ -60,40 +105,44 @@
   background: var(--code-bg);
   box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
 }
-.md .md-code-block {
-  display: block;
-  color: var(--code-fg);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-  font-size: .92rem;
-  tab-size: 2;
+
+/* Copy to clipboard button */
+.code-block {
+  position: relative;
+  margin: 1rem 0;
 }
 
-/* Per-language border tint + top label */
-.md .md-pre[data-lang]::before {
-  content: attr(data-lang);
-  position: absolute; top: 0; left: 0;
-  font: 600 .7rem/1 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
-  padding: .22rem .5rem; border-bottom-right-radius: .5rem;
-  transform: translateY(-100%);
-  background: var(--code-border); color: #cbd5e1; opacity: .9;
+.code-block pre {
+  background: #1e1e1e;
+  padding: 1rem;
+  border-radius: 8px;
+  overflow-x: auto;
 }
 
-/* Language-specific accents (adjust as needed) */
-.md .md-pre[data-lang="ts"]  { border-color: color-mix(in srgb, var(--ts) 70%, var(--code-border)); }
-.md .md-pre[data-lang="js"]  { border-color: color-mix(in srgb, var(--js) 70%, var(--code-border)); }
-.md .md-pre[data-lang="rs"]  { border-color: color-mix(in srgb, var(--rs) 70%, var(--code-border)); }
-.md .md-pre[data-lang="cpp"],
-.md .md-pre[data-lang="c"]   { border-color: color-mix(in srgb, var(--cpp) 70%, var(--code-border)); }
-.md .md-pre[data-lang="py"]  { border-color: color-mix(in srgb, var(--py) 70%, var(--code-border)); }
-.md .md-pre[data-lang="sql"] { border-color: color-mix(in srgb, var(--sql) 70%, var(--code-border)); }
-.md .md-pre[data-lang="sh"],
-.md .md-pre[data-lang="bash"]{ border-color: color-mix(in srgb, var(--sh) 70%, var(--code-border)); }
+.code-block .copy-btn {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.5rem;
+  background: #e0e0e0;
+  color: #333;
+  border: none;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.45rem;
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.15s ease-in-out;
+}
 
-/* Optional: highlighted lines (if your pipeline wraps them) */
-.md .line--highlighted { background: rgba(255,255,255,.06); display: block; margin: 0 -1rem; padding: 0 .9rem; }
+.code-block:hover .copy-btn {
+  opacity: 1;
+}
 
-/* Horizontal rule */
-.md hr { border: 0; border-top: 1px solid var(--border); margin: 2rem 0; }
+.code-block .copy-btn.copied {
+  background: #4caf50;
+  color: white;
+}
+
 
 /* Images */
 .md .md-img { max-width: 100%; height: auto; display: block; }
@@ -112,4 +161,14 @@
   --code-fg: #e6edf3;
   --code-bg: #0b1020;
   --code-border: #1f2937;
+}
+
+/* Default (light mode) */
+.md img {
+  filter: invert(0);
+}
+
+/* Dark mode */
+.dark .md img {
+  filter: invert(0.9) hue-rotate(180deg) saturate(1.2) contrast(1.05);
 }

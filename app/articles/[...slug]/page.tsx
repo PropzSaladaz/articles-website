@@ -4,6 +4,7 @@ import { ArticleViewToggle } from '../../../components/ArticleViewToggle';
 import { ArticleContent } from '../../../components/ArticleContent';
 import { getAllArticles, getArticleBySlug, getArticleCanonicalUrl } from '../../../lib/content/content';
 import { Suspense } from 'react';
+import { CopyCodeButtons } from '@/components/CopyCodeButtons';
 
 export const runtime = 'nodejs';           // ensure Node runtime (fs available)
 export const dynamic = 'force-static';     // keep SSG if you’re reading local files
@@ -57,6 +58,8 @@ export default async function ArticlePage({ params }: PageProps) {
       <Suspense fallback={null}>
         <ArticleContent article={article} />
       </Suspense>
+
+      <CopyCodeButtons />
     </div>
   );
 }

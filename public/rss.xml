@@ -5,18 +5,18 @@
   <link>https://example.com/</link>
   <description>Latest articles</description>
   <item>
-    <title><![CDATA[Threshold Encryption Made SImple]]></title>
-    <link>https://example.com/articles/computer-science/cryptography/threshold-encryption/threshold-encryption-made-simple/</link>
-    <guid>https://example.com/articles/computer-science/cryptography/threshold-encryption/threshold-encryption-made-simple/</guid>
-    <pubDate>Sat, 25 Oct 2025 11:58:24 GMT</pubDate>
-    <description><![CDATA[How Threshold Cryptography works in simple terms]]></description>
-  </item>
-  <item>
     <title><![CDATA[Hardware & APIs In Context]]></title>
     <link>https://example.com/collections/computer-science/3d-programming/a-modern-jorney-through-the-graphics-pipeline/the-big-picture/hardware-apis-in-context/</link>
     <guid>https://example.com/collections/computer-science/3d-programming/a-modern-jorney-through-the-graphics-pipeline/the-big-picture/hardware-apis-in-context/</guid>
-    <pubDate>Sat, 25 Oct 2025 11:14:00 GMT</pubDate>
+    <pubDate>Sat, 25 Oct 2025 12:30:36 GMT</pubDate>
     <description><![CDATA[How CPU, GPU, drivers, and APIs cooperate to turn draw calls into pixels.]]></description>
+  </item>
+  <item>
+    <title><![CDATA[Threshold Encryption Made SImple]]></title>
+    <link>https://example.com/articles/computer-science/cryptography/threshold-encryption/threshold-encryption-made-simple/</link>
+    <guid>https://example.com/articles/computer-science/cryptography/threshold-encryption/threshold-encryption-made-simple/</guid>
+    <pubDate>Sat, 25 Oct 2025 12:01:02 GMT</pubDate>
+    <description><![CDATA[How Threshold Cryptography works in simple terms]]></description>
   </item>
   <item>
     <title><![CDATA[Vertex Data]]></title>

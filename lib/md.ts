@@ -12,6 +12,8 @@ import { toString } from 'mdast-util-to-string';
 import GithubSlugger from 'github-slugger';
 import rehypeScopeClasses from './rehypeScopeClasses';
 import { Heading } from './content/types';
+import rehypeShiki from '@shikijs/rehype';
+import rehypeCodeBlockCopy from './rehypeCodeBlockCopy';
 
 
 export async function markdownToHtml(markdown: string): Promise<string> {
@@ -22,6 +24,13 @@ export async function markdownToHtml(markdown: string): Promise<string> {
     .use(remarkGfm)
     // transform to HTML AST
     .use(remarkRehype, { allowDangerousHtml: true })
+    .use(rehypeShiki, {
+      themes: {
+        light: 'github-dark',
+        dark: 'github-dark',
+      },
+      // Optional: add line numbers, highlight lines, etc., later
+    })
     // support raw HTML in markdown
     .use(rehypeRaw as any)
     // add ids to headings - allow making link jumps to sections possible
@@ -32,6 +41,8 @@ export async function markdownToHtml(markdown: string): Promise<string> {
     })
     // set custom classes for each HTML element - allow styling markdown content
     .use(rehypeScopeClasses, { prefix: 'md-' })
+    // add copy button to code blocks
+    .use(rehypeCodeBlockCopy)
     // serialize HTML AST to HTML
     .use(rehypeStringify, { allowDangerousHtml: true })
     .process(markdown);
