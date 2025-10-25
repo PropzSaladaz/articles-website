@@ -1,7 +1,6 @@
 ---
 status: "draft"
 summary: "How CPU, GPU, drivers, and APIs cooperate to turn draw calls into pixels."
-coverImage: "./images/cover_hardware.png"
 ---
 
 # The Division of Labor: CPU vs GPU

@@ -1,3 +1,9 @@
+---
+status: "draft"          # draft | published | archived
+summary: "How Threshold Cryptography works in simple terms"
+coverImage: "./images/medium1.png"
+---
+
 # 1.  Caesar Salad of Secrets: A Recipe for the First Cipher
 
 Since ancient times, people have needed to keep important information hidden from prying eyes. Whether it was a king's secret orders or a merchant's trade routes, secrecy was often the difference between safety and disaster.
@@ -15,7 +21,7 @@ Here's how it worked:
 
 Without knowing the shift, anyone intercepting the message would see only gibberish.
 
-![](/articles/computer-science/cryptography/threshold-encryption/threshold-encryption-made-simple/images/medium1.png)
+![](./images/medium1.png)
 
 But there was a catch. **Patterns** - such as the repeated letter 't' in the message above - can still give attackers clues. And given enough time, they could try all possible shifts and eventually break the code.
 
@@ -34,7 +40,7 @@ Woof… That's a big definition. Let's unpack it:
 
 And as a warning: today's ciphers will eventually become obsolete too.
 
-![](/articles/computer-science/cryptography/threshold-encryption/threshold-encryption-made-simple/images/medium2.png)
+![](./images/medium2.png)
 
 # 2. One Key to Rule Them All (Symmetric Ciphers)
 
@@ -45,7 +51,7 @@ After Caesar's cipher, people kept improving the same basic idea: **one key to e
 
 Think of it like the keys to your house. If you give someone the key, they can go inside - and if a thief steals the key, there's a pretty good chance you'll arrive at your house with no furniture.
 
-![](/articles/computer-science/cryptography/threshold-encryption/threshold-encryption-made-simple/images/sym_key.png)
+![](./images/sym_key.png)
 
 Over the centuries, symmetric ciphers evolved from Caesar's simple letter shifts to complex machines like the Enigma in World War II. But the fundamental problem stayed the same: how do you share the key securely in the first place?
 
@@ -66,7 +72,7 @@ Ok, I got 2 keys. What now? If I want to send you a secret:
 1. I use your public key to lock the message.
 2. Only your private key can unlock it.
 
-![](/articles/computer-science/cryptography/threshold-encryption/threshold-encryption-made-simple/images/sym_asym.png)
+![](./images/sym_asym.png)
 
 This scheme is somehow similar to a Facebook account. If I want to send you a message, then I send it to your **public** account. Then only you can see it using your **private** password to log in.
 
@@ -82,7 +88,7 @@ This works perfectly if you **unilaterally** decide when to decrypt data sent to
 
 Here's a simple example of the shortcomings of both approaches we've seen so far. Imagine a group of friends that discovered a treasure map. They decide to go after the treasure in 2 months from now, and they let each one get part of a number of the coordinates. This simply means that Paul alone can't know where exactly the treasure is if he only gets part of the longitudinal coordinate. They do this such that only if they are all together again, they can go and retrieve the treasure.
 
-![](/articles/computer-science/cryptography/threshold-encryption/threshold-encryption-made-simple/images/shares.png)
+![](./images/shares.png)
 
 At this point, the friend group has to decide - Should they let the splits be in plaintext? If they do this, anyone running by could see that coordinate share. Anyone close to Paul could start searching. Maybe his sister tells Carl's sister and they both start looking for it in their backs.. Then they could merge their secrets and get the full Latitude coordinate.
 

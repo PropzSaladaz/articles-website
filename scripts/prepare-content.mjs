@@ -13,6 +13,8 @@ const PUBLIC_ROOT = path.join(PROJECT_ROOT, 'public');
 const INDEX_FILENAME = 'index.md';
 const IMAGE_SUFFIX = 'images';
 
+const ENV_REPO_NAME = process.env.NEXT_REPO_NAME || '';
+
 function slugify(value) {
   return value
     .trim()
@@ -248,7 +250,7 @@ function transformUrl(target, context) {
       return { changed: false, value: target };
     }
     const normalizedRelative = toPosixPath(relativeToArticle);
-    const newUrl = `${context.entry.canonicalPath}/${normalizedRelative}${query}${hash}`;
+    const newUrl = `${ENV_REPO_NAME}/${context.entry.canonicalPath}/${normalizedRelative}${query}${hash}`;
     return { changed: true, value: newUrl };
   }
 
