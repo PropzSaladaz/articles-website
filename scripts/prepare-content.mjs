@@ -15,7 +15,7 @@ const PUBLIC_ROOT = path.join(PROJECT_ROOT, 'public');
 const INDEX_FILENAME = 'index.md';
 const IMAGE_SUFFIX = 'images';
 
-const ENV_REPO_NAME = process.env.NEXT_REPO_NAME || '';
+const ENV_REPO_NAME = `/${process.env.NEXT_REPO_NAME}` || '';
 
 function slugify(value) {
   return value
