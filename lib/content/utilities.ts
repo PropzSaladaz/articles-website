@@ -32,7 +32,7 @@ export function numericPrefixOrNull(name: string): number | null {
 }
 
 export function pathToId(slug: string) {
-  return Buffer.from(slug || '/').toString('base64url').slice(0, 16);
+  return slug;
 }
 
 /**
