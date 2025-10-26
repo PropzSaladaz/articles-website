@@ -5,10 +5,17 @@
   <link>https://example.com/</link>
   <description>Latest articles</description>
   <item>
+    <title><![CDATA[Threshold Encryption Made SImple]]></title>
+    <link>https://example.com/articles/computer-science/cryptography/threshold-encryption/threshold-encryption-made-simple/</link>
+    <guid>https://example.com/articles/computer-science/cryptography/threshold-encryption/threshold-encryption-made-simple/</guid>
+    <pubDate>Sun, 26 Oct 2025 00:03:50 GMT</pubDate>
+    <description><![CDATA[How Threshold Cryptography works in simple terms]]></description>
+  </item>
+  <item>
     <title><![CDATA[Coordinate Spaces And Transform]]></title>
     <link>https://example.com/articles/computer-science/3d-programming/coordinate-spaces-and-transform/</link>
     <guid>https://example.com/articles/computer-science/3d-programming/coordinate-spaces-and-transform/</guid>
-    <pubDate>Sat, 25 Oct 2025 23:56:48 GMT</pubDate>
+    <pubDate>Sun, 26 Oct 2025 00:01:00 GMT</pubDate>
     <description><![CDATA[A pragmatic route to 3–10× faster pipelines using caching and graph-aware jobs.]]></description>
   </item>
   <item>
@@ -17,13 +24,6 @@
     <guid>https://example.com/collections/computer-science/3d-programming/a-modern-jorney-through-the-graphics-pipeline/the-big-picture/introduction-what-is-the-graphics-piepeline/</guid>
     <pubDate>Sat, 25 Oct 2025 23:27:24 GMT</pubDate>
     <description><![CDATA[A pragmatic route to 3–10× faster pipelines using caching and graph-aware jobs.]]></description>
-  </item>
-  <item>
-    <title><![CDATA[Threshold Encryption Made SImple]]></title>
-    <link>https://example.com/articles/computer-science/cryptography/threshold-encryption/threshold-encryption-made-simple/</link>
-    <guid>https://example.com/articles/computer-science/cryptography/threshold-encryption/threshold-encryption-made-simple/</guid>
-    <pubDate>Sat, 25 Oct 2025 22:19:30 GMT</pubDate>
-    <description><![CDATA[How Threshold Cryptography works in simple terms]]></description>
   </item>
   <item>
     <title><![CDATA[Hardware & APIs In Context]]></title>

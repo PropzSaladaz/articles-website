@@ -2,7 +2,7 @@
 import { visit } from 'unist-util-visit';
 
 export default function remarkStrongHr() {
-  return (tree) => {
+  return (tree: any) => {
     visit(tree, (node, index, parent) => {
       // Look for a paragraph whose only child is "===" (ignoring whitespace)
       if (

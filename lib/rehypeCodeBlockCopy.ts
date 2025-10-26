@@ -1,7 +1,7 @@
 import { visit } from "unist-util-visit"
 
 export default function rehypeCodeBlockCopy() {
-  return (tree) => {
+  return (tree: any) => {
     visit(tree, "element", (node, index, parent) => {
       if (!parent) return;
 
@@ -17,7 +17,7 @@ export default function rehypeCodeBlockCopy() {
           .join("");
 
         // Wrap in a parent container div
-        parent.children[index] = {
+        parent.children[index as number] = {
           type: "element",
           tagName: "div",
           properties: { className: ["code-block"] },

@@ -3,8 +3,8 @@ import { visit } from 'unist-util-visit';
 import { toString } from 'mdast-util-to-string';
 
 export default function remarkSpoiler() {
-  return (tree) => {
-    visit(tree, (node) => node.type === 'containerDirective' && node.name === 'spoiler', (node) => {
+  return (tree: any) => {
+    visit(tree, (node: any) => node.type === 'containerDirective' && node.name === 'spoiler', (node) => {
       node.data ||= {};
       // 1) Title from label: :::spoiler[Title]
       // 2) Fallback: first paragraph inside block
