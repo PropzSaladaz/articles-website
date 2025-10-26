@@ -58,7 +58,10 @@ export function TreeNavigation({ tree, collections }: TreeNavigationProps) {
 
   useEffect(() => {
     setExpandedKeys(new Set(initialExpandedKeys));
-  }, [initialFingerprint, initialExpandedKeys]);
+    // We intentionally depend on the fingerprint to avoid resetting the
+    // expansion state when the caller re-renders without changing the tree.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialFingerprint]);
 
   const handleToggle = (key: string, value?: boolean) => {
     setExpandedKeys((prev) => {

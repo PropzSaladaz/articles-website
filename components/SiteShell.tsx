@@ -1,6 +1,8 @@
 'use client';
 
 import Link from 'next/link';
+import { Menu } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 import {
   useCallback,
   useEffect,
@@ -31,9 +33,11 @@ export function SiteShell({ tree, collections, children }: SiteShellProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const dragOriginRef = useRef(0);
   const lastExpandedWidthRef = useRef(DEFAULT_SIDEBAR_WIDTH);
+  const pathname = usePathname();
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [isMobileTreeOpen, setIsMobileTreeOpen] = useState(false);
 
   useEffect(() => {
     if (!isSidebarCollapsed && sidebarWidth > 0) {
@@ -50,21 +54,40 @@ export function SiteShell({ tree, collections, children }: SiteShellProps) {
     event.preventDefault();
   }, []);
 
-  const handleDoubleClick = useCallback(() => {
-    setIsSidebarCollapsed((prev) => {
-      if (prev) {
-        const restoredWidth = Math.min(
-          MAX_SIDEBAR_WIDTH,
-          Math.max(MIN_SIDEBAR_WIDTH, lastExpandedWidthRef.current || DEFAULT_SIDEBAR_WIDTH)
-        );
-        setSidebarWidth(restoredWidth);
-        return false;
-      }
-      lastExpandedWidthRef.current = sidebarWidth || DEFAULT_SIDEBAR_WIDTH;
-      setSidebarWidth(0);
-      return true;
-    });
+  const expandSidebar = useCallback(() => {
+    const restoredWidth = Math.min(
+      MAX_SIDEBAR_WIDTH,
+      Math.max(MIN_SIDEBAR_WIDTH, lastExpandedWidthRef.current || DEFAULT_SIDEBAR_WIDTH)
+    );
+    setSidebarWidth(restoredWidth);
+    setIsSidebarCollapsed(false);
+  }, []);
+
+  const collapseSidebar = useCallback(() => {
+    lastExpandedWidthRef.current = sidebarWidth || DEFAULT_SIDEBAR_WIDTH;
+    setSidebarWidth(0);
+    setIsSidebarCollapsed(true);
   }, [sidebarWidth]);
+
+  const handleDoubleClick = useCallback(() => {
+    if (isSidebarCollapsed) {
+      expandSidebar();
+    } else {
+      collapseSidebar();
+    }
+  }, [collapseSidebar, expandSidebar, isSidebarCollapsed]);
+
+  const handleSidebarToggle = useCallback(() => {
+    if (isSidebarCollapsed) {
+      expandSidebar();
+    } else {
+      collapseSidebar();
+    }
+  }, [collapseSidebar, expandSidebar, isSidebarCollapsed]);
+
+  const handleMobileTreeToggle = useCallback(() => {
+    setIsMobileTreeOpen((prev) => !prev);
+  }, []);
 
   useEffect(() => {
     if (!isDragging) return;
@@ -102,6 +125,10 @@ export function SiteShell({ tree, collections, children }: SiteShellProps) {
   }, [isDragging]);
 
   useEffect(() => {
+    setIsMobileTreeOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
     if (!isDragging) return;
     const previousCursor = document.body.style.cursor;
     const previousUserSelect = document.body.style.userSelect;
@@ -118,9 +145,31 @@ export function SiteShell({ tree, collections, children }: SiteShellProps) {
     <div className="relative flex min-h-screen flex-col">
       <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-5">
-          <Link href={`${basePath}/`} className="text-xl font-semibold tracking-tight">
-            Sid Makes Sense
-          </Link>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-border bg-background text-muted-foreground transition-colors hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background lg:hidden"
+              onClick={handleMobileTreeToggle}
+              aria-label="Toggle navigation"
+              aria-expanded={isMobileTreeOpen}
+              aria-controls="mobile-tree-navigation"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              className="hidden h-10 w-10 items-center justify-center rounded-md border border-border bg-background text-muted-foreground transition-colors hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background lg:inline-flex"
+              onClick={handleSidebarToggle}
+              aria-label={isSidebarCollapsed ? 'Open navigation' : 'Collapse navigation'}
+              aria-expanded={!isSidebarCollapsed}
+              aria-controls="desktop-tree-navigation"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+            <Link href={`${basePath}/`} className="text-xl font-semibold tracking-tight">
+              Sid Makes Sense
+            </Link>
+          </div>
           <div className="flex items-center gap-3">
             <span className="hidden text-sm font-medium text-muted-foreground sm:inline-flex">
               Personal blog by Sidnei Teixeira
@@ -130,7 +179,14 @@ export function SiteShell({ tree, collections, children }: SiteShellProps) {
         </div>
       </header>
 
-      <div className="border-b border-border bg-background lg:hidden">
+      <div
+        id="mobile-tree-navigation"
+        className={cn(
+          'border-b border-border bg-background lg:hidden',
+          isMobileTreeOpen ? 'block' : 'hidden'
+        )}
+        aria-hidden={!isMobileTreeOpen}
+      >
         <div className="mx-auto max-h-80 w-full max-w-6xl overflow-y-auto px-4 py-4">
           <TreeNavigation tree={tree} collections={collections} />
         </div>
@@ -154,6 +210,7 @@ export function SiteShell({ tree, collections, children }: SiteShellProps) {
               isSidebarCollapsed ? 'pointer-events-none opacity-0' : 'opacity-100'
             )}
             aria-hidden={isSidebarCollapsed}
+            id="desktop-tree-navigation"
           >
             <TreeNavigation tree={tree} collections={collections} />
           </div>
