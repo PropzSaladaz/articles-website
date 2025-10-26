@@ -5,6 +5,27 @@
   <link>https://example.com/</link>
   <description>Latest articles</description>
   <item>
+    <title><![CDATA[Coordinate Spaces And Transform]]></title>
+    <link>https://example.com/articles/computer-science/3d-programming/coordinate-spaces-and-transform/</link>
+    <guid>https://example.com/articles/computer-science/3d-programming/coordinate-spaces-and-transform/</guid>
+    <pubDate>Sat, 25 Oct 2025 23:56:48 GMT</pubDate>
+    <description><![CDATA[A pragmatic route to 3–10× faster pipelines using caching and graph-aware jobs.]]></description>
+  </item>
+  <item>
+    <title><![CDATA[Introduction: What Is The Graphics Piepeline?]]></title>
+    <link>https://example.com/collections/computer-science/3d-programming/a-modern-jorney-through-the-graphics-pipeline/the-big-picture/introduction-what-is-the-graphics-piepeline/</link>
+    <guid>https://example.com/collections/computer-science/3d-programming/a-modern-jorney-through-the-graphics-pipeline/the-big-picture/introduction-what-is-the-graphics-piepeline/</guid>
+    <pubDate>Sat, 25 Oct 2025 23:27:24 GMT</pubDate>
+    <description><![CDATA[A pragmatic route to 3–10× faster pipelines using caching and graph-aware jobs.]]></description>
+  </item>
+  <item>
+    <title><![CDATA[Threshold Encryption Made SImple]]></title>
+    <link>https://example.com/articles/computer-science/cryptography/threshold-encryption/threshold-encryption-made-simple/</link>
+    <guid>https://example.com/articles/computer-science/cryptography/threshold-encryption/threshold-encryption-made-simple/</guid>
+    <pubDate>Sat, 25 Oct 2025 22:19:30 GMT</pubDate>
+    <description><![CDATA[How Threshold Cryptography works in simple terms]]></description>
+  </item>
+  <item>
     <title><![CDATA[Hardware & APIs In Context]]></title>
     <link>https://example.com/collections/computer-science/3d-programming/a-modern-jorney-through-the-graphics-pipeline/the-big-picture/hardware-apis-in-context/</link>
     <guid>https://example.com/collections/computer-science/3d-programming/a-modern-jorney-through-the-graphics-pipeline/the-big-picture/hardware-apis-in-context/</guid>
@@ -12,25 +33,11 @@
     <description><![CDATA[How CPU, GPU, drivers, and APIs cooperate to turn draw calls into pixels.]]></description>
   </item>
   <item>
-    <title><![CDATA[Threshold Encryption Made SImple]]></title>
-    <link>https://example.com/articles/computer-science/cryptography/threshold-encryption/threshold-encryption-made-simple/</link>
-    <guid>https://example.com/articles/computer-science/cryptography/threshold-encryption/threshold-encryption-made-simple/</guid>
-    <pubDate>Sat, 25 Oct 2025 12:01:02 GMT</pubDate>
-    <description><![CDATA[How Threshold Cryptography works in simple terms]]></description>
-  </item>
-  <item>
     <title><![CDATA[Vertex Data]]></title>
     <link>https://example.com/collections/computer-science/3d-programming/opengl/vertex-data/</link>
     <guid>https://example.com/collections/computer-science/3d-programming/opengl/vertex-data/</guid>
     <pubDate>Wed, 22 Oct 2025 08:38:20 GMT</pubDate>
     <description><![CDATA[Core idea 1 … Core idea 2 …]]></description>
-  </item>
-  <item>
-    <title><![CDATA[Introduction: What Is The Graphics Piepeline?]]></title>
-    <link>https://example.com/collections/computer-science/3d-programming/a-modern-jorney-through-the-graphics-pipeline/the-big-picture/introduction-what-is-the-graphics-piepeline/</link>
-    <guid>https://example.com/collections/computer-science/3d-programming/a-modern-jorney-through-the-graphics-pipeline/the-big-picture/introduction-what-is-the-graphics-piepeline/</guid>
-    <pubDate>Wed, 22 Oct 2025 08:38:20 GMT</pubDate>
-    <description><![CDATA[A pragmatic route to 3–10× faster pipelines using caching and graph-aware jobs.]]></description>
   </item>
 </channel>
 </rss>

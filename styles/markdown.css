@@ -172,3 +172,75 @@
 .dark .md img {
   filter: invert(0.9) hue-rotate(180deg) saturate(1.2) contrast(1.05);
 }
+
+/** =============================
+      Spoiler / Details styles
+  ================================ */
+
+  /* Container */
+.md-details {
+  margin-block: 3rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color, #ccc);
+  border-radius: 6px;
+  background-color:  rgba(0,0,0,0.075);
+}
+
+/* The clickable summary line */
+.md-details > summary {
+  cursor: pointer;
+  font-weight: 500;
+  list-style: none; /* remove default arrow bullet */
+  outline: none;
+  padding: 0.25rem 0;
+}
+
+/* Add a custom arrow instead of the browser default */
+.md-details > summary::before {
+  content: '▸';
+  display: inline-block;
+  margin-right: 6px;
+  transition: transform 0.15s ease;
+}
+
+/* Rotate arrow when open */
+.md-details[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+/* Optional hover effect */
+.md-details:hover {
+  background: var(rgba(0,0,0,0.06));
+}
+
+/* Inner content spacing */
+.md-details > *:not(summary) {
+  margin-top: 0.5rem;
+}
+
+/* =============================
+        Strong Horizontal Rule
+  ================================ */
+
+/* Base spacing */
+.md-hr-strong {
+  margin: 7rem 0;
+  text-align: center;
+}
+
+/* Dots ornament */
+.md-hr-dots::before {
+  content: '• • •';
+  letter-spacing: 0.6rem;
+  font-size: 1.2rem;
+  opacity: 0.45;
+}
+
+/* Optional: theme variables */
+:root {
+  --hr-strong-color: currentColor;
+}
+.dark .md-hr-dots::before {
+  opacity: 0.55; /* slightly brighter in dark mode */
+}
+

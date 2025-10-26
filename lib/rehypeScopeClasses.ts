@@ -19,6 +19,7 @@ type Options = {
  * - Strong/Em: md-strong / md-em
  * - Inline code: md-code-inline
  * - Code blocks: md-pre + data-lang="ts" (etc.) on <pre>, md-code-block on <code>
+ * - Details/Summary: md-details / md-summary
  */
 const rehypeScopeClasses: Plugin<[Options?], Root> = (opts) => {
   const prefix = (opts?.prefix ?? 'md-').trim();
@@ -80,6 +81,14 @@ const rehypeScopeClasses: Plugin<[Options?], Root> = (opts) => {
 
         case 'img':
           add(cls('img'));
+          break;
+
+        case 'details':
+          add(cls('details'));
+          break;
+
+        case 'summary':
+          add(cls('summary'));
           break;
 
         case 'code': {

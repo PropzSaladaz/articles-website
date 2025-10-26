@@ -3,6 +3,8 @@ import '../styles/markdown.css';
 import { AppProviders } from '../components/AppProviders';
 import { SiteShell } from '../components/SiteShell';
 import { getCollections, getSubjectTree } from '../lib/content/content';
+import 'katex/dist/katex.min.css';
+
 
 export default async function RootLayout({
   children,
