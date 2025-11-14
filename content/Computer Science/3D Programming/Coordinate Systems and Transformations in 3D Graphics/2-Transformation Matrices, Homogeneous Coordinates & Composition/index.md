@@ -3,98 +3,12 @@ status: "draft"          # draft | published | archived
 summary: "A pragmatic route to 3–10× faster pipelines using caching and graph-aware jobs."
 ---
 
-## 1. Coordinate Spaces
 
-In mathematics, a coordinate space (or reference frame) defines:
-- A point considered to be the **origin (0, 0, 0)**
-- Three **perpendicular axes (x, y, z)** that define directions
-- A unit scale for length (what "1 unit" means)
-
-Any vector only has meaning given the **space** which it belongs to.
-The same vector may refer to different physical locations depending on the space, as we will see next.
-
----
-
-### Local/Object Space
-
-Local space is the object's own coordinate system. It moves and rotates with the object. Think of it as a localized view of everything that may alter the object.
-
-#### Key Properties
-- The **origin is at the object’s pivot/center**. Note that this does not mean the center of the mesh/object. Sometimes its useful to define a 3D object to have its pivot be in one of the edges of the model. Think of a door - If we need to animate it open, then we should rotate it based off its hindge. If we rotate the door from its center, it won't rotate correctly. The following example shows a top-down view of a door being rotated from its center vs. from its hindge:
-
-![](./images/img1.svg)
-
-- Axes represent the object's own forward, right, and up directions.
-- Scaling, rotation, and translation do not change the numbers of vertices in this space — they only change how local space maps to other spaces. If we decide to rotate the door from its hidnge, then the vertices on the handle of the door will change their position.
-
-#### Why It Exists
-
-Local space allows an object to be defined independently of where it is placed in the scene.
-Modeling tools export geometry in local coordinates, so the same mesh can be reused anywhere with different transforms.
-
-#### Example
-
-Imagine a character’s arm. When the arm rotates, the hand should move with it.
-If hand vertices were stored in world space, animation would be extremely complex.
-Because they are stored in local space, rotating the hand means rotating its local frame — all points follow automatically.
-
-![](./images/img2.svg)
-
----
-
-### World Space
-
-World space is the **global coordinate system** in which all objects are positioned, oriented, and interact within a scene.  
-Every object’s local coordinates are transformed into world coordinates so they can coexist in a shared space.
-
-#### Key Properties
-- **Single Global Reference Frame**  
-  The world has one origin and one set of axes (X, Y, Z). All objects and systems refer to this same coordinate frame.
-
-- **Defines Object Placement in the Scene**  
-  After you apply an object's local transformations (scale, rotation, translation), the resulting coordinates represent where the object exists in the world.
-
-- **Allows Object Interaction**  
-  Physics, collision detection, lighting, shadows, and spatial queries rely on world-space coordinates so objects can interact meaningfully.
-
-- **Scene-Level Consistency**  
-  Rendering engines, physics engines, and AI/navigation systems operate in world space to ensure consistent simulation and behavior across components.
-
-#### Why It Exists
-
-World space is required to place all independent objects into a unified scene.  
-Without it, each object would exist only in its own local coordinate system, making interactions, rendering, and simulation impossible.
-
-By converting objects into world space:
-
-- A character can walk on terrain and collide with walls.
-- Light sources can illuminate objects and compute shadows correctly.
-- A camera can move around the scene and render objects relative to a common frame.
-
-#### Example
-
-A car model is created. We have the local space with the origin at the center of the model.
-Now we take a step back, and position it in the world space - say with a slight rotation, and translation to the top right of the world origin.
-The image below shows the difference:
-
-![](./images/img3.svg)
-
-
-===
-
-
-
-
-
-
-
-
-
-## 2. Homogeneous Coordinates
+## 1. Homogeneous Coordinates
 
 Strange name huh? We will see what it represents in a second. But first, let's start from the simplest case - 2D.
 
-### 2.1 Starting with 2D: Rotation Using Matrices
+### 1.1 Starting with 2D: Rotation Using Matrices
 
 In a 2D Cartesian plane, a point is represented as:
 
@@ -242,7 +156,7 @@ The point moves from the positive X-axis to the positive Y-axis, as expected:
 
 ---
 
-### 2.2 Scaling in 2D
+### 1.2 Scaling in 2D
 
 Scaling also fits naturally into matrix multiplication:
 
@@ -258,7 +172,7 @@ For example, scaling a point by 2 in both axes doubles its distance from the ori
 
 ---
 
-### 2.3 The Limitation: Translation Does Not Fit
+### 1.3 The Limitation: Translation Does Not Fit
 
 Rotation and scaling can be expressed as matrix × vector operations.  
 Translation cannot:
@@ -303,19 +217,15 @@ The next step will show how adding a third component in 2D (homogeneous represen
 
 ---
 
-### 2.4 Solving Translation in 2D with Homogeneous Coordinates
+### 1.4 Solving Translation in 2D with Homogeneous Coordinates
 
 As we saw, the limitation in standard 2D coordinates is that translation requires addition, not multiplication.  
 To overcome this, we extend 2D points from 2 components to **3 components**:
 
-- A 2D point \((x, y)\) becomes \((x, y, 1)\)
-- A 2D direction vector becomes \((x, y, 0)\)
+- A 2D point $(x, y)$ becomes $(x, y, 1)$
+- A 2D direction vector becomes $(x, y, 0)$
 
 This extended representation is called **homogeneous coordinates**.
-
----
-
-#### Homogeneous Representation
 
 A point in 2D homogeneous form is written as:
 
@@ -394,9 +304,17 @@ $$
 
 All transformations now have the same 3×3 structure.
 
----
 
-#### The Power of Composition
+
+
+
+===
+
+
+
+
+
+## 2. The Power of Composition
 
 Since translation, rotation, and scaling are all matrices of the same size, they can be **combined into a single transform matrix**:
 
@@ -417,15 +335,59 @@ This solves the translation issue and gives a unified, composable system for bui
 
 The same idea extends naturally to 3D, where we add one more component and use 4×4 matrices to gain the same benefits there.
 
+### 2.1. Order of Transformations
+
+One last thing to notice is that **transformations must be applied in the reverse order**. What this means is that if we want to:
+1. Scale the object  
+2. Rotate the object  
+3. Translate the object  
+
+We build the combined matrix in the **reverse order**:
+
+$$
+M = T \cdot R \cdot S
+$$
+
+Since vectors are multiplied on the **right**:
+
+$$
+p' = M \cdot p = (T \cdot R \cdot S) \cdot p
+$$
+
+The transformation closest to the vector (**S**) is applied first, then **R**, then **T**.
+
+This is because matrix multiplication is evaluated **right to left** when applied to vectors:
+
+$$
+p' = T \cdot R \cdot S \cdot p
+$$
+
+Execution flow:
+
+1. $ S \cdot p $ → scales the point  
+2. $ R \cdot (S \cdot p) $ → rotates the scaled point  
+3. $ T \cdot (...) $ → translates the rotated point  
+
+Changing the order produces a different result. Example:
+
+$$
+R \cdot T \neq T \cdot R
+$$
+
+Translating then rotating yields a different final position than rotating then translating, because rotation would also rotate the translation vector.
+
+![](./images/img5.svg)
+
+
 ===
 
 
 
 
 
-
-
 ## 3. Transformation Matrices (4×4)
+
+Now that we saw the 2D case, everything works pretty much the same for 3D. We extend it to **4D homogenous coordinates** to allow translation as a matrix transformation.
 
 ### 3.1 Translation
 
@@ -513,129 +475,69 @@ $$
 
 Order matters because matrix multiplication is **not commutative**.
 
----
+
+
+
+===
+
+
+
 
 ## 4. Transform Chains
 
-If an object has parent matrix \( M_p \) and local matrix \( M_l \):
+We now understand local and world spaces, how hierarchies work conceptually, and how transformations are expressed as matrices. Transform chains show how these ideas come together to compute an object’s final placement in the world.
 
-Local → World:
+When an object has a parent, its **local transform matrix** does not directly tell us where it is in world space. Instead, it expresses the object’s position, rotation, and scale **relative to its parent’s coordinate space**. To obtain the object’s world transform, we must include the parent’s transform as well.
+
+### 4.1 Local → World Space
+
+Let an object define its local transform with matrix $M_l$.  
+Its parent’s world transform is already known, denoted $M_p$.
+
+To compute the object’s world transform, we compose both:
 
 $$
 M_{world} = M_p \cdot M_l
 $$
 
-World → Local:
+This multiplication applies the object’s local transform first, then brings the result into the parent’s world space. Any point expressed in the object’s local coordinates can now be converted to world coordinates using $M_{world}$.
+
+### 4.2 Multi-Level Hierarchies
+
+Scene hierarchies often contain several levels. In that case, each parent contributes its own transform, and all must be applied in order — from the highest parent down to the object:
+
+$$
+M_{world} =
+M_{root} \cdot
+M_{parent_2} \cdot
+M_{parent_1} \cdot
+M_l
+$$
+
+For example:
+
+Arm → Forearm → Hand
+
+The hand’s transform is defined in **forearm-local space** — it describes how the hand is positioned and oriented relative to the forearm, not the world.
+To obtain the hand’s final position in world space, its local transform must inherit the transforms of all parents in the hierarchy:
+
+the forearm’s transform (relative to the arm)
+
+the arm’s transform (relative to the world)
+
+Because of this chain, when the arm rotates, the forearm and hand follow automatically. Their world matrices already include the arm’s transformation, so there is no need to manually update the child objects — the hierarchy and matrix multiplication perform the propagation for us.
+
+![](./images/img2.svg)
+
+### 4.3 World → Local Space
+
+Sometimes we need to convert a world-space position back into local space — for example, to compute an offset relative to the hand, or to attach another object correctly.
+
+Since $M_{world}$ converts local → world, the inverse reverses the process:
 
 $$
 p_{local} = M_{world}^{-1} \cdot p_{world}
 $$
 
-Hierarchies multiply like:  
-Local → Parent → Parent’s Parent → … → World.
+This removes all inherited transformations, leaving the point expressed in the object’s own coordinates.
 
----
-
-## 5. Euler Angles
-
-Euler angles represent rotation as three sequential rotations, often around x, then y, then z. One common order:
-
-$$
-R = R_z(\gamma) R_y(\beta) R_x(\alpha)
-$$
-
-Limits:
-- rotation order affects result
-- can suffer **gimbal lock** (loss of one degree of freedom)
-- poor for interpolation
-
----
-
-## 6. Quaternions
-
-A quaternion is:
-
-$$
-q = w + xi + yj + zk
-$$
-
-Rotation of angle \( \theta \) around a unit axis \( \vec{u} = (u_x, u_y, u_z) \):
-
-$$
-q = \cos\frac{\theta}{2} + (u_x i + u_y j + u_z k)\sin\frac{\theta}{2}
-$$
-
-### 6.1 Rotating a Vector with a Quaternion
-
-Convert vector \( v \) into a quaternion with 0 scalar part:
-
-$$
-v_q = 0 + v_x i + v_y j + v_z k
-$$
-
-Apply rotation:
-
-$$
-v' = q \, v_q \, q^{-1}
-$$
-
-### 6.2 Quaternion to Rotation Matrix
-
-$$
-R(q) =
-\begin{bmatrix}
-1 - 2(y^2 + z^2) & 2(xy - wz) & 2(xz + wy) \\
-2(xy + wz) & 1 - 2(x^2 + z^2) & 2(yz - wx) \\
-2(xz - wy) & 2(yz + wx) & 1 - 2(x^2 + y^2)
-\end{bmatrix}
-$$
-
-### 6.3 Quaternion Interpolation (Slerp)
-
-$$
-\text{Slerp}(q_0, q_1, t) =
-\frac{\sin((1-t)\Omega)}{\sin \Omega} q_0 +
-\frac{\sin(t\Omega)}{\sin \Omega} q_1
-$$
-
-where \( \Omega = \arccos(q_0 \cdot q_1) \).
-
----
-
-## 7. Transforming Normals
-
-Normals must be transformed differently than points if scaling or shearing exists.
-
-Given transform matrix \( M \):
-
-Normal transform uses **inverse-transpose** of the upper-left 3×3:
-
-$$
-n' = (M^{-1})^T n
-$$
-
-Then normalize.
-
----
-
-## 8. Change of Basis
-
-If basis vectors of coordinate system A are stored in matrix \( B_A \) and of system B in \( B_B \):
-
-To convert a vector from A to B:
-
-$$
-v_B = B_B^{-1} B_A v_A
-$$
-
-This is the math behind converting between coordinate spaces.
-
----
-
-## 9. Summary
-
-- Use **4×4 matrices** for translation, rotation, scaling in one representation.
-- **Euler angles** are intuitive but have singularities and ordering issues.
-- **Quaternions** offer robust rotation representation and smooth interpolation.
-- Local-to-world transformations are matrix multiplications up a hierarchy.
-- Normals require **inverse-transpose** transformation.
