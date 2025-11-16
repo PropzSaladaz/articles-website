@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+<defs>
+<style>
+.axis { stroke: #444; stroke-width: 2.5; }
+.axis-arrow { marker-end: url(#arrow-dark); }
+.point { fill: #1976d2; }        /* blue */
+.point-rot { fill: #d32f2f; }    /* red  */
+.label { font-family: ui-sans-serif, system-ui; font-size: 18px; fill: #111; }
+.arc { fill: none; stroke: #9c27b0; stroke-width: 3; stroke-dasharray: 6 6; marker-end: url(#arrow-purple); }
+</style>
+<marker id="arrow-dark" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+  <path d="M0,0 L10,3 L0,6 z" fill="#444"/>
+</marker>
+<marker id="arrow-purple" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+  <path d="M0,0 L10,3 L0,6 z" fill="#9c27b0"/>
+</marker>
+</defs>
+
+<line class="axis axis-arrow" x1="400" y1="350" x2="640" y2="350"/>
+<line class="axis axis-arrow" x1="400" y1="350" x2="400" y2="110"/>
+<path class="arc" d="M 520.0 350.0 A 120 120 0 0 0 400.0 230.0"/>
+<circle class="point" cx="520.0" cy="350.0" r="7"/>
+<text class="label" x="528.0" y="342.0">p = (1, 0)</text>
+<circle class="point-rot" cx="400.0" cy="230.0" r="7"/>
+<text class="label" x="408.0" y="222.0">p' = (0, 1)</text>
+</svg>

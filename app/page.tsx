@@ -147,7 +147,7 @@ export default async function HomePage() {
                     style={{ animationDelay: `${index * 70}ms` }}
                   >
                     <CardContent className="flex h-full flex-col gap-4">
-                      <span className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground/80 transition-colors duration-300 group-hover:text-primary">
+                      <span className="mt-5 text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground/80 transition-colors duration-300">
                         Collection
                       </span>
                       <p className="text-lg font-medium text-foreground transition-colors duration-300 group-hover:text-primary">

@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2460" height="1184" viewBox="0 0 2460 1184">
+<defs>
+<style>
+.panel { fill: none; stroke: #efefef; stroke-width: 1; }
+.axis { stroke: #444; stroke-width: 2; marker-end: url(#arrow-dark); }
+.origin { fill: #444; }
+.shapeA { fill: #bbdefb; stroke: #1e88e5; stroke-width: 2; }
+.shapeB { fill: #fff3cd; stroke: #ffb300; stroke-width: 2; }
+.shapeC { fill: #ffccbc; stroke: #e64a19; stroke-width: 2; }
+.rowlabel { font-family: ui-sans-serif, system-ui; font-size: 18px; fill: #111; font-weight: 600; }
+.step { font-family: ui-sans-serif, system-ui; font-size: 14px; fill: #333; text-anchor: middle; }
+</style>
+<marker id="arrow-dark" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+  <path d="M0,0 L10,3 L0,6 z" fill="#444"/>
+</marker>
+</defs>
+
+<rect class="panel" x="108.0" y="98.0" width="460" height="300" rx="10" ry="10"/>
+<line class="axis" x1="338.0" y1="248.0" x2="428.0" y2="248.0"/>
+<line class="axis" x1="338.0" y1="248.0" x2="338.0" y2="158.0"/>
+<circle class="origin" cx="338.0" cy="248.0" r="3"/>
+<polygon class="shapeA" points="338.0,328.0 378.0,328.0 378.0,208.0 338.0,208.0"/>
+<polygon class="shapeA" points="338.0,248.0 438.0,248.0 438.0,208.0 338.0,208.0"/>
+<text class="step" x="338.0" y="388.0">1</text>
+<rect class="panel" x="616.0" y="98.0" width="460" height="300" rx="10" ry="10"/>
+<line class="axis" x1="846.0" y1="248.0" x2="936.0" y2="248.0"/>
+<line class="axis" x1="846.0" y1="248.0" x2="846.0" y2="158.0"/>
+<circle class="origin" cx="846.0" cy="248.0" r="3"/>
+<polygon class="shapeA" points="846.0,296.0 926.0,296.0 926.0,224.0 846.0,224.0"/>
+<polygon class="shapeA" points="846.0,248.0 1046.0,248.0 1046.0,224.0 846.0,224.0"/>
+<text class="step" x="846.0" y="388.0">2</text>
+<rect class="panel" x="1124.0" y="98.0" width="460" height="300" rx="10" ry="10"/>
+<line class="axis" x1="1354.0" y1="248.0" x2="1444.0" y2="248.0"/>
+<line class="axis" x1="1354.0" y1="248.0" x2="1354.0" y2="158.0"/>
+<circle class="origin" cx="1354.0" cy="248.0" r="3"/>
+<polygon class="shapeA" points="1381.5,287.3 1447.1,241.4 1405.8,182.5 1340.2,228.3"/>
+<polygon class="shapeA" points="1354.0,248.0 1517.8,133.3 1504.1,113.6 1340.2,228.3"/>
+<text class="step" x="1354.0" y="388.0">3</text>
+<rect class="panel" x="1632.0" y="98.0" width="460" height="300" rx="10" ry="10"/>
+<line class="axis" x1="1862.0" y1="248.0" x2="1952.0" y2="248.0"/>
+<line class="axis" x1="1862.0" y1="248.0" x2="1862.0" y2="158.0"/>
+<circle class="origin" cx="1862.0" cy="248.0" r="3"/>
+<polygon class="shapeA" points="2049.5,327.3 2115.1,281.4 2073.8,222.5 2008.2,268.3"/>
+<polygon class="shapeA" points="2022.0,288.0 2185.8,173.3 2172.1,153.6 2008.2,268.3"/>
+<text class="step" x="1862.0" y="388.0">4</text>
+<text class="rowlabel" x="80.0" y="122.0">A) S → R → T</text>
+<rect class="panel" x="108.0" y="442.0" width="460" height="300" rx="10" ry="10"/>
+<line class="axis" x1="338.0" y1="592.0" x2="428.0" y2="592.0"/>
+<line class="axis" x1="338.0" y1="592.0" x2="338.0" y2="502.0"/>
+<circle class="origin" cx="338.0" cy="592.0" r="3"/>
+<polygon class="shapeB" points="338.0,672.0 378.0,672.0 378.0,552.0 338.0,552.0"/>
+<polygon class="shapeB" points="338.0,592.0 438.0,592.0 438.0,552.0 338.0,552.0"/>
+<text class="step" x="338.0" y="732.0">1</text>
+<rect class="panel" x="616.0" y="442.0" width="460" height="300" rx="10" ry="10"/>
+<line class="axis" x1="846.0" y1="592.0" x2="936.0" y2="592.0"/>
+<line class="axis" x1="846.0" y1="592.0" x2="846.0" y2="502.0"/>
+<circle class="origin" cx="846.0" cy="592.0" r="3"/>
+<polygon class="shapeB" points="891.9,657.5 924.7,634.6 855.8,536.3 823.1,559.2"/>
+<polygon class="shapeB" points="846.0,592.0 927.9,534.6 905.0,501.9 823.1,559.2"/>
+<text class="step" x="846.0" y="732.0">2</text>
+<rect class="panel" x="1124.0" y="442.0" width="460" height="300" rx="10" ry="10"/>
+<line class="axis" x1="1354.0" y1="592.0" x2="1444.0" y2="592.0"/>
+<line class="axis" x1="1354.0" y1="592.0" x2="1354.0" y2="502.0"/>
+<circle class="origin" cx="1354.0" cy="592.0" r="3"/>
+<polygon class="shapeB" points="1445.8,631.3 1511.3,617.6 1373.6,558.6 1308.1,572.3"/>
+<polygon class="shapeB" points="1354.0,592.0 1517.8,557.6 1471.9,537.9 1308.1,572.3"/>
+<text class="step" x="1354.0" y="732.0">3</text>
+<rect class="panel" x="1632.0" y="442.0" width="460" height="300" rx="10" ry="10"/>
+<line class="axis" x1="1862.0" y1="592.0" x2="1952.0" y2="592.0"/>
+<line class="axis" x1="1862.0" y1="592.0" x2="1862.0" y2="502.0"/>
+<circle class="origin" cx="1862.0" cy="592.0" r="3"/>
+<polygon class="shapeB" points="2113.8,671.3 2179.3,657.6 2041.6,598.6 1976.1,612.3"/>
+<polygon class="shapeB" points="2022.0,632.0 2185.8,597.6 2139.9,577.9 1976.1,612.3"/>
+<text class="step" x="1862.0" y="732.0">4</text>
+<text class="rowlabel" x="80.0" y="466.0">B) R → S → T</text>
+<rect class="panel" x="108.0" y="786.0" width="460" height="300" rx="10" ry="10"/>
+<line class="axis" x1="338.0" y1="936.0" x2="428.0" y2="936.0"/>
+<line class="axis" x1="338.0" y1="936.0" x2="338.0" y2="846.0"/>
+<circle class="origin" cx="338.0" cy="936.0" r="3"/>
+<polygon class="shapeC" points="338.0,1016.0 378.0,1016.0 378.0,896.0 338.0,896.0"/>
+<polygon class="shapeC" points="338.0,936.0 438.0,936.0 438.0,896.0 338.0,896.0"/>
+<text class="step" x="338.0" y="1076.0">1</text>
+<rect class="panel" x="616.0" y="786.0" width="460" height="300" rx="10" ry="10"/>
+<line class="axis" x1="846.0" y1="936.0" x2="936.0" y2="936.0"/>
+<line class="axis" x1="846.0" y1="936.0" x2="846.0" y2="846.0"/>
+<circle class="origin" cx="846.0" cy="936.0" r="3"/>
+<polygon class="shapeC" points="1006.0,1056.0 1046.0,1056.0 1046.0,936.0 1006.0,936.0"/>
+<polygon class="shapeC" points="1006.0,976.0 1106.0,976.0 1106.0,936.0 1006.0,936.0"/>
+<text class="step" x="846.0" y="1076.0">2</text>
+<rect class="panel" x="1124.0" y="786.0" width="460" height="300" rx="10" ry="10"/>
+<line class="axis" x1="1354.0" y1="936.0" x2="1444.0" y2="936.0"/>
+<line class="axis" x1="1354.0" y1="936.0" x2="1354.0" y2="846.0"/>
+<circle class="origin" cx="1354.0" cy="936.0" r="3"/>
+<polygon class="shapeC" points="1553.9,942.5 1586.7,919.6 1517.8,821.3 1485.1,844.2"/>
+<polygon class="shapeC" points="1508.0,877.0 1589.9,819.6 1567.0,786.9 1485.1,844.2"/>
+<text class="step" x="1354.0" y="1076.0">3</text>
+<rect class="panel" x="1632.0" y="786.0" width="460" height="300" rx="10" ry="10"/>
+<line class="axis" x1="1862.0" y1="936.0" x2="1952.0" y2="936.0"/>
+<line class="axis" x1="1862.0" y1="936.0" x2="1862.0" y2="846.0"/>
+<circle class="origin" cx="1862.0" cy="936.0" r="3"/>
+<polygon class="shapeC" points="2261.8,939.9 2327.3,926.1 2189.7,867.2 2124.1,880.9"/>
+<polygon class="shapeC" points="2170.0,900.6 2333.8,866.2 2288.0,846.5 2124.1,880.9"/>
+<text class="step" x="1862.0" y="1076.0">4</text>
+<text class="rowlabel" x="80.0" y="810.0">C) T → R → S</text>
+</svg>

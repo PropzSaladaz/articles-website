@@ -3,7 +3,6 @@ status: "draft"          # draft | published | archived
 summary: "A pragmatic route to 3–10× faster pipelines using caching and graph-aware jobs."
 ---
 
-
 ## 1. Homogeneous Coordinates
 
 Strange name huh? We will see what it represents in a second. But first, let's start from the simplest case - 2D.
@@ -13,7 +12,7 @@ Strange name huh? We will see what it represents in a second. But first, let's s
 In a 2D Cartesian plane, a point is represented as:
 
 $$
-p = \begin{bmatrix} x \\ y \end{bmatrix}
+p = \begin{bmatrix} x \ y \end{bmatrix}
 $$
 
 Certain transformations can be applied to this point using matrix multiplication. The first important example is **rotation**.
@@ -22,7 +21,7 @@ Certain transformations can be applied to this point using matrix multiplication
 
 #### 2D Rotation
 
-To rotate a point around the origin by an angle \(\theta\), we use the following rotation matrix:
+To rotate a point around the origin by an angle (\theta), we use the following rotation matrix:
 
 $$
 R(\theta)=
@@ -32,7 +31,7 @@ R(\theta)=
 \end{bmatrix}
 $$
 
-:::spoiler[See explanation for that formula]
+:::spoiler\[See explanation for that formula]
 
 ### Why the Rotation Formula Has This Form
 
@@ -40,8 +39,8 @@ $$
 
 Any point $(x, y)$ can be described using:
 
-- its distance from the origin \(r\)
-- its angle \(\alpha\) relative to the positive X-axis
+* its distance from the origin (r)
+* its angle (\alpha) relative to the positive X-axis
 
 $$
 x = r\cos\alpha,\quad y = r\sin\alpha
@@ -97,16 +96,17 @@ Now express the transformation as a matrix multiplication:
 
 $$
 \begin{bmatrix}
-x' \\ y'
+x' \ y'
 \end{bmatrix}
-=
+=============
+
 \begin{bmatrix}
 \cos\theta & -\sin\theta \\
 \sin\theta & \cos\theta
 \end{bmatrix}
 \cdot
 \begin{bmatrix}
-x \\ y
+x \ y
 \end{bmatrix}
 $$
 
@@ -118,9 +118,9 @@ This matrix is the **2D rotation matrix**.
 
 The rotation matrix is not arbitrary; it is the algebraic form of a geometric fact:
 
-- Rotating a point increases its angle by $\theta$, but keeps its distance from the origin constant.
-- The cosine and sine terms come from converting between polar and Cartesian coordinates.
-- The structure of the matrix ensures that the point’s length does not change — only its orientation.
+* Rotating a point increases its angle by $\theta$, but keeps its distance from the origin constant.
+* The cosine and sine terms come from converting between polar and Cartesian coordinates.
+* The structure of the matrix ensures that the point’s length does not change — only its orientation.
 
 This is why **rotation fits perfectly into a matrix multiplication**, making it easy to apply and combine with other transformations.
 
@@ -134,9 +134,9 @@ $$
 
 This is a purely multiplicative operation, which is powerful because:
 
-- It allows applying rotations consistently to any vector.
-- It can be chained with other matrix-based transformations.
-- It keeps the math compact and efficient.
+* It allows applying rotations consistently to any vector.
+* It can be chained with other matrix-based transformations.
+* It keeps the math compact and efficient.
 
 **Example:** rotating the point $(1, 0)$ by $90^\circ$ counter-clockwise:
 
@@ -147,12 +147,12 @@ R(90^\circ)=
 1 & 0
 \end{bmatrix}
 \quad\Rightarrow\quad
-p' = \begin{bmatrix}0\\1\end{bmatrix}
+p' = \begin{bmatrix}0\1\end{bmatrix}
 $$
 
 The point moves from the positive X-axis to the positive Y-axis, as expected:
 
-![](./images/img4.svg)
+![](/articles-website/collections/computer-science/3d-programming/coordinate-systems-and-transformations-in-3d-graphics/transformation-matrices-homogeneous-coordinates-composition/images/img4.svg)
 
 ---
 
@@ -161,10 +161,10 @@ The point moves from the positive X-axis to the positive Y-axis, as expected:
 Scaling also fits naturally into matrix multiplication:
 
 $$
-S(s_x, s_y) =
+S(s\_x, s\_y) =
 \begin{bmatrix}
-s_x & 0 \\
-0 & s_y
+s\_x & 0 \\
+0 & s\_y
 \end{bmatrix}
 $$
 
@@ -174,18 +174,18 @@ For example, scaling a point by 2 in both axes doubles its distance from the ori
 
 ### 1.3 The Limitation: Translation Does Not Fit
 
-Rotation and scaling can be expressed as matrix × vector operations.  
+Rotation and scaling can be expressed as matrix × vector operations.\
 Translation cannot:
 
 $$
 p' =
 \begin{bmatrix}
-x + t_x \\
-y + t_y
+x + t\_x \\
+y + t\_y
 \end{bmatrix}
 $$
 
-There is no 2×2 matrix \(T\) such that:
+There is no 2×2 matrix (T) such that:
 
 $$
 T \cdot p = p + t
@@ -193,11 +193,11 @@ $$
 
 This creates a practical issue:
 
-- Rotation and scaling can be chained through matrix multiplication.
-- Translation requires addition.
-- Mixing multiplication and addition complicates combining transformations.
+* Rotation and scaling can be chained through matrix multiplication.
+* Translation requires addition.
+* Mixing multiplication and addition complicates combining transformations.
 
-If you want to scale, then rotate, then translate a point, you must apply each step separately.  
+If you want to scale, then rotate, then translate a point, you must apply each step separately.\
 This makes it harder to **compose transforms** into a single reusable operation.
 
 ---
@@ -210,27 +210,27 @@ $$
 p' = M \cdot p
 $$
 
-where \(M\) represents the entire accumulated transformation.
+where (M) represents the entire accumulated transformation.
 
-The limitation in 2D — that translation requires addition — is the motivation for extending the coordinate system.  
+The limitation in 2D — that translation requires addition — is the motivation for extending the coordinate system.\
 The next step will show how adding a third component in 2D (homogeneous representation) solves this elegantly.
 
 ---
 
 ### 1.4 Solving Translation in 2D with Homogeneous Coordinates
 
-As we saw, the limitation in standard 2D coordinates is that translation requires addition, not multiplication.  
+As we saw, the limitation in standard 2D coordinates is that translation requires addition, not multiplication.\
 To overcome this, we extend 2D points from 2 components to **3 components**:
 
-- A 2D point $(x, y)$ becomes $(x, y, 1)$
-- A 2D direction vector becomes $(x, y, 0)$
+* A 2D point $(x, y)$ becomes $(x, y, 1)$
+* A 2D direction vector becomes $(x, y, 0)$
 
 This extended representation is called **homogeneous coordinates**.
 
 A point in 2D homogeneous form is written as:
 
 $$
-p_h = \begin{bmatrix} x \\ y \\ 1 \end{bmatrix}
+p\_h = \begin{bmatrix} x \ y \ 1 \end{bmatrix}
 $$
 
 The extra value `1` enables translation to be embedded inside a matrix.
@@ -242,10 +242,10 @@ The extra value `1` enables translation to be embedded inside a matrix.
 With homogeneous coordinates, translation can be expressed as a **3×3 matrix**:
 
 $$
-T(t_x, t_y) =
+T(t\_x, t\_y) =
 \begin{bmatrix}
-1 & 0 & t_x \\
-0 & 1 & t_y \\
+1 & 0 & t\_x \\
+0 & 1 & t\_y \\
 0 & 0 & 1
 \end{bmatrix}
 $$
@@ -253,24 +253,25 @@ $$
 Applying a translation is now a matrix multiplication:
 
 $$
-p'_h = T \cdot p_h
+p'\_h = T \cdot p\_h
 $$
 
 Expanding:
 
 $$
 \begin{bmatrix}
-1 & 0 & t_x \\
-0 & 1 & t_y \\
+1 & 0 & t\_x \\
+0 & 1 & t\_y \\
 0 & 0 & 1
 \end{bmatrix}
 \cdot
 \begin{bmatrix}
-x \\ y \\ 1
+x \ y \ 1
 \end{bmatrix}
-=
+=============
+
 \begin{bmatrix}
-x + t_x \\ y + t_y \\ 1
+x + t\_x \ y + t\_y \ 1
 \end{bmatrix}
 $$
 
@@ -294,25 +295,17 @@ $$
 Scaling becomes:
 
 $$
-S(s_x, s_y) =
+S(s\_x, s\_y) =
 \begin{bmatrix}
-s_x & 0 & 0 \\
-0 & s_y & 0 \\
+s\_x & 0 & 0 \\
+0 & s\_y & 0 \\
 0 & 0 & 1
 \end{bmatrix}
 $$
 
 All transformations now have the same 3×3 structure.
 
-
-
-
-
-===
-
-
-
-
+\===
 
 ## 2. The Power of Composition
 
@@ -325,12 +318,12 @@ $$
 Then applied in a single step:
 
 $$
-p'_h = M \cdot p_h
+p'\_h = M \cdot p\_h
 $$
 
 This allows chaining of multiple transformations without mixing operations.
 
-By adding one extra component and using 3×3 matrices, **every 2D transformation becomes a matrix multiplication**.  
+By adding one extra component and using 3×3 matrices, **every 2D transformation becomes a matrix multiplication**.\
 This solves the translation issue and gives a unified, composable system for building complex transformations — essential for graphics, animation, and game engines.
 
 The same idea extends naturally to 3D, where we add one more component and use 4×4 matrices to gain the same benefits there.
@@ -338,9 +331,10 @@ The same idea extends naturally to 3D, where we add one more component and use 4
 ### 2.1. Order of Transformations
 
 One last thing to notice is that **transformations must be applied in the reverse order**. What this means is that if we want to:
-1. Scale the object  
-2. Rotate the object  
-3. Translate the object  
+
+1. Scale the object
+2. Rotate the object
+3. Translate the object
 
 We build the combined matrix in the **reverse order**:
 
@@ -364,9 +358,9 @@ $$
 
 Execution flow:
 
-1. $ S \cdot p $ → scales the point  
-2. $ R \cdot (S \cdot p) $ → rotates the scaled point  
-3. $ T \cdot (...) $ → translates the rotated point  
+1. $ S \cdot p $ → scales the point
+2. $ R \cdot (S \cdot p) $ → rotates the scaled point
+3. $ T \cdot (...) $ → translates the rotated point
 
 Changing the order produces a different result. Example:
 
@@ -376,14 +370,9 @@ $$
 
 Translating then rotating yields a different final position than rotating then translating, because rotation would also rotate the translation vector.
 
-![](./images/img5.svg)
+![](/articles-website/collections/computer-science/3d-programming/coordinate-systems-and-transformations-in-3d-graphics/transformation-matrices-homogeneous-coordinates-composition/images/img5.svg)
 
-
-===
-
-
-
-
+\===
 
 ## 3. Transformation Matrices (4×4)
 
@@ -394,16 +383,16 @@ Now that we saw the 2D case, everything works pretty much the same for 3D. We ex
 $$
 T =
 \begin{bmatrix}
-1 & 0 & 0 & t_x \\
-0 & 1 & 0 & t_y \\
-0 & 0 & 1 & t_z \\
+1 & 0 & 0 & t\_x \\
+0 & 1 & 0 & t\_y \\
+0 & 0 & 1 & t\_z \\
 0 & 0 & 0 & 1
 \end{bmatrix}
 $$
 
 ### 3.2 Scaling
 
-Uniform scale \( s \):
+Uniform scale ( s ):
 
 $$
 S =
@@ -415,14 +404,14 @@ s & 0 & 0 & 0 \\
 \end{bmatrix}
 $$
 
-Non-uniform \( (s_x, s_y, s_z) \):
+Non-uniform ( (s\_x, s\_y, s\_z) ):
 
 $$
 S =
 \begin{bmatrix}
-s_x & 0 & 0 & 0 \\
-0 & s_y & 0 & 0 \\
-0 & 0 & s_z & 0 \\
+s\_x & 0 & 0 & 0 \\
+0 & s\_y & 0 & 0 \\
+0 & 0 & s\_z & 0 \\
 0 & 0 & 0 & 1
 \end{bmatrix}
 $$
@@ -432,7 +421,7 @@ $$
 Rotation about **x-axis**:
 
 $$
-R_x(\theta) =
+R\_x(\theta) =
 \begin{bmatrix}
 1 & 0 & 0 & 0 \\
 0 & \cos\theta & -\sin\theta & 0 \\
@@ -444,7 +433,7 @@ $$
 Rotation about **y-axis**:
 
 $$
-R_y(\theta) =
+R\_y(\theta) =
 \begin{bmatrix}
 \cos\theta & 0 & \sin\theta & 0 \\
 0 & 1 & 0 & 0 \\
@@ -456,7 +445,7 @@ $$
 Rotation about **z-axis**:
 
 $$
-R_z(\theta) =
+R\_z(\theta) =
 \begin{bmatrix}
 \cos\theta & -\sin\theta & 0 & 0 \\
 \sin\theta & \cos\theta & 0 & 0 \\
@@ -475,13 +464,7 @@ $$
 
 Order matters because matrix multiplication is **not commutative**.
 
-
-
-
-===
-
-
-
+\===
 
 ## 4. Transform Chains
 
@@ -491,27 +474,27 @@ When an object has a parent, its **local transform matrix** does not directly te
 
 ### 4.1 Local → World Space
 
-Let an object define its local transform with matrix $M_l$.  
-Its parent’s world transform is already known, denoted $M_p$.
+Let an object define its local transform with matrix $M\_l$.\
+Its parent’s world transform is already known, denoted $M\_p$.
 
 To compute the object’s world transform, we compose both:
 
 $$
-M_{world} = M_p \cdot M_l
+M\_{world} = M\_p \cdot M\_l
 $$
 
-This multiplication applies the object’s local transform first, then brings the result into the parent’s world space. Any point expressed in the object’s local coordinates can now be converted to world coordinates using $M_{world}$.
+This multiplication applies the object’s local transform first, then brings the result into the parent’s world space. Any point expressed in the object’s local coordinates can now be converted to world coordinates using $M\_{world}$.
 
 ### 4.2 Multi-Level Hierarchies
 
 Scene hierarchies often contain several levels. In that case, each parent contributes its own transform, and all must be applied in order — from the highest parent down to the object:
 
 $$
-M_{world} =
-M_{root} \cdot
-M_{parent_2} \cdot
-M_{parent_1} \cdot
-M_l
+M\_{world} =
+M\_{root} \cdot
+M\_{parent\_2} \cdot
+M\_{parent\_1} \cdot
+M\_l
 $$
 
 For example:
@@ -527,17 +510,16 @@ the arm’s transform (relative to the world)
 
 Because of this chain, when the arm rotates, the forearm and hand follow automatically. Their world matrices already include the arm’s transformation, so there is no need to manually update the child objects — the hierarchy and matrix multiplication perform the propagation for us.
 
-![](./images/img2.svg)
+![](/articles-website/collections/computer-science/3d-programming/coordinate-systems-and-transformations-in-3d-graphics/transformation-matrices-homogeneous-coordinates-composition/images/img2.svg)
 
 ### 4.3 World → Local Space
 
 Sometimes we need to convert a world-space position back into local space — for example, to compute an offset relative to the hand, or to attach another object correctly.
 
-Since $M_{world}$ converts local → world, the inverse reverses the process:
+Since $M\_{world}$ converts local → world, the inverse reverses the process:
 
 $$
-p_{local} = M_{world}^{-1} \cdot p_{world}
+p\_{local} = M\_{world}^{-1} \cdot p\_{world}
 $$
 
 This removes all inherited transformations, leaving the point expressed in the object’s own coordinates.
-

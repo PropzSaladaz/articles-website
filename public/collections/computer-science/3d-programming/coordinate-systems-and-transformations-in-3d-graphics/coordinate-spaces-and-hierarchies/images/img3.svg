@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="500" viewBox="0 0 1400 500">
+<defs>
+    <marker id="arrow-red" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <path d="M0,0 L10,3 L0,6 z" fill="#d32f2f"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <path d="M0,0 L10,3 L0,6 z" fill="#388e3c"/>
+    </marker>
+    <marker id="arrow-black" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <path d="M0,0 L10,3 L0,6 z" fill="#222"/>
+    </marker>
+    <style>
+      .car { fill: #ffffff; fill-opacity: 0.95; stroke: #2f2f2f; stroke-width: 3; }
+      .axis-local-x { stroke: #d32f2f; stroke-width: 3; marker-end: url(#arrow-red); }
+      .axis-local-y { stroke: #388e3c; stroke-width: 3; marker-end: url(#arrow-green); }
+      .axis-world-x { stroke: #222; stroke-width: 3; stroke-opacity: 0.7; marker-end: url(#arrow-black); }
+      .axis-world-y { stroke: #222; stroke-width: 3; stroke-opacity: 0.7; marker-end: url(#arrow-black); }
+      .grid { stroke: #aaa; stroke-width: 1; stroke-opacity: 0.25; }
+      .caption { font-family: ui-sans-serif, system-ui; font-size: 20px; fill: #222; text-anchor: middle; }
+    </style>
+    </defs>
+<line class="grid" x1="0" y1="0" x2="0" y2="0"/>
+<line class="grid" x1="0" y1="0" x2="0" y2="0"/>
+<polygon class="car" points="310.0,205.0 490.0,205.0 490.0,295.0 310.0,295.0"/>
+<line class="axis-local-x" x1="400.0" y1="250.0" x2="480.0" y2="250.0"/>
+<line class="axis-local-y" x1="400.0" y1="250.0" x2="400.0" y2="170.0"/>
+<text class="caption" x="400.0" y="480">Local Space</text>
+<line class="grid" x1="800" y1="60" x2="800" y2="440"/>
+<line class="grid" x1="840" y1="60" x2="840" y2="440"/>
+<line class="grid" x1="880" y1="60" x2="880" y2="440"/>
+<line class="grid" x1="920" y1="60" x2="920" y2="440"/>
+<line class="grid" x1="960" y1="60" x2="960" y2="440"/>
+<line class="grid" x1="1000" y1="60" x2="1000" y2="440"/>
+<line class="grid" x1="1040" y1="60" x2="1040" y2="440"/>
+<line class="grid" x1="1080" y1="60" x2="1080" y2="440"/>
+<line class="grid" x1="1120" y1="60" x2="1120" y2="440"/>
+<line class="grid" x1="1160" y1="60" x2="1160" y2="440"/>
+<line class="grid" x1="1200" y1="60" x2="1200" y2="440"/>
+<line class="grid" x1="1240" y1="60" x2="1240" y2="440"/>
+<line class="grid" x1="1280" y1="60" x2="1280" y2="440"/>
+<line class="grid" x1="1320" y1="60" x2="1320" y2="440"/>
+<line class="grid" x1="1360" y1="60" x2="1360" y2="440"/>
+<line class="grid" x1="1400" y1="60" x2="1400" y2="440"/>
+<line class="grid" x1="800" y1="60" x2="1400" y2="60"/>
+<line class="grid" x1="800" y1="100" x2="1400" y2="100"/>
+<line class="grid" x1="800" y1="140" x2="1400" y2="140"/>
+<line class="grid" x1="800" y1="180" x2="1400" y2="180"/>
+<line class="grid" x1="800" y1="220" x2="1400" y2="220"/>
+<line class="grid" x1="800" y1="260" x2="1400" y2="260"/>
+<line class="grid" x1="800" y1="300" x2="1400" y2="300"/>
+<line class="grid" x1="800" y1="340" x2="1400" y2="340"/>
+<line class="grid" x1="800" y1="380" x2="1400" y2="380"/>
+<line class="grid" x1="800" y1="420" x2="1400" y2="420"/>
+<polygon class="car" points="1089.6,256.0 1245.4,166.0 1290.4,244.0 1134.6,334.0"/>
+<line class="axis-world-x" x1="850" y1="390" x2="960.0" y2="390.0"/>
+<line class="axis-world-y" x1="850" y1="390" x2="850.0" y2="280.0"/>
+<line class="axis-local-x" x1="1190.0" y1="250.0" x2="1259.3" y2="210.0"/>
+<line class="axis-local-y" x1="1190.0" y1="250.0" x2="1150.0" y2="180.7"/>
+<text class="caption" x="1190.0" y="480">World Space</text>
+</svg>

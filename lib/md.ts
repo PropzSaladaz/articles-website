@@ -74,7 +74,8 @@ export function extractHeadings(markdown: string): Heading[] {
   const slugger = new GithubSlugger();
 
   visit(tree, 'heading', (node: any) => {
-    if (!node.depth || node.depth < 2 || node.depth > 4) {
+    // only headings of level 1-2
+    if (!node.depth || node.depth < 1 || node.depth > 2) {
       return;
     }
     const text = toString(node).trim();

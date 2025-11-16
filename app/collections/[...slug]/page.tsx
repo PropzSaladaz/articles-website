@@ -180,7 +180,7 @@ function CollectionView({ collection }: { collection: LoadedCollection }) {
           <ol className="space-y-4">
             {collection.articles.map((article, index) => (
               <li key={article.slug} className="list-none">
-                <div className="flex gap-4 rounded-2xl border border-border/60 bg-background/80 p-5 transition-colors hover:border-primary/40">
+                <div className="flex gap-4 rounded-2xl border border-border p-5 transition-colors hover:bg-card">
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
                     {String(index + 1).padStart(2, '0')}
                   </span>

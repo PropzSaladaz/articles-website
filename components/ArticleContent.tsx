@@ -65,7 +65,7 @@ export function ArticleContent({ article }: { article: Article }) {
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">On this page</h2>
             <ul className="mt-3 space-y-2">
               {article.headings.map((heading) => (
-                <li key={heading.id} className={heading.level > 2 ? 'ml-4' : undefined}>
+                <li key={heading.id} className={heading.level > 1 ? 'ml-4' : undefined}>
                   <a href={`#${heading.id}`} className="text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400">
                     {heading.text}
                   </a>

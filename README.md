@@ -18,14 +18,13 @@ content/
 
       Rendering-Pipeline/            # ← Collection (multi-chapter)
         index.md                     # collection metadata + summary
-        chapters/
-          01-introduction/
-            index.md                 # chapter content
-            summary.md               # chapter summary
-            images/…                 # optional assets
-          02-vertex-processing/
-            index.md
-            summary.md
+        01-introduction/
+          index.md                 # chapter content
+          summary.md               # chapter summary
+          images/…                 # optional assets
+        02-vertex-processing/
+          index.md
+          summary.md
 ```
 
 ---
@@ -43,12 +42,8 @@ A folder with:
 
 ```yaml
 ---
-title: "Building Static Sites with Next.js"
-slug: "2025-09-30-static-sites-with-nextjs"
-date: 2025-09-30
-tags: ["nextjs", "guides"]
-summary: "How to export and deploy Next.js apps as static sites."
-coverImage: "./images/cover.png"
+status: "draft"          # draft | published | archived
+summary: "How Threshold Cryptography works in simple terms"
 ---
 ```
 
@@ -57,21 +52,21 @@ coverImage: "./images/cover.png"
 A folder with:
 
 * `index.md` — overview of the entire collection (title, slug, description, optional cover)
-* `chapters/` — each subfolder is one chapter
+* `Chapter1/` — each subfolder is one chapter
 
-Each chapter folder must contain:
+Each chapter folder can contain:
 
 * `index.md` — main content (with title, slug, date, etc.)
 * `summary.md` — summary of that chapter
+
+If that is the case, then the folder is treated as an article, and the article name will be the folder name. Else, the folder may actually contain subfolders.
 
 **Collection frontmatter (`index.md`):**
 
 ```yaml
 ---
-title: "Rendering Pipeline Deep Dive"
-slug: "rendering-pipeline"
-date: 2025-10-10
-summary: "Explore the entire GPU rendering pipeline step by step."
+status: "draft"          # draft | published | archived
+summary: "A pragmatic route to 3–10× faster pipelines using caching and graph-aware jobs."
 coverImage: "./images/cover.png"
 ---
 ```
@@ -80,11 +75,8 @@ coverImage: "./images/cover.png"
 
 ```yaml
 ---
-title: "Introduction to the Rendering Pipeline"
-slug: "introduction"
-date: 2025-10-10
-order: 1              # optional ordering override
-tags: ["graphics", "gpu"]
+status: "draft"          # draft | published | archived
+summary: "A pragmatic route to 3–10× faster pipelines using caching and graph-aware jobs."
 coverImage: "./images/intro.png"
 ---
 ```
@@ -96,12 +88,11 @@ coverImage: "./images/intro.png"
 * Folder names can have numeric prefixes (`01-`, `02-`) to define order visually.
 * The parser automatically sorts chapters by:
 
-  1. `order` in frontmatter (if present)
-  2. numeric prefix
-  3. alphabetical order
-* All slugs must be unique:
+  1. numeric prefix
+  2. alphabetical order
+* Article name uniqueness is implicitly treated using filesystem path uniqueness:
 
-  * Standalone: `/articles/:slug/`
+  * Standalone: `/articles/article-1/`
   * Collection: `/collections/:collectionSlug/`
   * Chapters: `/collections/:collectionSlug/:chapterSlug/`
 
