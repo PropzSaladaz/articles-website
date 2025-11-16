@@ -24,6 +24,7 @@ export function ViewPreferenceProvider({ children }: { children: React.ReactNode
   const pathname = usePathname();
   const [stored, setStored] = useState<ViewMode | null>(null);
 
+  // read from localStorage the previously selected view mode if any
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const value = window.localStorage.getItem(STORAGE_KEY);
@@ -32,12 +33,15 @@ export function ViewPreferenceProvider({ children }: { children: React.ReactNode
     }
   }, []);
 
+  // default to 'full' for article pages, 'summary' otherwise
   const fallbackView = pathname?.includes('/articles/') ? 'full' : 'summary';
+  // set paramView as: search param 'view' > stored value > fallback
   const paramView = normalizeView(searchParams?.get('view'), stored ?? fallbackView);
 
   const [view, setViewState] = useState<ViewMode>(paramView);
   const pendingRef = useRef<ViewMode | null>(null);
 
+  // Sync view with paramView
   useEffect(() => {
     if (pendingRef.current && pendingRef.current !== paramView) {
       return;
@@ -56,13 +60,20 @@ export function ViewPreferenceProvider({ children }: { children: React.ReactNode
   };
 
   useEffect(() => {
-    const current = searchParams?.get('view');
     if (!pathname) return;
-    if (current === view) {
+    if (!pendingRef.current) {
       return;
     }
+
+    const current = searchParams?.get('view');
+    if (current === view) {
+      pendingRef.current = null;
+      return;
+    }
+
     const params = new URLSearchParams(searchParams?.toString());
     params.set('view', view);
+    pendingRef.current = null;
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   }, [view, pathname, router, searchParams]);
 
