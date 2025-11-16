@@ -29,11 +29,29 @@ type SiteShellProps = {
 export function SiteShell({ tree, collections, children }: SiteShellProps) {
   const basePath = getBasePath();
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const headerRef = useRef<HTMLElement | null>(null);
   const dragOriginRef = useRef(0);
   const lastExpandedWidthRef = useRef(DEFAULT_SIDEBAR_WIDTH);
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [headerOffset, setHeaderOffset] = useState(84);
+
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+
+    const updateOffset = () => {
+      setHeaderOffset(header.getBoundingClientRect().height);
+    };
+
+    updateOffset();
+    window.addEventListener('resize', updateOffset);
+
+    return () => {
+      window.removeEventListener('resize', updateOffset);
+    };
+  }, []);
 
   useEffect(() => {
     if (!isSidebarCollapsed && sidebarWidth > 0) {
@@ -116,7 +134,10 @@ export function SiteShell({ tree, collections, children }: SiteShellProps) {
 
   return (
     <div className="relative flex min-h-screen flex-col">
-      <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-xl">
+      <header
+        ref={headerRef}
+        className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-xl"
+      >
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-5">
           <Link href={`${basePath}/`} className="text-xl font-semibold tracking-tight">
             Sid Makes Sense
@@ -150,9 +171,13 @@ export function SiteShell({ tree, collections, children }: SiteShellProps) {
         >
           <div
             className={cn(
-              'sticky top-[5.25rem] max-h-[calc(100vh-5.25rem)] overflow-y-auto px-4 py-6 transition-opacity duration-200',
+              'sticky overflow-y-auto px-4 py-6 transition-opacity duration-200',
               isSidebarCollapsed ? 'pointer-events-none opacity-0' : 'opacity-100'
             )}
+            style={{
+              top: headerOffset,
+              maxHeight: `calc(100vh - ${headerOffset}px)`,
+            }}
             aria-hidden={isSidebarCollapsed}
           >
             <TreeNavigation tree={tree} collections={collections} />
