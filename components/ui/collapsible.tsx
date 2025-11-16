@@ -114,69 +114,28 @@ type CollapsibleContentProps = React.HTMLAttributes<HTMLDivElement>;
 const CollapsibleContent = React.forwardRef<HTMLDivElement, CollapsibleContentProps>(
   ({ className, style, children, ...props }, ref) => {
     const { open } = useCollapsibleContext('CollapsibleContent');
-    const contentRef = React.useRef<HTMLDivElement | null>(null);
-    const mergedRef = useMergeRefs(ref, contentRef);
-    const [height, setHeight] = React.useState(0);
-
-    React.useLayoutEffect(() => {
-      const node = contentRef.current;
-      if (!node) return;
-
-      const updateHeight = () => {
-        setHeight(node.scrollHeight);
-      };
-
-      updateHeight();
-
-      if (typeof ResizeObserver !== 'undefined') {
-        const observer = new ResizeObserver(updateHeight);
-        observer.observe(node);
-        return () => {
-          observer.disconnect();
-        };
-      }
-
-      return undefined;
-    }, [children, open]);
 
     return (
       <div
-        ref={mergedRef}
+        ref={ref}
         data-state={open ? 'open' : 'closed'}
         className={cn(
-          'overflow-hidden transition-[max-height,opacity] duration-200 ease-out data-[state=open]:opacity-100 data-[state=closed]:opacity-0',
+          'grid transition-[grid-template-rows,opacity] duration-200 ease-out',
+          'data-[state=closed]:grid-rows-[0fr] data-[state=open]:grid-rows-[1fr]',
+          'data-[state=open]:opacity-100 data-[state=closed]:opacity-0',
           className
         )}
         style={{
           ...style,
-          maxHeight: open ? (height ? `${height}px` : '9999px') : '0px',
           pointerEvents: open ? style?.pointerEvents ?? 'auto' : 'none',
         }}
         aria-hidden={!open}
         {...props}
       >
-        {children}
+        <div className="overflow-hidden">{children}</div>
       </div>
     );
   }
 );
 CollapsibleContent.displayName = 'CollapsibleContent';
-
-function useMergeRefs<T>(...refs: (React.Ref<T> | undefined)[]) {
-  return React.useCallback(
-    (node: T) => {
-      refs.forEach((ref) => {
-        if (!ref) return;
-        if (typeof ref === 'function') {
-          ref(node);
-        } else {
-          (ref as React.MutableRefObject<T | null>).current = node;
-        }
-      });
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    refs
-  );
-}
-
 export { Collapsible, CollapsibleContent, CollapsibleTrigger };
