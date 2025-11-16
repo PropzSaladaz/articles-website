@@ -56,13 +56,20 @@ export function ViewPreferenceProvider({ children }: { children: React.ReactNode
   };
 
   useEffect(() => {
-    const current = searchParams?.get('view');
     if (!pathname) return;
-    if (current === view) {
+    if (!pendingRef.current) {
       return;
     }
+
+    const current = searchParams?.get('view');
+    if (current === view) {
+      pendingRef.current = null;
+      return;
+    }
+
     const params = new URLSearchParams(searchParams?.toString());
     params.set('view', view);
+    pendingRef.current = null;
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   }, [view, pathname, router, searchParams]);
 
