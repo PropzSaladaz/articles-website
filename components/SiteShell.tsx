@@ -19,6 +19,7 @@ const DEFAULT_SIDEBAR_WIDTH = 288;
 const MIN_SIDEBAR_WIDTH = 224;
 const MAX_SIDEBAR_WIDTH = 460;
 const COLLAPSE_THRESHOLD = 80;
+const HEADER_HEIGHT = 72;
 
 type SiteShellProps = {
   tree: SubjectNode;
@@ -116,7 +117,9 @@ export function SiteShell({ tree, collections, children }: SiteShellProps) {
 
   return (
     <div className="relative flex min-h-screen flex-col">
-      <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-xl">
+      <header
+        className="sticky top-0 z-30 dotted-bg"
+      >
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-5">
           <Link href={`${basePath}/`} className="text-xl font-semibold tracking-tight">
             Sid Makes Sense
@@ -131,7 +134,7 @@ export function SiteShell({ tree, collections, children }: SiteShellProps) {
       </header>
 
       <div className="border-b border-border bg-background lg:hidden">
-        <div className="mx-auto max-h-80 w-full max-w-6xl overflow-y-auto px-4 py-4">
+        <div className="mx-auto max-h-80 w-full max-w-6xl overflow-y-auto px-4 py-4 ">
           <TreeNavigation tree={tree} collections={collections} />
         </div>
       </div>
@@ -150,9 +153,10 @@ export function SiteShell({ tree, collections, children }: SiteShellProps) {
         >
           <div
             className={cn(
-              'sticky top-[5.25rem] max-h-[calc(100vh-5.25rem)] overflow-y-auto px-4 py-6 transition-opacity duration-200',
+              'sticky overflow-y-auto px-4 py-6 transition-opacity duration-200',
               isSidebarCollapsed ? 'pointer-events-none opacity-0' : 'opacity-100'
             )}
+            style={{ top: HEADER_HEIGHT, maxHeight: `calc(100vh - ${HEADER_HEIGHT}px)` }}
             aria-hidden={isSidebarCollapsed}
           >
             <TreeNavigation tree={tree} collections={collections} />
@@ -176,7 +180,7 @@ export function SiteShell({ tree, collections, children }: SiteShellProps) {
         </main>
       </div>
 
-      <footer className="border-t border-border/60 bg-background/80 py-8 backdrop-blur-xl">
+      <footer className="dotted-bg border-t border-border bg-background py-8 backdrop-blur-xl">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <span>© {new Date().getFullYear()} Sidnei Teixeira. All rights reserved.</span>
           <span className="inline-flex items-center gap-1 text-xs uppercase tracking-[0.3em] text-muted-foreground/80">

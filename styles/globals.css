@@ -127,3 +127,35 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* =============================
+      Markdown styles
+  ================================ */
+
+.dotted-bg {
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: hsl(var(--border));
+
+  background-color: hsl(var(--background) / 0.8);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+.dotted-bg::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+
+  background-image: radial-gradient(circle, rgba(0, 0, 0, 0.06) 1px, transparent 1px);
+  background-size: 12px 12px;
+}
+
+.dark .dotted-bg::before {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.18) 1px, transparent 1px);
+}
+
+
+
