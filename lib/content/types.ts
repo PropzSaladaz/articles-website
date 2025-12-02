@@ -56,6 +56,11 @@ export type Heading = {
   level: number;
 };
 
+export type KnowledgePathItem = {
+  title: string;
+  slug: string;
+};
+
 export type Article = {
   slug: string;
   title: string;

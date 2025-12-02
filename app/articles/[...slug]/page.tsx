@@ -2,7 +2,12 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { ArticleViewToggle } from '../../../components/ArticleViewToggle';
 import { ArticleContent } from '../../../components/ArticleContent';
-import { getAllArticles, getArticleBySlug, getArticleCanonicalUrl } from '../../../lib/content/content';
+import {
+  getAllArticles,
+  getArticleBySlug,
+  getArticleCanonicalUrl,
+  getKnowledgePathForSlug,
+} from '../../../lib/content/content';
 import { Suspense } from 'react';
 import { CopyCodeButtons } from '@/components/CopyCodeButtons';
 
@@ -37,7 +42,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ArticlePage({ params }: PageProps) {
   const slug = Array.isArray(params.slug) ? params.slug.join('/') : params.slug ?? '';
-  const article = await getArticleBySlug(slug);
+  const [article, knowledgePath] = await Promise.all([
+    getArticleBySlug(slug),
+    getKnowledgePathForSlug(slug),
+  ]);
   if (!article || article.collectionSlug) {
     notFound();
   }
@@ -56,7 +64,7 @@ export default async function ArticlePage({ params }: PageProps) {
 
       {/* If ArticleContent uses client hooks, wrap it too */}
       <Suspense fallback={null}>
-        <ArticleContent article={article} />
+        <ArticleContent article={article} knowledgePath={knowledgePath} />
       </Suspense>
 
       <CopyCodeButtons />

@@ -12,6 +12,7 @@ import {
   getCollectionBySlug,
   getCollectionCanonicalUrl,
   getCollections,
+  getKnowledgePathForSlug,
 } from '../../../lib/content/content';
 import { formatDate } from '../../../lib/format';
 
@@ -86,7 +87,10 @@ export default async function CollectionSlugPage({ params }: PageProps) {
     notFound();
   }
 
-  const parentCollection = await getCollectionBySlug(article.collectionSlug);
+  const [parentCollection, knowledgePath] = await Promise.all([
+    getCollectionBySlug(article.collectionSlug),
+    getKnowledgePathForSlug(slug),
+  ]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -106,7 +110,7 @@ export default async function CollectionSlugPage({ params }: PageProps) {
       </div>
 
       <Suspense fallback={null}>
-        <ArticleContent article={article} />
+        <ArticleContent article={article} knowledgePath={knowledgePath} />
       </Suspense>
     </div>
   );
