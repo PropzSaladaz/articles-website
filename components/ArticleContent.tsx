@@ -1,6 +1,6 @@
 'use client';
 
-import { Article } from '../lib/content/types';
+import { Article, KnowledgePathItem } from '../lib/content/types';
 import Image from 'next/image';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { useIsSummaryView } from './ArticleViewToggle';
@@ -9,13 +9,35 @@ import { TagBadge } from './TagBadge';
 import { withBasePath } from '../lib/paths';
 import { GiscusComments } from './GiscusComments';
 
-export function ArticleContent({ article }: { article: Article }) {
+export function ArticleContent({
+  article,
+  knowledgePath = [],
+}: {
+  article: Article;
+  knowledgePath?: KnowledgePathItem[];
+}) {
   const isSummary = useIsSummaryView();
 
   return (
     <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-16">
       <article className="prose prose-lg prose-slate max-w-none dark:prose-invert">
         <header className="not-prose mb-8 flex flex-col gap-4">
+          {knowledgePath.length > 0 && (
+            <nav aria-label="Knowledge path" className="text-sm text-slate-600 dark:text-slate-300">
+              <ol className="flex flex-wrap items-center gap-2">
+                {knowledgePath.map((node, index) => (
+                  <li key={node.slug} className="flex items-center gap-2">
+                    <span className="font-medium">{node.title}</span>
+                    {index < knowledgePath.length - 1 && (
+                      <span aria-hidden="true" className="text-slate-400">
+                        /
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </nav>
+          )}
           <div className="space-y-2">
             <h1 className="text-4xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{article.title}</h1>
             <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500 dark:text-slate-400">

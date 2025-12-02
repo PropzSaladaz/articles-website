@@ -1,4 +1,4 @@
-import { SubjectNode, Article, Collection } from './types';
+import { SubjectNode, Article, Collection, KnowledgePathItem } from './types';
 import { getCanonicalUrl } from '../site';
 import { loadAllFromDisk } from './tree';
 import { generateRss, generateSitemap, persistCaches } from './cache';
@@ -99,4 +99,34 @@ export function getArticleCanonicalUrl(article: Article) {
 
 export function getCollectionCanonicalUrl(slug: string) {
   return getCanonicalUrl(`/collections/${slug}/`);
+}
+
+function findNodePath(node: SubjectNode, targetSlug: string): SubjectNode[] | null {
+  if (node.slug === targetSlug) {
+    return [node];
+  }
+
+  if (!node.children) return null;
+
+  for (const child of node.children) {
+    const childPath = findNodePath(child, targetSlug);
+    if (childPath) {
+      return [node, ...childPath];
+    }
+  }
+
+  return null;
+}
+
+export async function getKnowledgePathForSlug(slug: string): Promise<KnowledgePathItem[]> {
+  const { tree } = await ensureLoaded();
+  const path = findNodePath(tree, slug);
+  if (!path) return [];
+
+  return path
+    .filter((node) => node.slug)
+    .map((node) => ({
+      title: node.title,
+      slug: node.slug,
+    }));
 }
