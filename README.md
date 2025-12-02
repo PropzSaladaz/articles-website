@@ -1,11 +1,16 @@
 # 🧭 Articles & Collections Structure
 
-This repository uses a **tree-based content structure** to organize all writing — subjects, subtopics, standalone articles, and multi-chapter collections.
-The goal is to keep everything human-readable, versionable, and easy to parse programmatically.
+This repository uses a **tree-based content structure** to organize all writing — subjects, subtopics, standalone articles, and multi-chapter collections. The goal is to keep everything human-readable, versionable, and easy to parse programmatically.
 
----
+## Project architecture
 
-## 📂 Directory Overview
+- **Next.js App Router** (14.x) with static export (`output: "export"`) so builds produce a fully static `out/` directory.
+- **Content loader** (`lib/content/*`): walks `content/`, classifies folders as standalone articles or collections, and converts markdown to HTML with syntax highlighting, KaTeX support, summaries, and headings metadata.
+- **Prebuild step** (`scripts/prepare-content.mjs`): automatically runs before `npm run build` to rewrite intra-site markdown links, copy `images/` folders from content into `public/`, and normalize paths for GitHub Pages base paths.
+- **Caches & feeds**: build writes `.cache/{content-tree,articles,collections}.json` for inspection and generates `public/sitemap.xml` and `public/rss.xml` for SEO/subscriptions.
+- **UI shell** (`components/`, `app/layout.tsx`): renders navigation using the parsed subject tree and collections while keeping the site themeable via Tailwind and Radix primitives.
+
+### 📂 Directory overview
 
 ```
 content/
@@ -14,24 +19,22 @@ content/
       Vertex-Array-Objects/          # ← Standalone Article
         index.md                     # main article content
         summary.md                   # summary/abstract
-        images/cover.png             # optional assets
+        images/cover.png             # optional assets (copied to /public/articles/...)
 
       Rendering-Pipeline/            # ← Collection (multi-chapter)
         index.md                     # collection metadata + summary
         01-introduction/
           index.md                 # chapter content
           summary.md               # chapter summary
-          images/…                 # optional assets
+          images/…                 # optional assets copied alongside the chapter
         02-vertex-processing/
           index.md
           summary.md
 ```
 
----
+### 🧩 Article types
 
-## 🧩 Article Types
-
-### 📝 Standalone Article
+#### 📝 Standalone Article
 
 A folder with:
 
@@ -47,7 +50,7 @@ summary: "How Threshold Cryptography works in simple terms"
 ---
 ```
 
-### 📚 Collection
+#### 📚 Collection
 
 A folder with:
 
@@ -81,9 +84,7 @@ coverImage: "./images/intro.png"
 ---
 ```
 
----
-
-## 🧠 Naming & Ordering Rules
+### 🧠 Naming & ordering rules
 
 * Folder names can have numeric prefixes (`01-`, `02-`) to define order visually.
 * The parser automatically sorts chapters by:
@@ -96,9 +97,7 @@ coverImage: "./images/intro.png"
   * Collection: `/collections/:collectionSlug/`
   * Chapters: `/collections/:collectionSlug/:chapterSlug/`
 
----
-
-## 🧮 Generated Structure
+### 🧮 Generated structure
 
 When you run the site build:
 
@@ -109,49 +108,17 @@ When you run the site build:
   * `.cache/collections.json` — all collections
 * It also builds `sitemap.xml` and `rss.xml` in `/public/`.
 
----
-
-## ✨ Quick Reference
-
-| Type       | Folder structure     | Required files                                               | Output route                                             |
-| ---------- | -------------------- | ------------------------------------------------------------ | -------------------------------------------------------- |
-| Standalone | `/Topic/Article/`    | `index.md`, `summary.md`                                     | `/articles/:slug/`                                       |
-| Collection | `/Topic/Collection/` | `index.md`, `chapters/**/index.md`, `chapters/**/summary.md` | `/collections/:slug/` and `/collections/:slug/:chapter/` |
-
----
-
-## 🧰 Coming Soon: Boilerplate Generator
-
-You’ll later add a CLI utility (e.g. `pnpm gen:article`) that automates:
-
-* Creating the folder structure
-* Pre-filling frontmatter templates
-* Optionally adding a sample cover or placeholder diagrams
-
-Example usage:
-
-```bash
-pnpm gen:article "Computer Science/3D Graphics/Rendering Pipeline" --collection
-pnpm gen:article "Computer Science/3D Graphics/Vertex Array Objects" --standalone
-```
-
----
-
-## ✅ Writing Workflow
+### ✅ Writing workflow
 
 1. Choose whether you’re creating a **standalone article** or a **collection**.
 2. Create the appropriate folder inside `/content/...`.
 3. Write `index.md` and `summary.md`.
-4. Add images locally and reference them via relative paths.
+4. Add images locally and reference them via relative paths. The prebuild script will relocate `images/` folders into `public/{articles|collections}/...` and rewrite in-article links accordingly.
 5. Commit — the parser takes care of everything else on build.
-
----
 
 > 💡 Tip: You can preview the full parsed structure anytime by inspecting `.cache/content-tree.json` after running a build.
 
----
-
-# Getting Started
+## Getting started
 
 Install dependencies and run the development server:
 
@@ -160,62 +127,31 @@ npm install
 npm run dev
 ```
 
-Visit http://localhost:3000 to see the site. Articles live in `content/articles` and are parsed at build time.
+Visit http://localhost:3000 to see the site. Articles live in `content/` and are parsed at build time via `lib/content/*`.
 
-## Building & Exporting
+## Building & exporting
 
 Create a production build and generate the static export:
 
 ```bash
 npm run build
-npm run export
 ```
 
-The static files are emitted to the `out/` directory and can be served locally or deployed to GitHub Pages.
+`next.config.js` sets `output: "export"`, so `npm run build` writes the static site to `out/`. The `prebuild` hook runs `scripts/prepare-content.mjs` first to re-map internal links and copy content images.
 
-## GitHub Pages Deployment
+## Deployment
 
-1. Ensure GitHub Pages is configured to use GitHub Actions.
-2. Push changes to the `main` branch. The included workflow (`.github/workflows/pages.yml`) builds the project and deploys the `out/` directory.
-3. The workflow sets the `REPO_NAME` environment variable automatically from the repository name, ensuring the correct `basePath` and `assetPrefix` for project pages.
-
-If you host the site under a different domain, set the `SITE_URL` environment variable during the build.
-
-## Content Model
-
-Articles are Markdown files with YAML frontmatter stored in `content/articles`. Required fields include `title`, `slug`, and `date`. Optional fields: `tags`, `summary`, and `cover`.
+- **GitHub Pages (default):** Push to `main` and the included workflow (`.github/workflows/pages.yml`) builds `out/` and deploys it. `REPO_NAME` is inferred from the repository for correct `basePath`/`assetPrefix` handling.
+- **Custom domains:** Set `SITE_URL` during the build to generate canonical URLs, RSS, and sitemap links for your domain.
 
 ## Scripts
 
 - `npm run dev` – start the dev server
-- `npm run build` – build for production
-- `npm run export` – generate static output for GitHub Pages
+- `npm run build` – run the prebuild step, build, and export static output to `out/`
 - `npm run lint` – run Next.js linting
 
-## Enabling Article Comments with Giscus
+## Enabling article comments with Giscus
 
-This project can render a dedicated [Giscus](https://giscus.app/) discussion thread on each article page. Configure the following
-environment variables (for example in `.env.local`) with the values generated by Giscus:
+This project can render a dedicated [Giscus](https://giscus.app/) discussion thread on each article page. Configure the following environment variables (for example in `.env.local`) with the values generated by Giscus:
 
 - `NEXT_PUBLIC_GISCUS_REPO`
-- `NEXT_PUBLIC_GISCUS_REPO_ID`
-- `NEXT_PUBLIC_GISCUS_CATEGORY`
-- `NEXT_PUBLIC_GISCUS_CATEGORY_ID`
-
-Optional environment variables with sensible defaults:
-
-- `NEXT_PUBLIC_GISCUS_MAPPING` (default: `pathname`)
-- `NEXT_PUBLIC_GISCUS_STRICT` (default: `0`)
-- `NEXT_PUBLIC_GISCUS_REACTIONS_ENABLED` (default: `1`)
-- `NEXT_PUBLIC_GISCUS_EMIT_METADATA` (default: `0`)
-- `NEXT_PUBLIC_GISCUS_INPUT_POSITION` (default: `bottom`)
-- `NEXT_PUBLIC_GISCUS_LANG` (default: `en`)
-- `NEXT_PUBLIC_GISCUS_LOADING` (default: `lazy`)
-- `NEXT_PUBLIC_GISCUS_THEME` (default: `preferred_color_scheme`)
-
-When the required variables are set, a comments section appears below the full article view (it remains hidden when viewing the
-summary or on non-article pages).
-
-## Base Path Notes
-
-When deployed to `https://USERNAME.github.io/REPO_NAME`, the site automatically uses `/REPO_NAME` as the base path. Locally, the base path is omitted.
