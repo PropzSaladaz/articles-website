@@ -63,7 +63,7 @@ export async function buildArticleFromFolder({
   const fileStats = fs.statSync(indexPath);
   const publishedAt = parseOptionalDate(front.date) ?? fileStats.mtime.toISOString();
 
-  const html = await markdownToHtml(content);
+  const html = await markdownToHtml(content, { slug });
   const headings = extractHeadings(content);
 
   const summaryHtml = await markdownToHtml(summaryRaw);
@@ -84,6 +84,7 @@ export async function buildArticleFromFolder({
     headings,
     readingTime: { text: rt.text, minutes: rt.minutes, words: rt.words },
     collectionSlug: parentCollectionSlug,
+    folderAbs,
   };
 }
 
@@ -105,7 +106,7 @@ export async function buildCollectionFromFolder({
 
   const cover = deriveCover(front, folderAbs);
   const summaryRaw = summarySource(folderAbs, front, content);
-  const summaryHtml = await markdownToHtml(summaryRaw);
+  const summaryHtml = await markdownToHtml(summaryRaw, { slug });
   const summaryText = await markdownToPlainText(summaryRaw);
 
   return {
@@ -118,5 +119,6 @@ export async function buildCollectionFromFolder({
     collections: childCollections,
     totalArticles: childArticles.length,
     totalCollections: childCollections.length,
+    folderAbs,
   };
 }

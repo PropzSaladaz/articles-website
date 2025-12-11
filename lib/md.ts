@@ -5,6 +5,7 @@ import remarkRehype from 'remark-rehype';
 import remarkDirective from 'remark-directive';
 import remarkMath from 'remark-math';
 import remarkSpoiler from './remark-spoiler';
+import remarkGithubAlerts from './remark-github-alerts';
 import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import rehypeKatex from 'rehype-katex';
@@ -19,12 +20,17 @@ import { Heading } from './content/types';
 import rehypeShiki from '@shikijs/rehype';
 import rehypeCodeBlockCopy from './rehypeCodeBlockCopy';
 import remarkStrongHr from './remark-strong-hr';
+import rehypeDevImages from './rehype-dev-images';
 
+interface MarkdownOptions {
+  slug?: string;
+}
 
+export async function markdownToHtml(markdown: string, options?: MarkdownOptions): Promise<string> {
+  const isDev = process.env.NODE_ENV === 'development';
+  const slug = options?.slug || '';
 
-export async function markdownToHtml(markdown: string): Promise<string> {
-  const file = await unified()
-    // built the AST
+  let processor = unified()
     .use(remarkParse)
     // support github flavored markdown
     .use(remarkGfm)
@@ -33,10 +39,12 @@ export async function markdownToHtml(markdown: string): Promise<string> {
     // 2) Enable directives and convert :::spoiler → <details><summary>…</summary>…</details>
     .use(remarkDirective)
     .use(remarkSpoiler)
+    // GitHub-style alerts: > [!NOTE], > [!TIP], etc.
+    .use(remarkGithubAlerts)
 
     // stronger horizontal rules using '==='
     .use(remarkStrongHr)
-    
+
     // transform to HTML AST
     .use(remarkRehype, { allowDangerousHtml: true })
     // support raw HTML in markdown
@@ -53,15 +61,16 @@ export async function markdownToHtml(markdown: string): Promise<string> {
     })
     // add ids to headings - allow making link jumps to sections possible
     .use(rehypeSlug)
-    // add links to headings
-    .use(rehypeAutolinkHeadings, {
-      behavior: 'wrap',
-    })
-    // set custom classes for each HTML element - allow styling markdown content
+    .use(rehypeAutolinkHeadings, { behavior: 'wrap' })
     .use(rehypeScopeClasses, { prefix: 'md-' })
-    // add copy button to code blocks
-    .use(rehypeCodeBlockCopy)
-    // serialize HTML AST to HTML
+    .use(rehypeCodeBlockCopy);
+
+  // In dev mode with a slug, transform relative image URLs
+  if (isDev && slug) {
+    processor = processor.use(rehypeDevImages, { slug, isDev });
+  }
+
+  const file = await processor
     .use(rehypeStringify, { allowDangerousHtml: true })
     .process(markdown);
 

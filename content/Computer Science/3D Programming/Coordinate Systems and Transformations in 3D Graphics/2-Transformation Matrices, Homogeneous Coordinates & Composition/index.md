@@ -31,7 +31,7 @@ R(\theta)=
 \end{bmatrix}
 $$
 
-:::spoiler\[See explanation for that formula]
+:::spoiler[See explanation for that formula]
 
 ### Why the Rotation Formula Has This Form
 
@@ -98,7 +98,7 @@ $$
 \begin{bmatrix}
 x' \ y'
 \end{bmatrix}
-=============
+=
 
 \begin{bmatrix}
 \cos\theta & -\sin\theta \\
@@ -152,7 +152,7 @@ $$
 
 The point moves from the positive X-axis to the positive Y-axis, as expected:
 
-![](/articles-website/collections/computer-science/3d-programming/coordinate-systems-and-transformations-in-3d-graphics/transformation-matrices-homogeneous-coordinates-composition/images/img4.svg)
+![](./images/img4.svg)
 
 ---
 
@@ -268,7 +268,7 @@ $$
 \begin{bmatrix}
 x \ y \ 1
 \end{bmatrix}
-=============
+=
 
 \begin{bmatrix}
 x + t\_x \ y + t\_y \ 1
@@ -370,7 +370,7 @@ $$
 
 Translating then rotating yields a different final position than rotating then translating, because rotation would also rotate the translation vector.
 
-![](/articles-website/collections/computer-science/3d-programming/coordinate-systems-and-transformations-in-3d-graphics/transformation-matrices-homogeneous-coordinates-composition/images/img5.svg)
+![](./images/img5.svg)
 
 \===
 
@@ -510,7 +510,7 @@ the arm’s transform (relative to the world)
 
 Because of this chain, when the arm rotates, the forearm and hand follow automatically. Their world matrices already include the arm’s transformation, so there is no need to manually update the child objects — the hierarchy and matrix multiplication perform the propagation for us.
 
-![](/articles-website/collections/computer-science/3d-programming/coordinate-systems-and-transformations-in-3d-graphics/transformation-matrices-homogeneous-coordinates-composition/images/img2.svg)
+![](./images/img2.svg)
 
 ### 4.3 World → Local Space
 

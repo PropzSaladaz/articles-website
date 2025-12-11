@@ -139,7 +139,7 @@ export function SiteShell({ tree, collections, children }: SiteShellProps) {
         </div>
       </div>
 
-      <div className="flex flex-1" ref={containerRef}>
+      <div className="flex flex-1 items-start" ref={containerRef}>
         <aside
           className={cn(
             'relative hidden shrink-0 overflow-hidden bg-background backdrop-blur transition-[width] duration-200 ease-out lg:flex',

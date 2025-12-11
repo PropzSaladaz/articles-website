@@ -1,4 +1,5 @@
-import { visit } from "unist-util-visit"
+import { visit } from "unist-util-visit";
+import { toString } from "hast-util-to-string";
 
 export default function rehypeCodeBlockCopy() {
   return (tree: any) => {
@@ -11,25 +12,43 @@ export default function rehypeCodeBlockCopy() {
         node.children?.[0]?.tagName === "code"
       ) {
         const codeNode = node.children[0];
-        const codeText = codeNode.children
-          .filter((n: any) => n.type === "text")
-          .map((n: any) => n.value)
-          .join("");
 
-        // Wrap in a parent container div
+        // Use hast-util-to-string to extract all text content, including from nested spans
+        const codeText = toString(codeNode);
+
+        // Wrap in a parent container div with Mac-style header
         parent.children[index as number] = {
           type: "element",
           tagName: "div",
           properties: { className: ["code-block"] },
           children: [
+            // Mac-style header bar with traffic lights
             {
               type: "element",
-              tagName: "button",
-              properties: {
-                className: ["copy-btn"],
-                "data-code": codeText,
-              },
-              children: [{ type: "text", value: "Copy" }],
+              tagName: "div",
+              properties: { className: ["code-block-header"] },
+              children: [
+                {
+                  type: "element",
+                  tagName: "div",
+                  properties: { className: ["traffic-lights"] },
+                  children: [
+                    { type: "element", tagName: "span", properties: { className: ["light", "light-red"] }, children: [] },
+                    { type: "element", tagName: "span", properties: { className: ["light", "light-yellow"] }, children: [] },
+                    { type: "element", tagName: "span", properties: { className: ["light", "light-green"] }, children: [] },
+                  ],
+                },
+                {
+                  type: "element",
+                  tagName: "button",
+                  properties: {
+                    className: ["copy-btn"],
+                    "data-code": codeText,
+                    "aria-label": "Copy code",
+                  },
+                  children: [],
+                },
+              ],
             },
             node, // original <pre><code>
           ],

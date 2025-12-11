@@ -7,37 +7,37 @@ export type ContentStatus = 'draft' | 'published' | 'archived';
 // ========================================
 
 export enum NodeKind {
-    StandaloneArticle = 'standalone',
-    CollectionArticle = 'collection',
-    Node = 'node',
+  StandaloneArticle = 'standalone',
+  CollectionArticle = 'collection',
+  Node = 'node',
 }
 
 export interface SubjectNode {
-    kind: NodeKind;
-    id: string;
-    slug: string;
-    title: string;
-    status?: ContentStatus;
+  kind: NodeKind;
+  id: string;
+  slug: string;
+  title: string;
+  status?: ContentStatus;
 
-    // for collection only
-    children?: SubjectNode[];
-    articlesCount?: number;
-    collectionsCount?: number;
+  // for collection only
+  children?: SubjectNode[];
+  articlesCount?: number;
+  collectionsCount?: number;
 }
 
 export interface StandaloneArticle extends SubjectNode {
-    kind: NodeKind.StandaloneArticle;
-    articleSlug: Slug;
-    status: ContentStatus;
-    collectionSlug?: Slug | null;
+  kind: NodeKind.StandaloneArticle;
+  articleSlug: Slug;
+  status: ContentStatus;
+  collectionSlug?: Slug | null;
 }
 
 export interface CollectionArticle extends SubjectNode {
-    kind: NodeKind.CollectionArticle;
-    collectionSlug: Slug;
-    status: ContentStatus;
-    articlesCount: number;
-    collectionsCount: number;
+  kind: NodeKind.CollectionArticle;
+  collectionSlug: Slug;
+  status: ContentStatus;
+  articlesCount: number;
+  collectionsCount: number;
 }
 
 
@@ -78,16 +78,18 @@ export type Article = {
     words: number;
   };
   collectionSlug?: Slug | null;
+  folderAbs?: string;
 };
 
 export type Collection = {
-    slug: Slug;
-    title: string;
-    status: ContentStatus;
-    cover?: string | null;
-    summary: ArticleSummary;
-    articles: Article[];
-    collections: Collection[];
-    totalArticles: number;
-    totalCollections: number;
+  slug: Slug;
+  title: string;
+  status: ContentStatus;
+  cover?: string | null;
+  summary: ArticleSummary;
+  articles: Article[];
+  collections: Collection[];
+  totalArticles: number;
+  totalCollections: number;
+  folderAbs?: string;
 };

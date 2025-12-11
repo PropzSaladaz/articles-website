@@ -8,6 +8,7 @@ import { formatDate } from '../lib/format';
 import { TagBadge } from './TagBadge';
 import { withBasePath } from '../lib/paths';
 import { GiscusComments } from './GiscusComments';
+import { cn } from '../lib/utils';
 
 export function ArticleContent({
   article,
@@ -23,18 +24,23 @@ export function ArticleContent({
       <article className="prose prose-lg prose-slate max-w-none dark:prose-invert">
         <header className="not-prose mb-8 flex flex-col gap-4">
           {knowledgePath.length > 0 && (
-            <nav aria-label="Knowledge path" className="text-sm text-slate-600 dark:text-slate-300">
-              <ol className="flex flex-wrap items-center gap-2">
-                {knowledgePath.map((node, index) => (
-                  <li key={node.slug} className="flex items-center gap-2">
-                    <span className="font-medium">{node.title}</span>
-                    {index < knowledgePath.length - 1 && (
-                      <span aria-hidden="true" className="text-slate-400">
-                        /
+            <nav aria-label="Knowledge path" className="mb-2">
+              <ol className="flex flex-wrap items-center gap-1.5 text-sm leading-none text-muted-foreground/80">
+                {knowledgePath.map((node, index) => {
+                  const isLast = index === knowledgePath.length - 1;
+                  return (
+                    <li key={node.slug} className="flex items-center gap-1.5">
+                      <span className={cn("transition-colors", isLast ? "font-semibold text-foreground" : "hover:text-foreground")}>
+                        {node.title}
                       </span>
-                    )}
-                  </li>
-                ))}
+                      {!isLast && (
+                        <span aria-hidden="true" className="text-muted-foreground/40 select-none">
+                          ›
+                        </span>
+                      )}
+                    </li>
+                  );
+                })}
               </ol>
             </nav>
           )}
