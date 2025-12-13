@@ -22,8 +22,12 @@ import rehypeCodeBlockCopy from './rehypeCodeBlockCopy';
 import remarkStrongHr from './remark-strong-hr';
 import rehypeDevImages from './rehype-dev-images';
 
+import rehypeProductionImages from './rehype-production-images';
+
 interface MarkdownOptions {
   slug?: string;
+  parentCollectionSlug?: string | null;
+  isCollection?: boolean;
 }
 
 export async function markdownToHtml(markdown: string, options?: MarkdownOptions): Promise<string> {
@@ -68,6 +72,14 @@ export async function markdownToHtml(markdown: string, options?: MarkdownOptions
   // In dev mode with a slug, transform relative image URLs
   if (isDev && slug) {
     processor = processor.use(rehypeDevImages, { slug, isDev });
+  } else if (!isDev && slug) {
+    processor = processor.use(rehypeProductionImages, {
+      slug,
+      isDev,
+      repoName: process.env.NEXT_REPO_NAME,
+      parentCollectionSlug: options?.parentCollectionSlug,
+      isCollection: options?.isCollection
+    });
   }
 
   const file = await processor

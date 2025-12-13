@@ -3,10 +3,7 @@
 import fs from 'fs';
 import fsp from 'fs/promises';
 import path from 'path';
-import { remark } from 'remark';
-import { visit } from 'unist-util-visit';
 import 'dotenv/config';
-import remarkFrontmatter from 'remark-frontmatter';
 
 const PROJECT_ROOT = process.cwd();
 const CONTENT_ROOT = path.join(PROJECT_ROOT, 'content');
@@ -219,109 +216,7 @@ async function copyDirectory(src, dest) {
   }
 }
 
-function transformUrl(target, context) {
-  const trimmed = target.trim();
 
-  // check if target should be left untouched
-  if (isAbsoluteOrAnchor(trimmed)) {
-    return { changed: false, value: target };
-  }
-
-  // fetch actual image path without query/hash, if any
-  const { pathPart, hash, query } = splitTarget(trimmed);
-  if (!pathPart) {
-    return { changed: false, value: target };
-  }
-
-  // get OS-specific path for the image
-  const resolved = normalizePath(path.resolve(context.fileDir, pathPart));
-  const ext = path.extname(pathPart).toLowerCase();
-
-  if (ext === '.md' && context.indexByPath.has(resolved)) {
-    const targetEntry = context.indexByPath.get(resolved);
-    const newUrl = `${targetEntry.canonicalUrl}${query}${hash}`;
-    return { changed: true, value: newUrl };
-  }
-
-  if (pathHasImageDir(resolved)) {
-    if (!resolved.startsWith(context.entry.folderAbs)) {
-      return { changed: false, value: target };
-    }
-    const relativeToArticle = path.relative(context.entry.folderAbs, resolved);
-    if (relativeToArticle.startsWith('..')) {
-      return { changed: false, value: target };
-    }
-    const normalizedRelative = toPosixPath(relativeToArticle);
-    const newUrl = `${ENV_REPO_NAME}${context.entry.canonicalPath}/${normalizedRelative}${query}${hash}`;
-    return { changed: true, value: newUrl };
-  }
-
-  return { changed: false, value: target };
-}
-
-function rewriteLinksPlugin(context) {
-  return (tree, file) => {
-    let modified = false;
-    visit(tree, ['link', 'image', 'definition'], (node) => {
-      if (!node.url || typeof node.url !== 'string') {
-        return;
-      }
-      const { changed, value } = transformUrl(node.url, context);
-      if (changed) {
-        node.url = value;
-        modified = true;
-      }
-    });
-    if (modified) {
-      file.data.modified = true;
-    }
-  };
-}
-
-async function processMarkdownFile(entry, filePath, indexByPath) {
-  const original = await fsp.readFile(filePath, 'utf8');
-  const context = {
-    fileDir: path.dirname(filePath),
-    entry,
-    indexByPath,
-  };
-  const processor = remark()
-    // parse and preserve YAML front matter (`--- ... ---`)
-    .use(remarkFrontmatter, ['yaml'])
-    // your link/image rewriter
-    .use(rewriteLinksPlugin, context)
-    // control remark-stringify so it does not convert markers unexpectedly
-    .data('settings', {
-      setext: false,  // use ATX headings (# ##), don’t turn lines + --- into headings
-      rule: '-',      // keep horizontal rules as '---' instead of '***'
-      fences: true,   // prefer ``` code fences
-      listItemIndent: 'one'
-  });
-  const file = await processor.process(original);
-  const changed = Boolean(file.data.modified);
-  if (changed) {
-    await fsp.writeFile(filePath, String(file));
-  }
-  return changed;
-}
-
-async function updateMarkdownFiles(entry, indexByPath) {
-  // get all entries within the entry folder
-  const dirents = await fsp.readdir(entry.folderAbs, { withFileTypes: true });
-  // filter only markdown files
-  const mdFiles = dirents.filter((dirent) => dirent.isFile() && dirent.name.toLowerCase().endsWith('.md'));
-  const changedFiles = [];
-  for (const md of mdFiles) {
-    // build the path of the markdown file
-    const filePath = path.join(entry.folderAbs, md.name);
-    // update markdown file links
-    const changed = await processMarkdownFile(entry, filePath, indexByPath);
-    if (changed) {
-      changedFiles.push(filePath);
-    }
-  }
-  return changedFiles;
-}
 
 async function copyImageAssets(entry) {
   const imageDirs = await findImageDirectories(entry);
@@ -354,20 +249,14 @@ async function main() {
   const indexByPath = new Map(entries.map((entry) => [normalizePath(entry.indexPath), entry]));
 
   const summary = {
-    updatedFiles: [],
     copiedAssets: [],
   };
 
   for (const entry of entries) {
-    const updated = await updateMarkdownFiles(entry, indexByPath);
-    summary.updatedFiles.push(...updated);
     const copied = await copyImageAssets(entry);
     summary.copiedAssets.push(...copied);
   }
 
-  if (summary.updatedFiles.length > 0) {
-    console.log(`Updated markdown references in ${summary.updatedFiles.length} file(s).`);
-  }
   if (summary.copiedAssets.length > 0) {
     for (const { from, to } of summary.copiedAssets) {
       console.log(`Copied assets from ${from} to ${to}`);

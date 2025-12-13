@@ -63,7 +63,7 @@ export async function buildArticleFromFolder({
   const fileStats = fs.statSync(indexPath);
   const publishedAt = parseOptionalDate(front.date) ?? fileStats.mtime.toISOString();
 
-  const html = await markdownToHtml(content, { slug });
+  const html = await markdownToHtml(content, { slug, parentCollectionSlug });
   const headings = extractHeadings(content);
 
   const summaryHtml = await markdownToHtml(summaryRaw);
@@ -106,7 +106,7 @@ export async function buildCollectionFromFolder({
 
   const cover = deriveCover(front, folderAbs);
   const summaryRaw = summarySource(folderAbs, front, content);
-  const summaryHtml = await markdownToHtml(summaryRaw, { slug });
+  const summaryHtml = await markdownToHtml(summaryRaw, { slug, isCollection: true });
   const summaryText = await markdownToPlainText(summaryRaw);
 
   return {
