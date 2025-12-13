@@ -84,7 +84,7 @@ export async function buildArticleFromFolder({
     headings,
     readingTime: { text: rt.text, minutes: rt.minutes, words: rt.words },
     collectionSlug: parentCollectionSlug,
-    folderAbs,
+    folderAbs: process.env.NODE_ENV === 'development' ? folderAbs : undefined,
   };
 }
 
@@ -119,6 +119,6 @@ export async function buildCollectionFromFolder({
     collections: childCollections,
     totalArticles: childArticles.length,
     totalCollections: childCollections.length,
-    folderAbs,
+    folderAbs: process.env.NODE_ENV === 'development' ? folderAbs : undefined,
   };
 }

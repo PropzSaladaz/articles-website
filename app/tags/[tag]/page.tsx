@@ -6,6 +6,8 @@ import { Suspense } from 'react';
 
 export const runtime = 'nodejs';           // ensure Node runtime (fs available)
 export const dynamic = 'force-static';     // keep SSG if you’re reading local files
+export const dynamicParams = false;
+
 
 export async function generateStaticParams() {
   const tags = await getAllTags();

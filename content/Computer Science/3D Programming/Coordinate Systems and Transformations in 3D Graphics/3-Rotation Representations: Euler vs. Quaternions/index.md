@@ -13,24 +13,25 @@ This section explains when Euler angles are appropriate, their limitations, and 
 
 Euler angles express rotation as three sequential rotations around the coordinate axes (e.g., X → Y → Z). They are simple, intuitive, and easy for humans to understand.
 You specify rotations one at a time:
+
 1. Rotate X 30º
 2. Rotate Y 20º
 
 Euler angles are a good choice when:
 
-- You need a **user-friendly** way to specify orientation  
+* You need a **user-friendly** way to specify orientation\
   (e.g., in an editor: `(30°, 0°, 90°)`)
-- Rotations occur around **one axis at a time** (e.g., a camera looking up/down)
-- You want a **compact and readable** representation
-- You are doing a 2D application
+* Rotations occur around **one axis at a time** (e.g., a camera looking up/down)
+* You want a **compact and readable** representation
+* You are doing a 2D application
 
 Common examples:
 
-- Rotation fields in Unity/Unreal/Blender inspectors
-- Camera yaw/pitch controls
-- Simple mechanical rotations (doors, wheels, turrets)
+* Rotation fields in Unity/Unreal/Blender inspectors
+* Camera yaw/pitch controls
+* Simple mechanical rotations (doors, wheels, turrets)
 
-Euler angles match how people naturally describe orientation:  
+Euler angles match how people naturally describe orientation:\
 “Turn 45° left, then tilt 15° up.”
 
 ---
@@ -43,17 +44,18 @@ Euler angles are not ideal for continuous 3D rotation or animation. They suffer 
 
 Euler rotations are applied **sequentially**, one axis at a time. Changing the order produces different results:
 
-- Rotating X → Y → Z is **not the same** as Z → Y → X
+* Rotating X → Y → Z is **not the same** as Z → Y → X
 
 Different engines use different orders, which creates confusion and bugs.
 
 ### 1.2.2 Gimbal Lock
 
-Gimbal lock occurs when one rotation causes two axes to align, eliminating a degree of freedom.  
+Gimbal lock occurs when one rotation causes two axes to align, eliminating a degree of freedom.\
 The object can no longer rotate freely.
 
-**Example:**  
+**Example:**\
 Imagine we have a scene graph where the **blue** (Yaw) axis is the parent, then red axis is a child, and green axis (Roll) is the child of red:
+
 ```
 > Blue (Yaw)
    |- Red
@@ -68,9 +70,9 @@ If we rotate the green and blue such that they align, we are only able to rotate
 
 Interpolating Euler angles directly (e.g., linear interpolation) causes:
 
-- Jerky or unnatural motion
-- Sudden flips near angle boundaries (e.g., going from 359° to 0°)
-- Non-uniform rotation speed
+* Jerky or unnatural motion
+* Sudden flips near angle boundaries (e.g., going from 359° to 0°)
+* Non-uniform rotation speed
 
 Euler angles do not interpolate smoothly because the shortest rotation path is not linear in Euler space.
 
@@ -102,27 +104,27 @@ Quaternions encode rotation in 3D space, and are represented in four components.
 
 ### 2.1.1. No Rotation Order Problem
 
-A quaternion represents a **single unified rotation**, not three sequential axis rotations.  
-There is no concept of rotation order, so composition is consistent and predictable. We can be sure that $R_x(\theta) \rightarrow R_z(\theta) = R_z(\theta) \rightarrow R_x(\theta)$
+A quaternion represents a **single unified rotation**, not three sequential axis rotations.\
+There is no concept of rotation order, so composition is consistent and predictable. We can be sure that $R\_x(\theta) \rightarrow R\_z(\theta) = R\_z(\theta) \rightarrow R\_x(\theta)$
 
 ### 2.1.2 Immune to Gimbal Lock
 
-Quaternions operate in 4D space. Their representation never collapses axes together, so they never lose a degree of freedom.  
+Quaternions operate in 4D space. Their representation never collapses axes together, so they never lose a degree of freedom.\
 All orientations remain valid with full control over 3D rotation.
 
 ### 2.1.3. Smooth Interpolation (Slerp)
 
 Quaternions support **Spherical Linear Interpolation (Slerp)**, which moves along the shortest path on a sphere:
 
-- Smooth, natural rotation
-- Constant speed
-- No snapping or flipping
+* Smooth, natural rotation
+* Constant speed
+* No snapping or flipping
 
 This makes them ideal for animation, camera movement, and physics. That case we saw in the arrow gif above, you can forget about such issues. Will never happen.
 
 ### 2.1.4. Numerical Stability
 
-Repeated Euler rotations accumulate floating-point error, causing tilt and drift over time.  
+Repeated Euler rotations accumulate floating-point error, causing tilt and drift over time.\
 Quaternions preserve orthogonality and remain stable even after many rotations (when normalized).
 
 ## 2.2. Building an intuition for Quaternions
@@ -132,13 +134,14 @@ To understand all this, we need to take a step back, and think how rotations wor
 
 ### 2.2.1. Duoternians
 
-Let's focus on the 2D plane. Why? It's the smallest space that allows for rotations. If you doubt it, try to think how a rotation would happen in 1D. 
+Let's focus on the 2D plane. Why? It's the smallest space that allows for rotations. If you doubt it, try to think how a rotation would happen in 1D.
 Well, you can only move either forward or backward. you cannot rotate. For that to happen, you (suposing somehow you had eyes) would need to update where you were looking at continuously until you pointed in the oposite direction. But as you can see, this requires an additional dimension. If you are looking forward, and want to rotate to be looking backwards, you would either turn yourself from the right, left, up or down (weirdo).
 
 So, back to 2D. What is a rotation? You can intuitively see a triangle in a 2D plane, and rotate it 45 degrees clockwise.
 What this means actually is the following:
-1) There is an invisible axis perpendicular to the 2D plane, call it **z**
-2) We perfom a rotation over that axis over 45 degrees (use the right-hand rule)
+
+1. There is an invisible axis perpendicular to the 2D plane, call it **z**
+2. We perfom a rotation over that axis over 45 degrees (use the right-hand rule)
 
 So a rotation in 2D is really a rotation over an axis perpendicular to 2D plane - i.e, an axis in 3D space, and a 1D rotation (a single number - the angle).
 One interesting thing, is that this rotation axis is fixed - is always the same for any possible 2D rotation. Why? Well, we only have 2 axis - **x** and **y** defining our 2D space, which is a plane. The only rotational axis (which by definition needs to be perpendicular to the plane we want to rotate) is the one perpendicular to this plane - **z**.
@@ -165,20 +168,20 @@ Pling! this is a 4-value structure! The so-glorified 4D Quaternion!
 
 I challenge you to do a simple exercise. Keep this mental model of an axis of rotation and the plane perpendicular to it, and try to rotate your phone with your hand. Try to see how this is true.
 
-Of course some of you will continuously change the axis of rotation and call it BS! Fair enough. 
+Of course some of you will continuously change the axis of rotation and call it BS! Fair enough.
 You see, for simple rotations of the type *"I want to rotate this object from this original position into that final position"* - such cases use only 1 fixed axis, and rotation angle.
 
 But for more complex animations, where we need to update our rotation continuously, the axis is **no longer fixed**. Meaning the axis also continuously changes. But for each timestep the axis is assumed to be fixed. So the model of **constant 3D rotation axis + rotation angle** holds for any rotation.
 
 # 3. Best Quaternion resources
 
-- [Interesting ways to project 3D space into 2D](https://en.wikipedia.org/wiki/List_of_map_projections)
+* [Interesting ways to project 3D space into 2D](https://en.wikipedia.org/wiki/List_of_map_projections)
 
 ---
 
 ### 6.5 Practical Rule of Thumb
 
-- **Use Euler angles for input, UI, simple rotations, and user-facing values.**
-- **Use quaternions for actual rotation math, animation, physics, interpolation, and continuous 3D movement.**
+* **Use Euler angles for input, UI, simple rotations, and user-facing values.**
+* **Use quaternions for actual rotation math, animation, physics, interpolation, and continuous 3D movement.**
 
 Most engines expose Euler angles to the user for convenience, but internally convert them to quaternions to perform rotation computations correctly and avoid gimbal lock.

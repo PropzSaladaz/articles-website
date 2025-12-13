@@ -4,7 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import mime from 'mime';
 
-export const dynamic = 'force-dynamic';
+export const dynamic = process.env.NODE_ENV === 'development' ? 'force-dynamic' : 'force-static';
 
 export async function GET(request: NextRequest) {
     if (process.env.NODE_ENV !== 'development') {
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
         return new NextResponse('Missing parameters', { status: 400 });
     }
 
-    let target = await getArticleBySlug(slug);
+    let target: import('@/lib/content/types').Article | import('@/lib/content/types').Collection | undefined = await getArticleBySlug(slug);
     if (!target) {
         target = await getCollectionBySlug(slug);
     }

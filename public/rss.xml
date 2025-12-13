@@ -5,44 +5,44 @@
   <link>https://example.com/</link>
   <description>Latest articles</description>
   <item>
-    <title><![CDATA[Hardware & APIs In Context]]></title>
-    <link>https://example.com/collections/computer-science/3d-programming/a-modern-jorney-through-the-graphics-pipeline/the-big-picture/hardware-apis-in-context/</link>
-    <guid>https://example.com/collections/computer-science/3d-programming/a-modern-jorney-through-the-graphics-pipeline/the-big-picture/hardware-apis-in-context/</guid>
-    <pubDate>Thu, 11 Dec 2025 23:38:22 GMT</pubDate>
-    <description><![CDATA[How CPU, GPU, drivers, and APIs cooperate to turn draw calls into pixels.]]></description>
-  </item>
-  <item>
-    <title><![CDATA[Transformation Matrices, Homogeneous Coordinates & Composition]]></title>
-    <link>https://example.com/collections/computer-science/3d-programming/coordinate-systems-and-transformations-in-3d-graphics/transformation-matrices-homogeneous-coordinates-composition/</link>
-    <guid>https://example.com/collections/computer-science/3d-programming/coordinate-systems-and-transformations-in-3d-graphics/transformation-matrices-homogeneous-coordinates-composition/</guid>
-    <pubDate>Thu, 11 Dec 2025 18:34:00 GMT</pubDate>
+    <title><![CDATA[Coordinate Spaces And Hierarchies]]></title>
+    <link>https://example.com/collections/computer-science/3d-programming/coordinate-systems-and-transformations-in-3d-graphics/coordinate-spaces-and-hierarchies/</link>
+    <guid>https://example.com/collections/computer-science/3d-programming/coordinate-systems-and-transformations-in-3d-graphics/coordinate-spaces-and-hierarchies/</guid>
+    <pubDate>Sat, 13 Dec 2025 20:17:42 GMT</pubDate>
     <description><![CDATA[A pragmatic route to 3–10× faster pipelines using caching and graph-aware jobs.]]></description>
   </item>
   <item>
     <title><![CDATA[Threshold Encryption Made SImple]]></title>
     <link>https://example.com/articles/computer-science/cryptography/threshold-encryption/threshold-encryption-made-simple/</link>
     <guid>https://example.com/articles/computer-science/cryptography/threshold-encryption/threshold-encryption-made-simple/</guid>
-    <pubDate>Thu, 11 Dec 2025 14:53:06 GMT</pubDate>
+    <pubDate>Sat, 13 Dec 2025 19:55:31 GMT</pubDate>
     <description><![CDATA[How Threshold Cryptography works in simple terms]]></description>
   </item>
   <item>
     <title><![CDATA[Rotation Representations: Euler Vs. Quaternions]]></title>
     <link>https://example.com/collections/computer-science/3d-programming/coordinate-systems-and-transformations-in-3d-graphics/rotation-representations-euler-vs-quaternions/</link>
     <guid>https://example.com/collections/computer-science/3d-programming/coordinate-systems-and-transformations-in-3d-graphics/rotation-representations-euler-vs-quaternions/</guid>
-    <pubDate>Wed, 10 Dec 2025 23:10:18 GMT</pubDate>
+    <pubDate>Sat, 13 Dec 2025 19:55:31 GMT</pubDate>
     <description><![CDATA[A pragmatic route to 3–10× faster pipelines using caching and graph-aware jobs.]]></description>
+  </item>
+  <item>
+    <title><![CDATA[Transformation Matrices, Homogeneous Coordinates & Composition]]></title>
+    <link>https://example.com/collections/computer-science/3d-programming/coordinate-systems-and-transformations-in-3d-graphics/transformation-matrices-homogeneous-coordinates-composition/</link>
+    <guid>https://example.com/collections/computer-science/3d-programming/coordinate-systems-and-transformations-in-3d-graphics/transformation-matrices-homogeneous-coordinates-composition/</guid>
+    <pubDate>Sat, 13 Dec 2025 19:55:31 GMT</pubDate>
+    <description><![CDATA[A pragmatic route to 3–10× faster pipelines using caching and graph-aware jobs.]]></description>
+  </item>
+  <item>
+    <title><![CDATA[Hardware & APIs In Context]]></title>
+    <link>https://example.com/collections/computer-science/3d-programming/a-modern-jorney-through-the-graphics-pipeline/the-big-picture/hardware-apis-in-context/</link>
+    <guid>https://example.com/collections/computer-science/3d-programming/a-modern-jorney-through-the-graphics-pipeline/the-big-picture/hardware-apis-in-context/</guid>
+    <pubDate>Sat, 13 Dec 2025 19:54:47 GMT</pubDate>
+    <description><![CDATA[How CPU, GPU, drivers, and APIs cooperate to turn draw calls into pixels.]]></description>
   </item>
   <item>
     <title><![CDATA[What Is The Graphics Piepeline]]></title>
     <link>https://example.com/collections/computer-science/3d-programming/a-modern-jorney-through-the-graphics-pipeline/the-big-picture/what-is-the-graphics-piepeline/</link>
     <guid>https://example.com/collections/computer-science/3d-programming/a-modern-jorney-through-the-graphics-pipeline/the-big-picture/what-is-the-graphics-piepeline/</guid>
-    <pubDate>Wed, 10 Dec 2025 23:10:18 GMT</pubDate>
-    <description><![CDATA[A pragmatic route to 3–10× faster pipelines using caching and graph-aware jobs.]]></description>
-  </item>
-  <item>
-    <title><![CDATA[Coordinate Spaces And Hierarchies]]></title>
-    <link>https://example.com/collections/computer-science/3d-programming/coordinate-systems-and-transformations-in-3d-graphics/coordinate-spaces-and-hierarchies/</link>
-    <guid>https://example.com/collections/computer-science/3d-programming/coordinate-systems-and-transformations-in-3d-graphics/coordinate-spaces-and-hierarchies/</guid>
     <pubDate>Wed, 10 Dec 2025 23:10:18 GMT</pubDate>
     <description><![CDATA[A pragmatic route to 3–10× faster pipelines using caching and graph-aware jobs.]]></description>
   </item>

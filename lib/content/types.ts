@@ -30,6 +30,7 @@ export interface StandaloneArticle extends SubjectNode {
   articleSlug: Slug;
   status: ContentStatus;
   collectionSlug?: Slug | null;
+  folderAbs?: string;
 }
 
 export interface CollectionArticle extends SubjectNode {
