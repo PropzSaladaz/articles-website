@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Surface Extraction Engine</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-overlay: rgba(15, 23, 42, 0.9);
+            --bg-card: #1c212c;
+            --border-color: #334155;
+            --text-main: #e0e6ed;
+            --text-muted: #94a3b8;
+            --accent-blue: #3b82f6;
+            --accent-orange: #f59e0b;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            background-color: #0b0e14;
+            color: var(--text-main);
+        }
+
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            background-color: #0b0e14;
+            /* Grid pattern background */
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        /* Overlay Panel */
+        .overlay-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 340px;
+            background: var(--bg-overlay);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            z-index: 100;
+        }
+
+        .header-group h1 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            margin: 0 0 5px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-group h1 span {
+            color: var(--accent-blue);
+        }
+
+        .header-group p {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .section-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .mini-stat {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #fff;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .stat-sub {
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+
+        /* Toggles & Inputs */
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-card);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .toggle-row:hover {
+            border-color: var(--text-muted);
+        }
+
+        .toggle-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .icon-box {
+            width: 32px;
+            height: 32px;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        /* Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 22px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider-switch {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #334155;
+            transition: .3s;
+            border-radius: 24px;
+        }
+
+        .slider-switch:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider-switch {
+            background-color: var(--accent-blue);
+        }
+
+        input:checked+.slider-switch:before {
+            transform: translateX(18px);
+        }
+
+        /* Range Slider */
+        .range-container {
+            margin-top: 5px;
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: var(--bg-card);
+            border-radius: 3px;
+            outline: none;
+            margin-top: 10px;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--accent-orange);
+            cursor: pointer;
+            border: 2px solid var(--bg-card);
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
+        }
+
+        /* Legend */
+        .legend-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        /* CSS3D Faces */
+        .voxel-face {
+            width: 40px;
+            height: 40px;
+            box-sizing: border-box;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            pointer-events: none;
+            transition: background-color 0.2s;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.15);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="overlay-panel">
+        <div class="header-group">
+            <h1><span>❖</span> Surface Extraction</h1>
+            <p>Surface extraction pipeline visualization.</p>
+        </div>
+
+        <!-- Stats Section -->
+        <div>
+            <span class="section-title">Rendering Metrics</span>
+            <div class="stats-grid">
+                <div class="mini-stat">
+                    <div class="stat-label">Vertices</div>
+                    <div class="stat-value" id="vert-count">0</div>
+                    <div class="stat-sub">4x per face</div>
+                </div>
+                <div class="mini-stat">
+                    <div class="stat-label">Faces Drawn</div>
+                    <div class="stat-value" id="face-ratio">0 / 0</div>
+                    <div class="stat-sub" id="face-percent">0% of Total</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div>
+            <span class="section-title">Pipeline Settings</span>
+
+            <div class="toggle-row">
+                <div class="toggle-label">
+                    <div class="icon-box">✦</div>
+                    <span>Surface Culling</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="mode-switch" checked>
+                    <span class="slider-switch"></span>
+                </label>
+            </div>
+
+            <div class="range-container">
+                <div style="display:flex; justify-content:space-between; margin-top:15px;">
+                    <label style="font-size:13px; font-weight:500; color:var(--text-main);">Explode Mesh</label>
+                    <span id="gap-val" style="font-size:13px; color:var(--accent-orange);">0.0</span>
+                </div>
+                <input type="range" id="gap-slider" min="0" max="0.8" step="0.01" value="0.0">
+            </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="legend-list">
+            <div class="legend-item">
+                <div class="dot" style="background:var(--accent-blue)"></div>
+                <span>Visible Surface</span>
+            </div>
+            <div class="legend-item">
+                <div class="dot" style="background:var(--accent-red)"></div>
+                <span>Internal Geometry (Cullable)</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <!-- Three.js Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS3DRenderer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <script>
+        // --- Configuration ---
+        const CHUNK_SIZE = 6;
+        const CSS_VOXEL_SIZE = 40; // Pixels
+
+        // Global State
+        let scene, camera, renderer, controls;
+        let voxelGroup;
+        let currentMode = 'optimized'; // 'optimized' or 'unoptimized'
+        let currentGap = 0.0;
+
+        // 1 = Solid, 0 = Air
+        const voxels = [];
+
+        function initData() {
+            for (let x = 0; x < CHUNK_SIZE; x++) {
+                voxels[x] = [];
+                for (let y = 0; y < CHUNK_SIZE; y++) {
+                    voxels[x][y] = [];
+                    for (let z = 0; z < CHUNK_SIZE; z++) {
+                        const cx = CHUNK_SIZE / 2 - 0.5;
+                        const cy = CHUNK_SIZE / 2 - 0.5;
+                        const cz = CHUNK_SIZE / 2 - 0.5;
+                        const dist = Math.sqrt((x - cx) ** 2 + (y - cy) ** 2 + (z - cz) ** 2);
+                        // Sphere shape
+                        voxels[x][y][z] = (dist < 3.0) ? 1 : 0;
+                    }
+                }
+            }
+        }
+
+        function init() {
+            const container = document.getElementById('canvas-container');
+
+            // 1. Scene
+            scene = new THREE.Scene();
+
+            // 2. Camera
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+
+            camera = new THREE.PerspectiveCamera(50, width / height, 1, 5000);
+            camera.position.set(500, 400, 600);
+            camera.lookAt(0, 0, 0);
+
+            // 3. Renderer (CSS3D)
+            renderer = new THREE.CSS3DRenderer();
+            renderer.setSize(width, height);
+            container.appendChild(renderer.domElement);
+
+            // 4. Controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.autoRotate = true;
+            controls.autoRotateSpeed = 2.0;
+
+            // 5. Group for voxels
+            voxelGroup = new THREE.Group();
+            scene.add(voxelGroup);
+
+            // 6. Init Logic
+            initData();
+            updateGeometry();
+
+            // 7. Events
+            window.addEventListener('resize', onWindowResize);
+            controls.addEventListener('start', () => { controls.autoRotate = false; });
+
+            animate();
+        }
+
+        function getVoxel(x, y, z) {
+            if (x < 0 || x >= CHUNK_SIZE || y < 0 || y >= CHUNK_SIZE || z < 0 || z >= CHUNK_SIZE) return 0;
+            return voxels[x][y][z];
+        }
+
+        function createFace(color, w, h, x, y, z, rx, ry, rz) {
+            const div = document.createElement('div');
+            div.className = 'voxel-face';
+            div.style.backgroundColor = color;
+
+            const object = new THREE.CSS3DObject(div);
+            object.position.set(x, y, z);
+            object.rotation.set(rx, ry, rz);
+
+            return object;
+        }
+
+        function updateGeometry() {
+            for (let i = voxelGroup.children.length - 1; i >= 0; i--) {
+                const obj = voxelGroup.children[i];
+                if (obj.element && obj.element.parentNode) {
+                    obj.element.parentNode.removeChild(obj.element);
+                }
+                voxelGroup.remove(obj);
+            }
+
+            let renderedFaceCount = 0;
+            let totalPossibleFaces = 0;
+
+            // Colors (Cyberpunk Palette)
+            const colorTop = '#3b82f6';    // Blue 500
+            const colorSide = '#2563eb';   // Blue 600
+            const colorDark = '#1d4ed8';   // Blue 700
+            const colorWaste = '#ef4444';  // Red 500
+
+            const offset = - (CHUNK_SIZE * CSS_VOXEL_SIZE) / 2;
+
+            for (let x = 0; x < CHUNK_SIZE; x++) {
+                for (let y = 0; y < CHUNK_SIZE; y++) {
+                    for (let z = 0; z < CHUNK_SIZE; z++) {
+                        if (voxels[x][y][z] === 0) continue;
+
+                        const cx = CHUNK_SIZE / 2;
+                        const cy = CHUNK_SIZE / 2;
+                        const cz = CHUNK_SIZE / 2;
+                        const gapX = (x - cx) * currentGap * CSS_VOXEL_SIZE;
+                        const gapY = (y - cy) * currentGap * CSS_VOXEL_SIZE;
+                        const gapZ = (z - cz) * currentGap * CSS_VOXEL_SIZE;
+
+                        const px = x * CSS_VOXEL_SIZE + offset + gapX;
+                        const py = y * CSS_VOXEL_SIZE + offset + gapY;
+                        const pz = z * CSS_VOXEL_SIZE + offset + gapZ;
+                        const half = CSS_VOXEL_SIZE / 2;
+
+                        const faces = [
+                            { dx: 1, dy: 0, dz: 0, pos: [half, 0, 0], rot: [0, Math.PI / 2, 0], col: colorSide },
+                            { dx: -1, dy: 0, dz: 0, pos: [-half, 0, 0], rot: [0, -Math.PI / 2, 0], col: colorDark },
+                            { dx: 0, dy: 1, dz: 0, pos: [0, half, 0], rot: [-Math.PI / 2, 0, 0], col: colorTop },
+                            { dx: 0, dy: -1, dz: 0, pos: [0, -half, 0], rot: [Math.PI / 2, 0, 0], col: colorDark },
+                            { dx: 0, dy: 0, dz: 1, pos: [0, 0, half], rot: [0, 0, 0], col: colorSide },
+                            { dx: 0, dy: 0, dz: -1, pos: [0, 0, -half], rot: [0, Math.PI, 0], col: colorDark },
+                        ];
+
+                        faces.forEach(f => {
+                            const neighbor = getVoxel(x + f.dx, y + f.dy, z + f.dz);
+                            const isInternal = (neighbor === 1);
+
+                            // Count every face as "Possible"
+                            totalPossibleFaces++;
+
+                            let shouldDraw = false;
+                            let isWaste = false;
+
+                            if (currentMode === 'optimized') {
+                                if (!isInternal) shouldDraw = true;
+                            } else {
+                                shouldDraw = true;
+                                if (isInternal) isWaste = true;
+                            }
+
+                            if (shouldDraw) {
+                                const finalColor = isWaste ? colorWaste : f.col;
+                                const faceObj = createFace(
+                                    finalColor,
+                                    CSS_VOXEL_SIZE, CSS_VOXEL_SIZE,
+                                    px + f.pos[0], py + f.pos[1], pz + f.pos[2],
+                                    f.rot[0], f.rot[1], f.rot[2]
+                                );
+
+                                voxelGroup.add(faceObj);
+                                renderedFaceCount++;
+                            }
+                        });
+                    }
+                }
+            }
+
+            // Update Stats
+            const vertCount = renderedFaceCount * 4;
+            document.getElementById('vert-count').innerText = vertCount.toLocaleString();
+
+            document.getElementById('face-ratio').innerText = `${renderedFaceCount} / ${totalPossibleFaces}`;
+
+            // Calculate percentage of total geometry being rendered
+            const percent = Math.round((renderedFaceCount / totalPossibleFaces) * 100);
+            const percentEl = document.getElementById('face-percent');
+            percentEl.innerText = `${percent}% of Total Geometry`;
+
+            if (percent < 30) {
+                percentEl.style.color = '#10b981'; // Green (Efficient)
+            } else {
+                percentEl.style.color = '#ef4444'; // Red (Heavy)
+            }
+        }
+
+        // --- Interaction Handlers ---
+
+        // Toggle Switch
+        const modeSwitch = document.getElementById('mode-switch');
+        modeSwitch.addEventListener('change', (e) => {
+            currentMode = e.target.checked ? 'optimized' : 'unoptimized';
+            updateGeometry();
+        });
+
+        // Slider
+        const gapSlider = document.getElementById('gap-slider');
+        const gapVal = document.getElementById('gap-val');
+        gapSlider.addEventListener('input', (e) => {
+            currentGap = parseFloat(e.target.value);
+            gapVal.innerText = currentGap.toFixed(2);
+            updateGeometry();
+        });
+
+        // Resize
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        init();
+
+    </script>
+</body>
+
+</html>

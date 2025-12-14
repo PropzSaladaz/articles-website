@@ -6,7 +6,10 @@ summary: "A pragmatic route to 3–10× faster pipelines using caching and graph
 
 # 1. Coordinate Spaces
 
-In mathematics, a coordinate space (or reference frame) defines:
+In mathematics,
+<iframe src="simulations/lod-demo/index.html" width="100%" height="500px" style="border: none; border-radius: 8px;"></iframe>
+
+Each coordinate space has a specific purpose:
 
 * A point considered to be the **origin (0, 0, 0)**
 * Three **perpendicular axes (x, y, z)** that define directions

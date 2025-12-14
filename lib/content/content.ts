@@ -13,17 +13,24 @@ let cachePromise: Promise<{
 /**
  * Try loading content from disk if not already loaded. If not loaded, parse
  * all articles & generate sitemap + RSS feed.
+ * In development mode, always reload to pick up changes.
  * @returns A promise that ensures content is loaded and cached
  */
 async function ensureLoaded() {
-  if (!cachePromise) {
+  const isDev = process.env.NODE_ENV === 'development';
+
+  // In dev mode, always reload content to pick up changes
+  if (isDev || !cachePromise) {
     cachePromise = (async () => {
       const res = await loadAllFromDisk();
       // Sort by date desc
       res.articles.sort((a, b) => (a.date > b.date ? -1 : 1));
-      persistCaches(res);
-      generateSitemap(res.articles, res.collections);
-      generateRss(res.articles);
+      // Only persist caches and generate feeds in production
+      if (!isDev) {
+        persistCaches(res);
+        generateSitemap(res.articles, res.collections);
+        generateRss(res.articles);
+      }
       return res;
     })();
   }

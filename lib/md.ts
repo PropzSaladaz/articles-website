@@ -23,6 +23,7 @@ import remarkStrongHr from './remark-strong-hr';
 import rehypeDevImages from './rehype-dev-images';
 
 import rehypeProductionImages from './rehype-production-images';
+import rehypeIframeWindow from './rehype-iframe-window';
 
 interface MarkdownOptions {
   slug?: string;
@@ -53,6 +54,8 @@ export async function markdownToHtml(markdown: string, options?: MarkdownOptions
     .use(remarkRehype, { allowDangerousHtml: true })
     // support raw HTML in markdown
     .use(rehypeRaw as any)
+    // wrap iframes in macOS-styled window
+    .use(rehypeIframeWindow)
     // render math equations
     .use(rehypeKatex)
     // code highlighting

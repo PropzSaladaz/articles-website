@@ -171,16 +171,14 @@ function isAbsoluteOrAnchor(target) {
   return false;
 }
 
-function pathHasImageDir(absPath) {
+const ASSET_DIRS = [IMAGE_SUFFIX, 'simulations'];
+
+function pathHasAssetDir(absPath) {
   const parts = absPath.split(path.sep);
-  return parts.some((segment) => segment.endsWith(IMAGE_SUFFIX));
+  return parts.some((segment) => ASSET_DIRS.includes(segment));
 }
 
-function toPosixPath(p) {
-  return p.split(path.sep).join('/');
-}
-
-async function findImageDirectories(entry) {
+async function findAssetDirectories(entry) {
   const stack = [entry.folderAbs];
   const results = [];
   while (stack.length > 0) {
@@ -189,10 +187,12 @@ async function findImageDirectories(entry) {
     for (const dirent of dirents) {
       if (!dirent.isDirectory()) continue;
       const full = path.join(current, dirent.name);
-      if (dirent.name.endsWith(IMAGE_SUFFIX)) {
+
+      if (ASSET_DIRS.includes(dirent.name)) {
         results.push(full);
         continue;
       }
+
       if (hasIndex(full)) {
         continue;
       }
@@ -216,15 +216,13 @@ async function copyDirectory(src, dest) {
   }
 }
 
-
-
-async function copyImageAssets(entry) {
-  const imageDirs = await findImageDirectories(entry);
-  if (imageDirs.length === 0) {
+async function copyAssets(entry) {
+  const assetDirs = await findAssetDirectories(entry);
+  if (assetDirs.length === 0) {
     return [];
   }
   const copied = [];
-  for (const srcDir of imageDirs) {
+  for (const srcDir of assetDirs) {
     const relativeDir = path.relative(entry.folderAbs, srcDir);
     if (relativeDir.startsWith('..')) {
       continue;
@@ -253,7 +251,7 @@ async function main() {
   };
 
   for (const entry of entries) {
-    const copied = await copyImageAssets(entry);
+    const copied = await copyAssets(entry);
     summary.copiedAssets.push(...copied);
   }
 

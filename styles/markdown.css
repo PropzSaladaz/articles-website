@@ -615,3 +615,65 @@
 .md-alert .md-p:last-child {
   margin-bottom: 0;
 }
+
+/* =============================
+   Iframe Windows - Mac Style
+   ================================ */
+.md-iframe-window {
+  position: relative;
+  margin: 1.5rem 0;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+/* Mac-style titlebar */
+.md-iframe-titlebar {
+  display: flex;
+  align-items: center;
+  padding: 0.6rem 1rem;
+  background: linear-gradient(180deg, #3a3d4d 0%, #2d2f3a 100%);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+  gap: 0.5rem;
+}
+
+/* Traffic light buttons */
+.md-iframe-light {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  box-shadow: inset 0 -1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.md-iframe-light-red {
+  background: linear-gradient(180deg, #ff5f57 0%, #e0443e 100%);
+}
+
+.md-iframe-light-yellow {
+  background: linear-gradient(180deg, #ffbd2e 0%, #dea123 100%);
+}
+
+.md-iframe-light-green {
+  background: linear-gradient(180deg, #28c940 0%, #1aab29 100%);
+}
+
+/* The iframe itself */
+.md-iframe-window iframe {
+  display: block;
+  width: 100%;
+  border: none;
+  background: #0b0e14;
+}
+
+/* Light mode adjustments */
+.md-iframe-window {
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+/* Dark mode already looks great with default styles */
+.dark .md-iframe-window {
+  border-color: rgba(255, 255, 255, 0.08);
+}
