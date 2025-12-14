@@ -110,13 +110,29 @@ When you run the site build:
 
 ### ✅ Writing workflow
 
-1. Choose whether you’re creating a **standalone article** or a **collection**.
+1. Choose whether you're creating a **standalone article** or a **collection**.
 2. Create the appropriate folder inside `/content/...`.
 3. Write `index.md` and `summary.md`.
 4. Add images locally and reference them via relative paths. The prebuild script will relocate `images/` folders into `public/{articles|collections}/...` and rewrite in-article links accordingly.
 5. Commit — the parser takes care of everything else on build.
 
 > 💡 Tip: You can preview the full parsed structure anytime by inspecting `.cache/content-tree.json` after running a build.
+
+### 🎮 Embedding Simulations
+
+You can embed interactive HTML/JS simulations directly in your articles:
+
+1. Create a `simulations/` folder inside your article directory
+2. Add your self-contained HTML file (e.g., `demo.html`)
+3. Embed in markdown using an iframe:
+
+```html
+<iframe src="simulations/demo.html" width="100%" height="600px"></iframe>
+```
+
+The `simulations/` folder is automatically copied to `public/` by the prebuild script, making the files accessible at the correct URL path.
+
+Iframes are automatically wrapped in a macOS-styled window with traffic light buttons for a polished look.
 
 ## Getting started
 
@@ -128,6 +144,15 @@ npm run dev
 ```
 
 Visit http://localhost:3000 to see the site. Articles live in `content/` and are parsed at build time via `lib/content/*`.
+
+### Hot Reload
+
+The development server includes automatic hot reload for content:
+
+- **Markdown changes**: Reload automatically on page refresh (no caching in dev mode)
+- **Simulations/Images**: A file watcher copies updated assets to `public/` automatically
+
+The watcher runs alongside Next.js when you use `npm run dev`.
 
 ## Building & exporting
 
@@ -146,9 +171,13 @@ npm run build
 
 ## Scripts
 
-- `npm run dev` – start the dev server
-- `npm run build` – run the prebuild step, build, and export static output to `out/`
-- `npm run lint` – run Next.js linting
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start dev server with content hot reload |
+| `npm run dev:next` | Start Next.js dev server only (no watcher) |
+| `npm run watch` | Run content watcher standalone |
+| `npm run build` | Run prebuild, build, and export to `out/` |
+| `npm run lint` | Run Next.js linting |
 
 ## Enabling article comments with Giscus
 
