@@ -51,7 +51,6 @@ export default async function HomePage() {
 
   let featured: Article | undefined;
   let latest: Article[] = [];
-  let popularTopics: Array<[string, { count: number; latest: Article }]> = [];
   let articlesByYear: Record<string, Article[]> = {};
   let years: string[] = [];
 
@@ -59,21 +58,6 @@ export default async function HomePage() {
     featured = standaloneArticles[0];
     const rest = standaloneArticles.slice(1);
     latest = rest.slice(0, 3);
-
-    const tagMap = new Map<string, { count: number; latest: Article }>();
-    for (const article of standaloneArticles) {
-      for (const tag of article.tags) {
-        const entry = tagMap.get(tag);
-        if (!entry) {
-          tagMap.set(tag, { count: 1, latest: article });
-        } else {
-          entry.count += 1;
-        }
-      }
-    }
-    popularTopics = Array.from(tagMap.entries())
-      .sort((a, b) => (b[1].count === a[1].count ? a[0].localeCompare(b[0]) : b[1].count - a[1].count))
-      .slice(0, 6);
 
     articlesByYear = groupArticlesByYear(standaloneArticles);
     years = Object.keys(articlesByYear).sort((a, b) => Number(b) - Number(a));
@@ -98,16 +82,11 @@ export default async function HomePage() {
 
       {hasArticles && latest.length > 0 && (
         <section className="flex flex-col gap-6">
-          <div className="flex flex-wrap items-baseline justify-between gap-4">
-            <div className="space-y-2">
-              <h2 className="text-2xl font-semibold text-foreground sm:text-3xl">Latest standalone articles</h2>
-              <p className="text-base text-muted-foreground">
-                Below you can find some of the most recently published standalone pieces.
-              </p>
-            </div>
-            <Link href="/" className="text-sm font-semibold text-primary hover:text-primary/80">
-              View all articles
-            </Link>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-semibold text-foreground sm:text-3xl">Latest standalone articles</h2>
+            <p className="text-base text-muted-foreground">
+              Below you can find some of the most recently published standalone pieces.
+            </p>
           </div>
           <div className="grid gap-6 md:grid-cols-2">
             {latest.map((article, index) => (
@@ -162,40 +141,6 @@ export default async function HomePage() {
                 </Link>
               );
             })}
-          </div>
-        </section>
-      )}
-
-      {hasArticles && popularTopics.length > 0 && (
-        <section className="flex flex-col gap-6">
-          <div className="space-y-2">
-            <h2 className="text-2xl font-semibold text-foreground sm:text-3xl">Browse by topic</h2>
-            <p className="text-base text-muted-foreground">
-              Jump straight to the themes you care about, from practical workflows to deep technical guides.
-            </p>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {popularTopics.map(([tag, info], index) => (
-              <Link key={tag} href={`/tags/${encodeURIComponent(tag)}/`} className="group block">
-                <Card
-                  className={cn(
-                    'h-full overflow-hidden border border-border transition-all duration-300 hover:shadow-subtle',
-                    'animate-fade-up'
-                  )}
-                  style={{ animationDelay: `${index * 70}ms` }}
-                >
-                  <CardContent className="flex h-full flex-col gap-4">
-                    <span className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground/80 transition-colors duration-300 group-hover:text-primary">
-                      #{tag}
-                    </span>
-                    <p className="text-lg font-medium text-foreground transition-colors duration-300 group-hover:text-primary">
-                      {info.latest.title}
-                    </p>
-                    <p className="text-sm text-muted-foreground">{info.count} {info.count === 1 ? 'article' : 'articles'}</p>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
           </div>
         </section>
       )}

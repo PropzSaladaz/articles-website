@@ -1,6 +1,7 @@
 ---
-status: "draft"
-summary: "How CPU, GPU, drivers, and APIs cooperate to turn draw calls into pixels."
+status: "published"
+date: "2025-12-15"
+summary: "CPUs plan and decide while GPUs execute in parallel. Explore how draw calls flow through drivers, command buffers, and the GPU execution pipeline. Covers DirectX, Vulkan, Metal, and OpenGL."
 ---
 
 # The Division of Labor: CPU vs GPU

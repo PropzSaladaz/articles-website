@@ -1,6 +1,7 @@
 ---
-status: "draft"          # draft | published | archived
-summary: "A pragmatic route to 3–10× faster pipelines using caching and graph-aware jobs."
+status: "published"
+date: "2025-12-15"
+summary: "Homogeneous coordinates unify translation, rotation, and scaling into matrix multiplication. Learn how 4x4 matrices enable elegant 3D transformations and why they're essential for graphics."
 ---
 
 ## 1. Homogeneous Coordinates

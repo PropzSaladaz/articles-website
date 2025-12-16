@@ -40,7 +40,7 @@ function runPrepareContent() {
         if (pendingRerun) {
             pendingRerun = false;
             runPrepareContent();
-        }
+        } 
     });
 }
 

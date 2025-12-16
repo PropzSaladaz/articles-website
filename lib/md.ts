@@ -24,6 +24,7 @@ import rehypeDevImages from './rehype-dev-images';
 
 import rehypeProductionImages from './rehype-production-images';
 import rehypeIframeWindow from './rehype-iframe-window';
+import rehypeImageWrapper from './rehype-image-wrapper';
 
 interface MarkdownOptions {
   slug?: string;
@@ -54,7 +55,7 @@ export async function markdownToHtml(markdown: string, options?: MarkdownOptions
     .use(remarkRehype, { allowDangerousHtml: true })
     // support raw HTML in markdown
     .use(rehypeRaw as any)
-    // wrap iframes in macOS-styled window
+    // wrap iframes in styled window
     .use(rehypeIframeWindow)
     // render math equations
     .use(rehypeKatex)
@@ -70,7 +71,9 @@ export async function markdownToHtml(markdown: string, options?: MarkdownOptions
     .use(rehypeSlug)
     .use(rehypeAutolinkHeadings, { behavior: 'wrap' })
     .use(rehypeScopeClasses, { prefix: 'md-' })
-    .use(rehypeCodeBlockCopy);
+    .use(rehypeCodeBlockCopy)
+    // wrap images with skeleton placeholders (after scope classes to avoid double-prefixing)
+    .use(rehypeImageWrapper);
 
   // In dev mode with a slug, transform relative image URLs
   if (isDev && slug) {

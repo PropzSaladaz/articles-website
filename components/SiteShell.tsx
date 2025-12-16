@@ -139,7 +139,7 @@ export function SiteShell({ tree, collections, children }: SiteShellProps) {
         </div>
       </div>
 
-      <div className="flex flex-1 items-start" ref={containerRef}>
+      <div className="flex flex-1 items-stretch" ref={containerRef}>
         <aside
           className={cn(
             'relative hidden shrink-0 overflow-hidden bg-background backdrop-blur transition-[width] duration-200 ease-out lg:flex',
@@ -168,7 +168,7 @@ export function SiteShell({ tree, collections, children }: SiteShellProps) {
           aria-label="Resize navigation"
           tabIndex={-1}
           className={cn(
-            'hidden w-2 cursor-col-resize select-none transition-colors duration-150 lg:block',
+            'hidden w-2 cursor-col-resize select-none transition-colors duration-150 lg:block self-stretch',
             isDragging ? 'bg-border' : 'bg-transparent hover:bg-border/60'
           )}
           style={{ touchAction: 'none' }}

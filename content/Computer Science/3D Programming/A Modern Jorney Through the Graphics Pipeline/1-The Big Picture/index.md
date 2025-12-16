@@ -1,6 +1,7 @@
 ---
-status: "draft"          # draft | published | archived
-summary: "A pragmatic route to 3–10× faster pipelines using caching and graph-aware jobs."
+status: "published"
+date: "2025-12-15"
+summary: "The foundational concepts of graphics rendering. Introduces the pipeline architecture, CPU-GPU division of labor, and the transformation of 3D geometry into pixels."
 coverImage: "./images/cover.png"
 ---
 

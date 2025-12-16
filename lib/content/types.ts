@@ -67,7 +67,6 @@ export type Article = {
   title: string;
   status: ContentStatus;
   date: string;
-  tags: string[];
   summary: ArticleSummary;
   cover?: string | null;
   content: string;

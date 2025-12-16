@@ -3,7 +3,6 @@ import Image from 'next/image';
 import type { CSSProperties } from 'react';
 import { Article } from '../lib/content/types';
 import { formatDate } from '../lib/format';
-import { TagBadge } from './TagBadge';
 import { withBasePath } from '../lib/paths';
 import { Card, CardContent } from './ui/card';
 import { cn } from '../lib/utils';
@@ -51,8 +50,6 @@ export function ArticlePreviewCard({ article, variant = 'default', className, st
     compact: 'text-sm text-muted-foreground',
   };
 
-  const showTags = variant !== 'compact';
-
   return (
     <Card
       style={style}
@@ -65,7 +62,7 @@ export function ArticlePreviewCard({ article, variant = 'default', className, st
       {variant === 'featured' && article.cover && (
         <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-muted/60 md:w-1/2">
           {
-            article.cover && 
+            article.cover &&
             <Image // only show image if it exists
               src={withBasePath(article.cover)}
               alt={article.title}
@@ -80,29 +77,27 @@ export function ArticlePreviewCard({ article, variant = 'default', className, st
       )}
       <CardContent className={cn('flex flex-1 flex-col', variantClasses[variant])}>
         <header className="flex flex-col gap-3">
-          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-            <time dateTime={article.date}>{formatDate(article.date)}</time>
-            <span aria-hidden="true">•</span>
-            <span>{article.readingTime.text}</span>
+          <div className="flex items-center gap-3">
+            <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+              Article
+            </span>
+            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+              <time dateTime={article.date}>{formatDate(article.date)}</time>
+              <span aria-hidden="true">•</span>
+              <span>{article.readingTime.text}</span>
+            </div>
           </div>
           <Link href={href} className={titleClasses[variant]}>
             {article.title}
           </Link>
         </header>
         <p className={cn('text-balance', excerptClasses[variant])}>{excerpt}</p>
-        {showTags && article.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 pt-1">
-            {article.tags.map((tag) => (
-              <TagBadge key={tag} tag={tag} />
-            ))}
-          </div>
-        )}
         <div className="mt-auto pt-4">
           <Link
             href={href}
             className="inline-flex items-center gap-2 text-sm font-semibold text-primary transition-all duration-200 group-hover:gap-3"
           >
-            Continue reading
+            Read
             <span aria-hidden="true">→</span>
           </Link>
         </div>
@@ -110,3 +105,5 @@ export function ArticlePreviewCard({ article, variant = 'default', className, st
     </Card>
   );
 }
+
+

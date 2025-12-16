@@ -1,6 +1,7 @@
 ---
-status: "draft"          # draft | published | archived
-summary: "A pragmatic route to 3–10× faster pipelines using caching and graph-aware jobs."
+status: "published"
+date: "2025-12-15"
+summary: "The graphics pipeline is a staged factory that transforms 3D scene descriptions into 2D images. Learn how vertices become primitives, then fragments, and finally pixels on your screen."
 ---
 
 # The Pipeline, in one sentence

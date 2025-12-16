@@ -1,3 +1,9 @@
+---
+status: "draft"
+date: "2025-12-15"
+summary: "Voxel engines offer editable, volumetric worlds at a computational cost. Learn surface extraction, chunk culling, and LOD techniques to transform naive renderers into scalable real-time systems."
+---
+
 # Voxel Optimization Techniques: From Brute Force to Scalable Rendering
 
 Voxel engines enable fully volumetric, editable worlds, but that flexibility comes at a high computational cost. Unlike traditional polygonal environments—where geometry is static and artist-optimized—voxel worlds are dense, dynamic, and algorithmically generated. Without careful optimization, both memory usage and rendering cost grow uncontrollably.

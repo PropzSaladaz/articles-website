@@ -1,15 +1,12 @@
 ---
-status: "draft"          # draft | published | archived
-tags: ["misc"]
-summary: "A pragmatic route to 3–10× faster pipelines using caching and graph-aware jobs."
+status: "published"
+date: "2025-12-15"
+summary: "Coordinate spaces give meaning to vectors. Learn about local, world, view, and screen spaces, and why objects need their own coordinate systems for animation and reuse."
 ---
 
 # 1. Coordinate Spaces
 
-In mathematics,
-<iframe src="simulations/lod-demo/index.html" width="100%" height="500px" style="border: none; border-radius: 8px;"></iframe>
-
-Each coordinate space has a specific purpose:
+In mathematics and computer graphics, a **coordinate space** defines a frame of reference for describing positions and directions. Each coordinate space has a specific purpose:
 
 * A point considered to be the **origin (0, 0, 0)**
 * Three **perpendicular axes (x, y, z)** that define directions

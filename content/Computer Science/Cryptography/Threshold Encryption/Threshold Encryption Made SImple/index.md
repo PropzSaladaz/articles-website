@@ -1,6 +1,7 @@
 ---
-status: "draft"          # draft | published | archived
-summary: "How Threshold Cryptography works in simple terms"
+status: "published"
+date: "2025-12-15"
+summary: "From Caesar's cipher to threshold cryptography. Explore how encryption evolved from simple shifts to distributed systems where multiple parties must collaborate to decrypt secrets."
 ---
 
 # 1.  Caesar Salad of Secrets: A Recipe for the First Cipher
