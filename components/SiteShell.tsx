@@ -14,6 +14,7 @@ import { getBasePath } from '../lib/paths';
 import { cn } from '../lib/utils';
 import { TreeNavigation } from './TreeNavigation';
 import { ThemeToggle } from './ThemeToggle';
+import { PanelLeftClose, PanelLeft } from 'lucide-react';
 
 const DEFAULT_SIDEBAR_WIDTH = 288;
 const MIN_SIDEBAR_WIDTH = 224;
@@ -52,6 +53,22 @@ export function SiteShell({ tree, collections, children }: SiteShellProps) {
   }, []);
 
   const handleDoubleClick = useCallback(() => {
+    setIsSidebarCollapsed((prev) => {
+      if (prev) {
+        const restoredWidth = Math.min(
+          MAX_SIDEBAR_WIDTH,
+          Math.max(MIN_SIDEBAR_WIDTH, lastExpandedWidthRef.current || DEFAULT_SIDEBAR_WIDTH)
+        );
+        setSidebarWidth(restoredWidth);
+        return false;
+      }
+      lastExpandedWidthRef.current = sidebarWidth || DEFAULT_SIDEBAR_WIDTH;
+      setSidebarWidth(0);
+      return true;
+    });
+  }, [sidebarWidth]);
+
+  const handleToggleSidebar = useCallback(() => {
     setIsSidebarCollapsed((prev) => {
       if (prev) {
         const restoredWidth = Math.min(
@@ -132,6 +149,21 @@ export function SiteShell({ tree, collections, children }: SiteShellProps) {
           </div>
         </div>
       </header>
+
+      {/* Floating sidebar toggle button */}
+      <button
+        onClick={handleToggleSidebar}
+        className="hidden lg:flex fixed left-0 z-40 items-center justify-center w-8 h-8 rounded-r-md border border-l-0 border-border bg-background/80 backdrop-blur-sm transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-background hover:w-10 shadow-sm opacity-60 hover:opacity-100"
+        style={{ top: HEADER_HEIGHT + 16 }}
+        aria-label={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        title={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+      >
+        {isSidebarCollapsed ? (
+          <PanelLeft className="h-4 w-4" />
+        ) : (
+          <PanelLeftClose className="h-4 w-4" />
+        )}
+      </button>
 
       <div className="border-b border-border bg-background lg:hidden">
         <div className="mx-auto max-h-80 w-full max-w-6xl overflow-y-auto px-4 py-4 ">

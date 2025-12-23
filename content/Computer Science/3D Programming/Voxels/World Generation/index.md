@@ -1,5 +1,5 @@
 ---
-status: "draft"
+status: "published"
 date: "2025-12-15"
 summary: "Voxel engines offer editable, volumetric worlds at a computational cost. Learn surface extraction, chunk culling, and LOD techniques to transform naive renderers into scalable real-time systems."
 ---
