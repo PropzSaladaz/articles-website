@@ -4,11 +4,11 @@ date: "2025-12-15"
 summary: "Homogeneous coordinates unify translation, rotation, and scaling into matrix multiplication. Learn how 4x4 matrices enable elegant 3D transformations and why they're essential for graphics."
 ---
 
-## 1. Homogeneous Coordinates
+# 1. Homogeneous Coordinates
 
 Strange name huh? We will see what it represents in a second. But first, let's start from the simplest case - 2D.
 
-### 1.1 Starting with 2D: Rotation Using Matrices
+## 1.1 Starting with 2D: Rotation Using Matrices
 
 In a 2D Cartesian plane, a point is represented as:
 
@@ -20,7 +20,7 @@ Certain transformations can be applied to this point using matrix multiplication
 
 ---
 
-#### 2D Rotation
+### 2D Rotation
 
 To rotate a point around the origin by an angle (\theta), we use the following rotation matrix:
 
@@ -157,7 +157,7 @@ The point moves from the positive X-axis to the positive Y-axis, as expected:
 
 ---
 
-### 1.2 Scaling in 2D
+## 1.2 Scaling in 2D
 
 Scaling also fits naturally into matrix multiplication:
 
@@ -173,7 +173,7 @@ For example, scaling a point by 2 in both axes doubles its distance from the ori
 
 ---
 
-### 1.3 The Limitation: Translation Does Not Fit
+## 1.3 The Limitation: Translation Does Not Fit
 
 Rotation and scaling can be expressed as matrix × vector operations.\
 Translation cannot:
@@ -203,7 +203,7 @@ This makes it harder to **compose transforms** into a single reusable operation.
 
 ---
 
-#### Why This Matters
+### Why This Matters
 
 Game engines, animation systems, and GPU pipelines often need to apply **many transformations at once**, possibly hundreds per frame. Ideally, all transforms should be composable in the form:
 
@@ -218,7 +218,7 @@ The next step will show how adding a third component in 2D (homogeneous represen
 
 ---
 
-### 1.4 Solving Translation in 2D with Homogeneous Coordinates
+## 1.4 Solving Translation in 2D with Homogeneous Coordinates
 
 As we saw, the limitation in standard 2D coordinates is that translation requires addition, not multiplication.\
 To overcome this, we extend 2D points from 2 components to **3 components**:
@@ -238,7 +238,7 @@ The extra value `1` enables translation to be embedded inside a matrix.
 
 ---
 
-#### Translation as a Matrix
+### Translation as a Matrix
 
 With homogeneous coordinates, translation can be expressed as a **3×3 matrix**:
 
@@ -280,7 +280,7 @@ This produces the translated point using multiplication only.
 
 ---
 
-#### Rotation and Scaling Fit Too
+### Rotation and Scaling Fit Too
 
 Rotation in homogeneous 2D becomes:
 
@@ -308,7 +308,7 @@ All transformations now have the same 3×3 structure.
 
 \===
 
-## 2. The Power of Composition
+# 2. The Power of Composition
 
 Since translation, rotation, and scaling are all matrices of the same size, they can be **combined into a single transform matrix**:
 
@@ -329,7 +329,7 @@ This solves the translation issue and gives a unified, composable system for bui
 
 The same idea extends naturally to 3D, where we add one more component and use 4×4 matrices to gain the same benefits there.
 
-### 2.1. Order of Transformations
+## 2.1. Order of Transformations
 
 One last thing to notice is that **transformations must be applied in the reverse order**. What this means is that if we want to:
 
@@ -375,11 +375,11 @@ Translating then rotating yields a different final position than rotating then t
 
 \===
 
-## 3. Transformation Matrices (4×4)
+# 3. Transformation Matrices (4×4)
 
 Now that we saw the 2D case, everything works pretty much the same for 3D. We extend it to **4D homogenous coordinates** to allow translation as a matrix transformation.
 
-### 3.1 Translation
+## 3.1 Translation
 
 $$
 T =
@@ -391,7 +391,7 @@ T =
 \end{bmatrix}
 $$
 
-### 3.2 Scaling
+## 3.2 Scaling
 
 Uniform scale ( s ):
 
@@ -417,7 +417,7 @@ s\_x & 0 & 0 & 0 \\
 \end{bmatrix}
 $$
 
-### 3.3 Rotation Matrices
+## 3.3 Rotation Matrices
 
 Rotation about **x-axis**:
 
@@ -455,7 +455,7 @@ R\_z(\theta) =
 \end{bmatrix}
 $$
 
-### 3.4 Combined Transform
+## 3.4 Combined Transform
 
 A full rigid transform with scaling, rotation, and translation is typically:
 
@@ -467,13 +467,13 @@ Order matters because matrix multiplication is **not commutative**.
 
 \===
 
-## 4. Transform Chains
+# 4. Transform Chains
 
 We now understand local and world spaces, how hierarchies work conceptually, and how transformations are expressed as matrices. Transform chains show how these ideas come together to compute an object’s final placement in the world.
 
 When an object has a parent, its **local transform matrix** does not directly tell us where it is in world space. Instead, it expresses the object’s position, rotation, and scale **relative to its parent’s coordinate space**. To obtain the object’s world transform, we must include the parent’s transform as well.
 
-### 4.1 Local → World Space
+## 4.1 Local → World Space
 
 Let an object define its local transform with matrix $M\_l$.\
 Its parent’s world transform is already known, denoted $M\_p$.
@@ -486,7 +486,7 @@ $$
 
 This multiplication applies the object’s local transform first, then brings the result into the parent’s world space. Any point expressed in the object’s local coordinates can now be converted to world coordinates using $M\_{world}$.
 
-### 4.2 Multi-Level Hierarchies
+## 4.2 Multi-Level Hierarchies
 
 Scene hierarchies often contain several levels. In that case, each parent contributes its own transform, and all must be applied in order — from the highest parent down to the object:
 
@@ -513,7 +513,7 @@ Because of this chain, when the arm rotates, the forearm and hand follow automat
 
 ![](./images/img2.svg)
 
-### 4.3 World → Local Space
+## 4.3 World → Local Space
 
 Sometimes we need to convert a world-space position back into local space — for example, to compute an offset relative to the hand, or to attach another object correctly.
 

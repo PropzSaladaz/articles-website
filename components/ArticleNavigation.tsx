@@ -19,16 +19,16 @@ export function ArticleNavigation({ previous, next, collectionSlug }: ArticleNav
     const baseUrl = collectionSlug ? '/collections/' : '/articles/';
 
     return (
-        <nav className="not-prose mt-12 flex flex-col gap-4 border-t border-slate-200 pt-8 dark:border-slate-700 sm:flex-row sm:justify-between">
+        <nav className="not-prose mt-12 flex flex-col gap-4 border-t border-border pt-8 sm:flex-row sm:justify-between">
             {previous ? (
                 <Link
                     href={`${baseUrl}${previous.slug}/?view=full`}
-                    className="group flex flex-1 flex-col gap-1 rounded-xl border border-slate-200 p-4 transition-all hover:border-primary/50 hover:bg-slate-50 dark:border-slate-700 dark:hover:border-primary/50 dark:hover:bg-slate-800/50"
+                    className="group flex flex-1 flex-col gap-1 rounded-xl border border-border p-4 transition-all hover:border-foreground/20 hover:bg-muted/50"
                 >
-                    <span className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                         ← Previous
                     </span>
-                    <span className="font-semibold text-slate-900 transition-colors group-hover:text-primary dark:text-slate-100">
+                    <span className="font-semibold text-foreground transition-colors group-hover:text-primary">
                         {previous.title}
                     </span>
                 </Link>
@@ -38,12 +38,12 @@ export function ArticleNavigation({ previous, next, collectionSlug }: ArticleNav
             {next ? (
                 <Link
                     href={`${baseUrl}${next.slug}/?view=full`}
-                    className="group flex flex-1 flex-col gap-1 rounded-xl border border-slate-200 p-4 text-right transition-all hover:border-primary/50 hover:bg-slate-50 dark:border-slate-700 dark:hover:border-primary/50 dark:hover:bg-slate-800/50"
+                    className="group flex flex-1 flex-col gap-1 rounded-xl border border-border p-4 text-right transition-all hover:border-foreground/20 hover:bg-muted/50"
                 >
-                    <span className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                         Next →
                     </span>
-                    <span className="font-semibold text-slate-900 transition-colors group-hover:text-primary dark:text-slate-100">
+                    <span className="font-semibold text-foreground transition-colors group-hover:text-primary">
                         {next.title}
                     </span>
                 </Link>

@@ -96,7 +96,8 @@ export async function markdownToHtml(markdown: string, options?: MarkdownOptions
 }
 
 export function extractHeadings(markdown: string): Heading[] {
-  const tree = remark().use(remarkParse).parse(markdown);
+  // Use remarkMath to properly parse math expressions in the AST
+  const tree = remark().use(remarkParse).use(remarkMath).parse(markdown);
   const headings: Heading[] = [];
   const slugger = new GithubSlugger();
 
@@ -105,11 +106,24 @@ export function extractHeadings(markdown: string): Heading[] {
     if (!node.depth || node.depth < 1 || node.depth > 2) {
       return;
     }
-    const text = toString(node).trim();
-    if (!text) return;
+
+    // Extract text excluding math nodes
+    const textParts: string[] = [];
+    visit(node, (child: any) => {
+      if (child.type === 'text') {
+        textParts.push(child.value);
+      }
+      // Skip inlineMath and math nodes - they'll be excluded from text
+    });
+
+    const rawText = toString(node).trim();
+    const cleanText = textParts.join('').replace(/\s+/g, ' ').trim();
+
+    if (!cleanText) return;
+
     headings.push({
-      id: slugger.slug(text),
-      text,
+      id: slugger.slug(rawText), // Use original text for slug to match rendered IDs
+      text: cleanText,           // Use clean text (no math) for display
       level: node.depth,
     });
   });

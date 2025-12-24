@@ -174,21 +174,23 @@ export function SiteShell({ tree, collections, children }: SiteShellProps) {
       <div className="flex flex-1 items-stretch" ref={containerRef}>
         <aside
           className={cn(
-            'relative hidden shrink-0 overflow-hidden bg-background backdrop-blur transition-[width] duration-200 ease-out lg:flex',
+            'hidden shrink-0 overflow-hidden bg-background backdrop-blur transition-[width] duration-200 ease-out lg:flex sticky self-start',
             isSidebarCollapsed ? 'border-r border-transparent' : 'border-r border-border'
           )}
           style={{
             width: isSidebarCollapsed ? '0px' : `${sidebarWidth}px`,
             minWidth: isSidebarCollapsed ? '0px' : `${sidebarWidth}px`,
             transition: isDragging ? 'none' : 'width 0.2s ease',
+            top: HEADER_HEIGHT,
+            maxHeight: `calc(100vh - ${HEADER_HEIGHT}px)`,
           }}
         >
           <div
             className={cn(
-              'sticky overflow-y-auto px-4 py-6 transition-opacity duration-200',
+              'overflow-y-auto px-4 py-6 transition-opacity duration-200 w-full',
               isSidebarCollapsed ? 'pointer-events-none opacity-0' : 'opacity-100'
             )}
-            style={{ top: HEADER_HEIGHT, maxHeight: `calc(100vh - ${HEADER_HEIGHT}px)` }}
+            style={{ maxHeight: `calc(100vh - ${HEADER_HEIGHT}px)` }}
             aria-hidden={isSidebarCollapsed}
           >
             <TreeNavigation tree={tree} collections={collections} />
