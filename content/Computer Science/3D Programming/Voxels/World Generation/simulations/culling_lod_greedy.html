@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontier Voxel Engine Simulator</title>
+
+    <!-- Tailwind CSS (via CDN for instant styling without build steps) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        body {
+            background-color: #020617;
+            color: #e2e8f0;
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        canvas {
+            image-rendering: pixelated;
+        }
+
+        /* Custom Range Slider */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+            height: 20px;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 14px;
+            width: 14px;
+            border-radius: 50%;
+            background: #3b82f6;
+            margin-top: -5px;
+            cursor: pointer;
+            box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #334155;
+            border-radius: 2px;
+        }
+
+        input[type=range]:focus {
+            outline: none;
+        }
+
+        /* Compact toggle button */
+        .compact-toggle {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid #334155;
+            background: #1e293b;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .compact-toggle:hover {
+            background: #334155;
+        }
+
+        .compact-toggle.active {
+            background: rgba(59, 130, 246, 0.15);
+            border-color: rgba(59, 130, 246, 0.4);
+        }
+
+        .compact-toggle .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #475569;
+            transition: all 0.2s;
+        }
+
+        .compact-toggle.active .dot {
+            box-shadow: 0 0 8px currentColor;
+        }
+
+        .compact-toggle.lod.active .dot {
+            background: #3b82f6;
+        }
+
+        .compact-toggle.macro.active .dot {
+            background: #eab308;
+        }
+
+        .compact-toggle.greedy.active .dot {
+            background: #10b981;
+        }
+
+        /* Stat pill */
+        .stat-pill {
+            display: flex;
+            flex-direction: column;
+            padding: 8px 12px;
+            background: #0f172a;
+            border: 1px solid #1e293b;
+            border-radius: 8px;
+            min-width: 100px;
+        }
+
+        .stat-pill .label {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        .stat-pill .value {
+            font-size: 16px;
+            font-weight: 700;
+            font-family: ui-monospace, monospace;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="h-screen w-screen flex flex-col">
+
+        <!-- Top Control Bar -->
+        <div class="flex items-center justify-between px-4 py-2 bg-slate-950 border-b border-slate-800 gap-4 flex-wrap">
+
+            <!-- Left: Toggles -->
+            <div class="flex items-center gap-2">
+                <button id="btn-lod" class="compact-toggle lod active" onclick="toggleOption('useLOD')">
+                    <span class="dot"></span>
+                    <span>LOD</span>
+                </button>
+                <button id="btn-macro" class="compact-toggle macro active" onclick="toggleOption('useMacro')">
+                    <span class="dot"></span>
+                    <span>Culling</span>
+                </button>
+                <button id="btn-greedy" class="compact-toggle greedy active" onclick="toggleOption('useGreedy')">
+                    <span class="dot"></span>
+                    <span>Greedy</span>
+                </button>
+
+                <!-- Render Distance -->
+                <div class="flex items-center gap-2 ml-4 text-xs text-slate-400">
+                    <span>Distance:</span>
+                    <input type="range" min="4" max="14" value="8" class="w-20"
+                        oninput="updateRenderDistance(this.value)">
+                    <span id="val-dist-label" class="text-blue-400 font-mono w-16">17 Chunks</span>
+                </div>
+            </div>
+
+            <!-- Right: Stats -->
+            <div class="flex items-center gap-3">
+                <div class="stat-pill">
+                    <span class="label">Vertices</span>
+                    <span class="value text-emerald-400" id="stat-vertices">0</span>
+                </div>
+                <div class="stat-pill">
+                    <span class="label">Memory</span>
+                    <span class="value text-blue-400"><span id="stat-memory">0</span> <span
+                            class="text-xs text-slate-600">MB</span></span>
+                </div>
+                <div class="stat-pill">
+                    <span class="label">Chunks</span>
+                    <span class="value text-yellow-400" id="stat-chunks">0 / 0</span>
+                </div>
+                <div class="stat-pill">
+                    <span class="label">FPS</span>
+                    <span class="value text-slate-300" id="stat-fps">60</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Canvas Container -->
+        <div class="flex-1 relative overflow-hidden bg-slate-900">
+            <canvas id="simCanvas" class="w-full h-full cursor-grab active:cursor-grabbing block"></canvas>
+
+            <!-- Legend Overlay -->
+            <div
+                class="absolute bottom-3 right-3 bg-slate-950/90 backdrop-blur px-3 py-2 rounded-lg border border-slate-800 text-[10px] flex gap-4 pointer-events-none select-none">
+                <div class="flex items-center gap-1.5 text-slate-300">
+                    <div class="w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_6px_rgba(16,185,129,0.5)]"></div>
+                    LOD0
+                </div>
+                <div class="flex items-center gap-1.5 text-slate-300">
+                    <div class="w-2 h-2 bg-yellow-500 rounded-full shadow-[0_0_6px_rgba(245,158,11,0.5)]"></div>
+                    LOD1
+                </div>
+                <div class="flex items-center gap-1.5 text-slate-300">
+                    <div class="w-2 h-2 bg-blue-500 rounded-full shadow-[0_0_6px_rgba(59,130,246,0.5)]"></div>
+                    LOD2
+                </div>
+                <div class="flex items-center gap-1.5 text-slate-500">
+                    <div class="w-2 h-2 border border-dashed border-slate-600 rounded"></div>
+                    Culled
+                </div>
+            </div>
+
+            <!-- Instructions -->
+            <div class="absolute bottom-3 left-3 text-[10px] text-slate-500 pointer-events-none">
+                Drag to Pan • Scroll to Zoom
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Logic Script -->
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+
+        // --- Configuration & State ---
+        const options = {
+            useLOD: true,
+            useMacro: true,
+            useGreedy: true
+        };
+
+        const playerPos = { x: 0, y: 0 };
+
+        // Simulation Constants
+        const CHUNK_SIZE = 16;
+
+        // Dynamic Settings
+        let viewDistanceChunks = 8;
+        let zoomLevel = 1.0;
+        const BASE_PIXEL_SIZE = 28;
+
+        // Stats tracking
+        let lastFrameTime = performance.now();
+        let frameCount = 0;
+        let lastStatsUpdate = 0;
+
+        // DOM Elements
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        const elDistLabel = document.getElementById('val-dist-label');
+
+        // UI Stat Elements
+        const elVertices = document.getElementById('stat-vertices');
+        const elMemory = document.getElementById('stat-memory');
+        const elChunks = document.getElementById('stat-chunks');
+        const elFps = document.getElementById('stat-fps');
+
+        // Resize canvas to fill container
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // --- Interaction Logic ---
+
+        // Toggle Handler
+        function toggleOption(key) {
+            options[key] = !options[key];
+            updateButtonVisuals(key);
+        }
+
+        // Slider Handler
+        function updateRenderDistance(val) {
+            viewDistanceChunks = parseInt(val);
+            elDistLabel.textContent = (viewDistanceChunks * 2 + 1) + " Chunks";
+        }
+
+        // --- Drag & Zoom Logic ---
+        let isDragging = false;
+        let lastMouseX = 0;
+        let lastMouseY = 0;
+
+        canvas.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            lastMouseX = e.clientX;
+            lastMouseY = e.clientY;
+            canvas.style.cursor = 'grabbing';
+        });
+
+        window.addEventListener('mouseup', () => {
+            isDragging = false;
+            canvas.style.cursor = 'grab';
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+
+            const dx = e.clientX - lastMouseX;
+            const dy = e.clientY - lastMouseY;
+
+            lastMouseX = e.clientX;
+            lastMouseY = e.clientY;
+
+            const sensitivity = 0.5 / zoomLevel;
+            playerPos.x -= dx * sensitivity;
+            playerPos.y -= dy * sensitivity;
+        });
+
+        canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const zoomSpeed = 0.001;
+            zoomLevel += e.deltaY * -zoomSpeed;
+            zoomLevel = Math.max(0.2, Math.min(zoomLevel, 3.0));
+        }, { passive: false });
+
+
+        function updateButtonVisuals(key) {
+            const keyShort = key.replace('use', '').toLowerCase();
+            const btn = document.getElementById(`btn-${keyShort}`);
+
+            if (options[key]) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        }
+
+        // --- Core Simulation Logic ---
+
+        const noise = (x, y) => {
+            const continent = Math.sin(x * 0.01 + y * 0.005) + Math.cos(x * 0.005 - y * 0.01);
+            const detail = Math.sin(x * 0.03) * 0.4 + Math.cos(y * 0.03) * 0.4;
+            return continent + detail;
+        };
+
+        const isSolid = (x, y) => noise(x, y) > 0.5;
+
+        function renderSimulation() {
+            const WORLD_WIDTH = canvas.width;
+            const WORLD_HEIGHT = canvas.height;
+
+            // Clear Canvas
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+
+            // Draw Grid
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            for (let i = 0; i < WORLD_WIDTH; i += 40) { ctx.moveTo(i, 0); ctx.lineTo(i, WORLD_HEIGHT); }
+            for (let i = 0; i < WORLD_HEIGHT; i += 40) { ctx.moveTo(0, i); ctx.lineTo(WORLD_WIDTH, i); }
+            ctx.stroke();
+
+            const chunkPixelSize = BASE_PIXEL_SIZE * zoomLevel;
+            const centerX = WORLD_WIDTH / 2;
+            const centerY = WORLD_HEIGHT / 2;
+
+            const LOD0_RADIUS = 3;
+            const LOD1_RADIUS = 6;
+
+            let frameActiveChunks = 0;
+            let frameSkippedChunks = 0;
+            let frameVertices = 0;
+            let frameMemory = 0;
+
+            for (let dy = -viewDistanceChunks; dy <= viewDistanceChunks; dy++) {
+                for (let dx = -viewDistanceChunks; dx <= viewDistanceChunks; dx++) {
+
+                    const cx = Math.floor(playerPos.x / CHUNK_SIZE) + dx;
+                    const cy = Math.floor(playerPos.y / CHUNK_SIZE) + dy;
+
+                    const screenX = centerX + (dx * chunkPixelSize * 2.2);
+                    const screenY = centerY + (dy * chunkPixelSize * 2.2);
+
+                    if (screenX < -chunkPixelSize * 3 || screenX > WORLD_WIDTH + chunkPixelSize ||
+                        screenY < -chunkPixelSize * 3 || screenY > WORLD_HEIGHT + chunkPixelSize) {
+                        continue;
+                    }
+
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    // 1. MACRO CULLING
+                    let skipChunk = false;
+                    if (options.useMacro) {
+                        const corners = [
+                            isSolid(cx * CHUNK_SIZE, cy * CHUNK_SIZE),
+                            isSolid((cx + 1) * CHUNK_SIZE, cy * CHUNK_SIZE),
+                            isSolid(cx * CHUNK_SIZE, (cy + 1) * CHUNK_SIZE),
+                            isSolid((cx + 1) * CHUNK_SIZE, (cy + 1) * CHUNK_SIZE),
+                        ];
+                        const allSolid = corners.every(c => c === true);
+                        const allAir = corners.every(c => c === false);
+                        if (allSolid || allAir) skipChunk = true;
+                    }
+
+                    // 2. LOD CALCULATION
+                    let step = 1;
+                    if (options.useLOD) {
+                        if (dist > LOD1_RADIUS) step = 4;
+                        else if (dist > LOD0_RADIUS) step = 2;
+                    }
+
+                    if (skipChunk) {
+                        frameSkippedChunks++;
+                        ctx.strokeStyle = '#334155';
+                        ctx.lineWidth = 1 * zoomLevel;
+                        ctx.setLineDash([4 * zoomLevel, 4 * zoomLevel]);
+                        ctx.strokeRect(screenX, screenY, chunkPixelSize * 2, chunkPixelSize * 2);
+                        ctx.setLineDash([]);
+                    } else {
+                        frameActiveChunks++;
+                        const voxelsInChunk = (CHUNK_SIZE / step) * (CHUNK_SIZE / step);
+                        frameMemory += voxelsInChunk;
+
+                        const miniPixel = (chunkPixelSize * 2) / (CHUNK_SIZE / step);
+
+                        // 3. FULL 2D GREEDY MESHING SIMULATION
+                        const gridSize = CHUNK_SIZE / step;
+                        const visited = new Uint8Array(gridSize * gridSize);
+
+                        for (let gy = 0; gy < gridSize; gy++) {
+                            for (let gx = 0; gx < gridSize; gx++) {
+                                if (visited[gy * gridSize + gx] === 1) continue;
+
+                                const vx = gx * step;
+                                const vy = gy * step;
+                                const solid = isSolid((cx * CHUNK_SIZE) + vx, (cy * CHUNK_SIZE) + vy);
+
+                                if (!solid) continue;
+
+                                let runColor;
+                                if (step === 1) runColor = '#10B981';
+                                else if (step === 2) runColor = '#F59E0B';
+                                else runColor = '#3B82F6';
+
+                                let w = 1;
+                                let h = 1;
+
+                                if (options.useGreedy) {
+                                    while (gx + w < gridSize) {
+                                        if (visited[gy * gridSize + (gx + w)] === 1) break;
+                                        if (!isSolid((cx * CHUNK_SIZE) + (vx + w * step), (cy * CHUNK_SIZE) + vy)) break;
+                                        w++;
+                                    }
+                                    while (gy + h < gridSize) {
+                                        let rowOk = true;
+                                        for (let k = 0; k < w; k++) {
+                                            if (visited[(gy + h) * gridSize + (gx + k)] === 1) { rowOk = false; break; }
+                                            if (!isSolid((cx * CHUNK_SIZE) + (vx + k * step), (cy * CHUNK_SIZE) + (vy + h * step))) { rowOk = false; break; }
+                                        }
+                                        if (!rowOk) break;
+                                        h++;
+                                    }
+                                }
+
+                                for (let ddy = 0; ddy < h; ddy++) {
+                                    for (let ddx = 0; ddx < w; ddx++) {
+                                        visited[(gy + ddy) * gridSize + (gx + ddx)] = 1;
+                                    }
+                                }
+
+                                const drawX = screenX + (gx * miniPixel);
+                                const drawY = screenY + (gy * miniPixel);
+
+                                frameVertices += 6;
+
+                                ctx.fillStyle = runColor;
+                                ctx.fillRect(drawX, drawY, miniPixel * w, miniPixel * h);
+
+                                if (options.useGreedy) {
+                                    ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+                                    ctx.lineWidth = 1 * zoomLevel;
+                                    ctx.strokeRect(drawX, drawY, miniPixel * w, miniPixel * h);
+                                } else {
+                                    ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+                                    ctx.lineWidth = 1 * zoomLevel;
+                                    ctx.strokeRect(drawX, drawY, miniPixel, miniPixel);
+                                }
+                            }
+                        }
+
+                        const borderColor = step === 1 ? '#059669' : (step === 2 ? '#D97706' : '#2563EB');
+                        ctx.strokeStyle = borderColor;
+                        ctx.lineWidth = (dist <= LOD0_RADIUS ? 2 : 1) * zoomLevel;
+                        ctx.strokeRect(screenX, screenY, chunkPixelSize * 2, chunkPixelSize * 2);
+                    }
+                }
+            }
+
+            // Draw Player
+            ctx.shadowColor = '#EF4444';
+            ctx.shadowBlur = 10;
+            ctx.fillStyle = '#EF4444';
+            ctx.beginPath();
+            ctx.arc(centerX + 12, centerY + 12, 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            // Stats Update
+            frameCount++;
+            const now = performance.now();
+            if (now - lastStatsUpdate >= 200) {
+                const fps = Math.round(frameCount * (1000 / (now - lastStatsUpdate)));
+                elVertices.textContent = frameVertices.toLocaleString();
+                elMemory.textContent = (Math.round(frameMemory / 1024 * 100) / 100).toLocaleString();
+                elChunks.textContent = `${frameActiveChunks} / ${frameActiveChunks + frameSkippedChunks}`;
+                elFps.textContent = fps;
+                frameCount = 0;
+                lastStatsUpdate = now;
+            }
+
+            requestAnimationFrame(renderSimulation);
+        }
+
+        updateButtonVisuals('useLOD');
+        updateButtonVisuals('useMacro');
+        updateButtonVisuals('useGreedy');
+        requestAnimationFrame(renderSimulation);
+
+    </script>
+</body>
+
+</html>

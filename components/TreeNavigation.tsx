@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, FolderOpen, FileText } from 'lucide-react';
 import { getBasePath } from '../lib/paths';
 import { cn } from '../lib/utils';
 import { Collection, SubjectNode, NodeKind, StandaloneArticle } from '../lib/content/types';
@@ -209,8 +209,9 @@ function CollectionBranch({
         {hasChildren ? (
           <ToggleButton label={`Toggle ${node.title}`} />
         ) : (
-          <span className="inline-flex h-6 w-6 items-center justify-center text-xs text-muted-foreground">•</span>
+          <FolderOpen className="h-4 w-4 text-primary/70" />
         )}
+        <FolderOpen className="h-4 w-4 text-primary/70" />
         <Link href={`/collections/${slug}/`} className="flex-1 truncate font-medium">
           {node.title}
         </Link>
@@ -249,12 +250,13 @@ function StandaloneLeaf({ node, depth, active }: { node: StandaloneArticle; dept
     <Link
       href={href}
       className={cn(
-        'block rounded-md px-2 py-1 text-sm transition-colors',
+        'flex items-center gap-2 rounded-md px-2 py-1 text-sm transition-colors',
         isActive ? 'bg-primary/10 font-medium text-primary' : 'text-muted-foreground hover:text-foreground'
       )}
       style={{ paddingLeft: depth * 12 + TOGGLE_SIZE }}
     >
-      {node.title}
+      <FileText className="h-4 w-4 shrink-0 opacity-60" />
+      <span className="truncate">{node.title}</span>
     </Link>
   );
 }

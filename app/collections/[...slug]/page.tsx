@@ -12,6 +12,7 @@ import {
   getCollectionBySlug,
   getCollectionCanonicalUrl,
   getCollections,
+  getKnowledgePathForSlug,
 } from '../../../lib/content/content';
 import { formatDate } from '../../../lib/format';
 
@@ -86,7 +87,26 @@ export default async function CollectionSlugPage({ params }: PageProps) {
     notFound();
   }
 
-  const parentCollection = await getCollectionBySlug(article.collectionSlug);
+  const [parentCollection, knowledgePath] = await Promise.all([
+    getCollectionBySlug(article.collectionSlug),
+    getKnowledgePathForSlug(slug),
+  ]);
+
+  // Find sibling articles for navigation
+  let previousArticle: { slug: string; title: string } | null = null;
+  let nextArticle: { slug: string; title: string } | null = null;
+
+  if (parentCollection && parentCollection.articles.length > 1) {
+    const currentIndex = parentCollection.articles.findIndex(a => a.slug === article.slug);
+    if (currentIndex > 0) {
+      const prev = parentCollection.articles[currentIndex - 1];
+      previousArticle = { slug: prev.slug, title: prev.title };
+    }
+    if (currentIndex < parentCollection.articles.length - 1) {
+      const next = parentCollection.articles[currentIndex + 1];
+      nextArticle = { slug: next.slug, title: next.title };
+    }
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -106,7 +126,12 @@ export default async function CollectionSlugPage({ params }: PageProps) {
       </div>
 
       <Suspense fallback={null}>
-        <ArticleContent article={article} />
+        <ArticleContent
+          article={article}
+          knowledgePath={knowledgePath}
+          previousArticle={previousArticle}
+          nextArticle={nextArticle}
+        />
       </Suspense>
     </div>
   );
@@ -148,21 +173,29 @@ function CollectionView({ collection }: { collection: LoadedCollection }) {
             </p>
           </div>
           <ol className="space-y-4">
-            {collection.collections.map((child) => (
+            {collection.collections.map((child, index) => (
               <li key={child.slug} className="list-none">
-                <Link
-                  href={`/collections/${child.slug}/`}
-                  className="flex flex-col gap-2 rounded-2xl border border-border/60 bg-background/80 p-5 transition-colors hover:border-primary/40"
-                >
-                  <div className="flex flex-col gap-1">
-                    <span className="text-lg font-semibold text-foreground">{child.title}</span>
+                <div className="flex gap-4 rounded-2xl border border-border p-5 transition-colors hover:bg-card">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
+                  <div className="flex-1 space-y-2">
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
+                      <Link
+                        href={`/collections/${child.slug}/`}
+                        className="text-lg font-semibold text-foreground transition-colors hover:text-primary"
+                      >
+                        {child.title}
+                      </Link>
+                      <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                        {child.totalCollections > 0 && `${child.totalCollections} collections`}
+                        {child.totalCollections > 0 && child.totalArticles > 0 && ' · '}
+                        {child.totalArticles > 0 && `${child.totalArticles} articles`}
+                      </span>
+                    </div>
                     <p className="text-sm text-muted-foreground">{child.summary.text}</p>
                   </div>
-                  <div className="flex gap-4 text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                    <span>{child.totalCollections} collections</span>
-                    <span>{child.totalArticles} articles</span>
-                  </div>
-                </Link>
+                </div>
               </li>
             ))}
           </ol>

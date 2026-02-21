@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { Article } from '../lib/content/types';
 import { formatDate } from '../lib/format';
-import { TagBadge } from './TagBadge';
 import { Card, CardContent } from './ui/card';
 
 export function ArticleCard({ article }: { article: Article }) {
@@ -22,14 +21,13 @@ export function ArticleCard({ article }: { article: Article }) {
             <span aria-hidden="true">•</span>
             <span>{article.readingTime.text}</span>
           </div>
-          {article.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {article.tags.map((tag) => (
-                <TagBadge key={tag} tag={tag} />
-              ))}
-            </div>
-          )}
         </header>
+
+        {article.summary.text && (
+          <p className="text-muted-foreground line-clamp-2">
+            {article.summary.text}
+          </p>
+        )}
 
         <div>
           <Link
@@ -44,3 +42,4 @@ export function ArticleCard({ article }: { article: Article }) {
     </Card>
   );
 }
+

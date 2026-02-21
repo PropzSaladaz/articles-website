@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>LOD Simulation Demo</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #111;
+      color: #eee;
+    }
+    #info {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 10px;
+      border-radius: 4px;
+      pointer-events: none;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div id="info">
+    <strong>LOD Demo</strong><br>
+    Move mouse to simulate camera movement.<br>
+    Green: High Detail<br>
+    Yellow: Medium Detail<br>
+    Red: Low Detail
+  </div>
+  <canvas id="canvas"></canvas>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    let width, height;
+    
+    // Grid of objects
+    const gridSize = 20;
+    const spacing = 40;
+    const objects = [];
+
+    // Camera/Mouse position
+    let mouseX = 0;
+    let mouseY = 0;
+
+    function resize() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+      initObjects();
+    }
+
+    function initObjects() {
+      objects.length = 0;
+      const startX = (width - (gridSize * spacing)) / 2;
+      const startY = (height - (gridSize * spacing)) / 2;
+
+      for (let y = 0; y < gridSize; y++) {
+        for (let x = 0; x < gridSize; x++) {
+          objects.push({
+            x: startX + x * spacing,
+            y: startY + y * spacing,
+          });
+        }
+      }
+    }
+
+    function update(e) {
+      if (e) {
+        const rect = canvas.getBoundingClientRect();
+        mouseX = e.clientX - rect.left;
+        mouseY = e.clientY - rect.top;
+      }
+    }
+
+    function draw() {
+      ctx.fillStyle = '#111';
+      ctx.fillRect(0, 0, width, height);
+
+      for (const obj of objects) {
+        const dx = obj.x - mouseX;
+        const dy = obj.y - mouseY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        // LOD Logic based on distance
+        if (dist < 200) {
+          // High Detail (High Poly / Complex Shader) -> Represented by Circle
+          ctx.beginPath();
+          ctx.arc(obj.x, obj.y, 10, 0, Math.PI * 2);
+          ctx.fillStyle = '#4ade80'; // Green
+          ctx.fill();
+        } else if (dist < 400) {
+          // Medium Detail -> Represented by Square
+          ctx.fillStyle = '#facc15'; // Yellow
+          ctx.fillRect(obj.x - 8, obj.y - 8, 16, 16);
+        } else {
+          // Low Detail -> Represented by small dot
+          ctx.fillStyle = '#ef4444'; // Red
+          ctx.fillRect(obj.x - 4, obj.y - 4, 8, 8);
+        }
+      }
+
+      // Draw camera/mouse cursor ring
+      ctx.beginPath();
+      ctx.arc(mouseX, mouseY, 20, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+      ctx.stroke();
+
+      requestAnimationFrame(draw);
+    }
+
+    window.addEventListener('resize', resize);
+    window.addEventListener('mousemove', update);
+
+    resize();
+    requestAnimationFrame(draw);
+  </script>
+</body>
+</html>

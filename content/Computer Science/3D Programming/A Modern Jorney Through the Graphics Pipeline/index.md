@@ -1,6 +1,7 @@
 ---
-status: "draft"          # draft | published | archived
-summary: "A pragmatic route to 3–10× faster pipelines using caching and graph-aware jobs."
+status: "published"
+date: "2025-12-15"
+summary: "A comprehensive journey through how GPUs render 3D worlds. Covers vertex processing, rasterization, shading, and the complete transformation pipeline from triangles to pixels."
 coverImage: "./images/cover.png"
 ---
 

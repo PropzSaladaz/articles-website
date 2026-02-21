@@ -4,29 +4,44 @@ import { useEffect } from "react";
 
 export function CopyCodeButtons() {
   useEffect(() => {
-    const buttons = document.querySelectorAll<HTMLButtonElement>(".copy-btn");
+    const handleCopy = (btn: HTMLButtonElement) => {
+      const code = btn.getAttribute("data-code") || "";
+      navigator.clipboard.writeText(code).then(() => {
+        btn.classList.add("copied");
+        btn.setAttribute("data-tooltip", "Copied!");
 
-    buttons.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const code = btn.getAttribute("data-code") || "";
-        navigator.clipboard.writeText(code).then(() => {
-          btn.textContent = "Copied!";
-          btn.classList.add("copied");
-          setTimeout(() => {
-            btn.textContent = "Copy";
-            btn.classList.remove("copied");
-          }, 1200);
-        });
+        setTimeout(() => {
+          btn.classList.remove("copied");
+          btn.setAttribute("data-tooltip", "Copy");
+        }, 2000);
+      }).catch((err) => {
+        console.error("Failed to copy:", err);
+        btn.setAttribute("data-tooltip", "Failed!");
+        setTimeout(() => {
+          btn.setAttribute("data-tooltip", "Copy");
+        }, 2000);
       });
+    };
+
+    const onClick = (e: MouseEvent) => {
+      const btn = (e.target as Element).closest(".copy-btn") as HTMLButtonElement;
+      if (btn) {
+        handleCopy(btn);
+      }
+    };
+
+    // Use event delegation for better performance and to handle dynamic content
+    document.addEventListener("click", onClick);
+
+    // Set initial tooltip on all buttons
+    document.querySelectorAll<HTMLButtonElement>(".copy-btn").forEach((btn) => {
+      btn.setAttribute("data-tooltip", "Copy");
     });
 
     return () => {
-      buttons.forEach((btn) => {
-        const clone = btn.cloneNode(true);
-        btn.replaceWith(clone); // remove listeners on unmount
-      });
+      document.removeEventListener("click", onClick);
     };
   }, []);
 
-  return null; // this component renders nothing, it only activates the JS
+  return null;
 }

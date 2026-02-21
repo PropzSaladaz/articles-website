@@ -5,6 +5,7 @@ import remarkRehype from 'remark-rehype';
 import remarkDirective from 'remark-directive';
 import remarkMath from 'remark-math';
 import remarkSpoiler from './remark-spoiler';
+import remarkGithubAlerts from './remark-github-alerts';
 import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import rehypeKatex from 'rehype-katex';
@@ -19,12 +20,23 @@ import { Heading } from './content/types';
 import rehypeShiki from '@shikijs/rehype';
 import rehypeCodeBlockCopy from './rehypeCodeBlockCopy';
 import remarkStrongHr from './remark-strong-hr';
+import rehypeDevImages from './rehype-dev-images';
 
+import rehypeProductionImages from './rehype-production-images';
+import rehypeIframeWindow from './rehype-iframe-window';
+import rehypeImageWrapper from './rehype-image-wrapper';
 
+interface MarkdownOptions {
+  slug?: string;
+  parentCollectionSlug?: string | null;
+  isCollection?: boolean;
+}
 
-export async function markdownToHtml(markdown: string): Promise<string> {
-  const file = await unified()
-    // built the AST
+export async function markdownToHtml(markdown: string, options?: MarkdownOptions): Promise<string> {
+  const isDev = process.env.NODE_ENV === 'development';
+  const slug = options?.slug || '';
+
+  let processor = unified()
     .use(remarkParse)
     // support github flavored markdown
     .use(remarkGfm)
@@ -33,14 +45,18 @@ export async function markdownToHtml(markdown: string): Promise<string> {
     // 2) Enable directives and convert :::spoiler → <details><summary>…</summary>…</details>
     .use(remarkDirective)
     .use(remarkSpoiler)
+    // GitHub-style alerts: > [!NOTE], > [!TIP], etc.
+    .use(remarkGithubAlerts)
 
     // stronger horizontal rules using '==='
     .use(remarkStrongHr)
-    
+
     // transform to HTML AST
     .use(remarkRehype, { allowDangerousHtml: true })
     // support raw HTML in markdown
     .use(rehypeRaw as any)
+    // wrap iframes in styled window
+    .use(rehypeIframeWindow)
     // render math equations
     .use(rehypeKatex)
     // code highlighting
@@ -53,15 +69,26 @@ export async function markdownToHtml(markdown: string): Promise<string> {
     })
     // add ids to headings - allow making link jumps to sections possible
     .use(rehypeSlug)
-    // add links to headings
-    .use(rehypeAutolinkHeadings, {
-      behavior: 'wrap',
-    })
-    // set custom classes for each HTML element - allow styling markdown content
+    .use(rehypeAutolinkHeadings, { behavior: 'wrap' })
     .use(rehypeScopeClasses, { prefix: 'md-' })
-    // add copy button to code blocks
     .use(rehypeCodeBlockCopy)
-    // serialize HTML AST to HTML
+    // wrap images with skeleton placeholders (after scope classes to avoid double-prefixing)
+    .use(rehypeImageWrapper);
+
+  // In dev mode with a slug, transform relative image URLs
+  if (isDev && slug) {
+    processor = processor.use(rehypeDevImages, { slug, isDev });
+  } else if (!isDev && slug) {
+    processor = processor.use(rehypeProductionImages, {
+      slug,
+      isDev,
+      repoName: process.env.NEXT_REPO_NAME,
+      parentCollectionSlug: options?.parentCollectionSlug,
+      isCollection: options?.isCollection
+    });
+  }
+
+  const file = await processor
     .use(rehypeStringify, { allowDangerousHtml: true })
     .process(markdown);
 
@@ -69,7 +96,8 @@ export async function markdownToHtml(markdown: string): Promise<string> {
 }
 
 export function extractHeadings(markdown: string): Heading[] {
-  const tree = remark().use(remarkParse).parse(markdown);
+  // Use remarkMath to properly parse math expressions in the AST
+  const tree = remark().use(remarkParse).use(remarkMath).parse(markdown);
   const headings: Heading[] = [];
   const slugger = new GithubSlugger();
 
@@ -78,11 +106,24 @@ export function extractHeadings(markdown: string): Heading[] {
     if (!node.depth || node.depth < 1 || node.depth > 2) {
       return;
     }
-    const text = toString(node).trim();
-    if (!text) return;
+
+    // Extract text excluding math nodes
+    const textParts: string[] = [];
+    visit(node, (child: any) => {
+      if (child.type === 'text') {
+        textParts.push(child.value);
+      }
+      // Skip inlineMath and math nodes - they'll be excluded from text
+    });
+
+    const rawText = toString(node).trim();
+    const cleanText = textParts.join('').replace(/\s+/g, ' ').trim();
+
+    if (!cleanText) return;
+
     headings.push({
-      id: slugger.slug(text),
-      text,
+      id: slugger.slug(rawText), // Use original text for slug to match rendered IDs
+      text: cleanText,           // Use clean text (no math) for display
       level: node.depth,
     });
   });

@@ -4,7 +4,7 @@ import { extractHeadings, markdownToHtml } from "../md";
 import { markdownToPlainText } from "../summaries";
 import { deriveCover, isFile, loadMarkdown } from "./files";
 import { Article, Collection } from "./types";
-import { extractTags, parseStatus, titleFromFolder } from "./utilities";
+import { parseStatus, titleFromFolder } from "./utilities";
 import readingTime from "reading-time";
 
 type BuildArticleParams = {
@@ -29,6 +29,41 @@ function parseOptionalDate(value: unknown): string | null {
   return date.toISOString();
 }
 
+/**
+ * Extract the first meaningful paragraph from markdown content for use as summary.
+ * Skips headings, empty lines, and frontmatter-like content.
+ */
+function extractFirstParagraph(markdown: string): string {
+  const lines = markdown.split('\n');
+  let paragraph = '';
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    // Skip empty lines, headings, horizontal rules, and code blocks
+    if (!trimmed || trimmed.startsWith('#') || trimmed.startsWith('---') || trimmed.startsWith('```')) {
+      // If we already have content and hit a break, stop
+      if (paragraph.length > 0) break;
+      continue;
+    }
+    // Skip images and iframes
+    if (trimmed.startsWith('![') || trimmed.startsWith('<iframe')) continue;
+
+    paragraph += (paragraph ? ' ' : '') + trimmed;
+
+    // If paragraph is long enough, stop
+    if (paragraph.length > 200) break;
+  }
+
+  // Truncate to ~200 chars at word boundary
+  if (paragraph.length > 200) {
+    const truncated = paragraph.substring(0, 200);
+    const lastSpace = truncated.lastIndexOf(' ');
+    return (lastSpace > 100 ? truncated.substring(0, lastSpace) : truncated) + '...';
+  }
+
+  return paragraph;
+}
+
 function summarySource(folderAbs: string, front: any, fallbackMarkdown: string) {
   const summaryPath = path.join(folderAbs, 'summary.md');
   if (isFile(summaryPath)) {
@@ -39,7 +74,8 @@ function summarySource(folderAbs: string, front: any, fallbackMarkdown: string) 
   const viaFront = typeof front.summary === 'string' ? front.summary.trim() : '';
   if (viaFront.length > 0) return viaFront;
 
-  return fallbackMarkdown;
+  // Extract just the first paragraph as fallback, not the full content
+  return extractFirstParagraph(fallbackMarkdown);
 }
 
 export async function buildArticleFromFolder({
@@ -58,12 +94,11 @@ export async function buildArticleFromFolder({
   const slug = slugPieces.join('/');
   const summaryRaw = summarySource(folderAbs, front, content);
 
-  const tags = extractTags(front.tags);
   const cover = deriveCover(front, folderAbs);
   const fileStats = fs.statSync(indexPath);
   const publishedAt = parseOptionalDate(front.date) ?? fileStats.mtime.toISOString();
 
-  const html = await markdownToHtml(content);
+  const html = await markdownToHtml(content, { slug, parentCollectionSlug });
   const headings = extractHeadings(content);
 
   const summaryHtml = await markdownToHtml(summaryRaw);
@@ -76,7 +111,6 @@ export async function buildArticleFromFolder({
     title,
     status,
     date: publishedAt,
-    tags,
     summary: { text: summaryText, html: summaryHtml },
     cover,
     content,
@@ -84,6 +118,7 @@ export async function buildArticleFromFolder({
     headings,
     readingTime: { text: rt.text, minutes: rt.minutes, words: rt.words },
     collectionSlug: parentCollectionSlug,
+    folderAbs: process.env.NODE_ENV === 'development' ? folderAbs : undefined,
   };
 }
 
@@ -105,7 +140,7 @@ export async function buildCollectionFromFolder({
 
   const cover = deriveCover(front, folderAbs);
   const summaryRaw = summarySource(folderAbs, front, content);
-  const summaryHtml = await markdownToHtml(summaryRaw);
+  const summaryHtml = await markdownToHtml(summaryRaw, { slug, isCollection: true });
   const summaryText = await markdownToPlainText(summaryRaw);
 
   return {
@@ -118,5 +153,6 @@ export async function buildCollectionFromFolder({
     collections: childCollections,
     totalArticles: childArticles.length,
     totalCollections: childCollections.length,
+    folderAbs: process.env.NODE_ENV === 'development' ? folderAbs : undefined,
   };
 }
