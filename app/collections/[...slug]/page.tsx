@@ -63,7 +63,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   return {
     title: article.title,
-    description: article.summary.text,
+    description: article.description,
     alternates: {
       canonical: getArticleCanonicalUrl(article),
     },
@@ -229,7 +229,7 @@ function CollectionView({ collection }: { collection: LoadedCollection }) {
                         {formatDate(article.date)} · {article.readingTime.text}
                       </span>
                     </div>
-                    <p className="text-sm text-muted-foreground">{article.summary.text}</p>
+                    <p className="text-sm text-muted-foreground">{article.description}</p>
                   </div>
                 </div>
               </li>

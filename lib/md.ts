@@ -69,7 +69,11 @@ export async function markdownToHtml(markdown: string, options?: MarkdownOptions
     })
     // add ids to headings - allow making link jumps to sections possible
     .use(rehypeSlug)
-    .use(rehypeAutolinkHeadings, { behavior: 'wrap' })
+    .use(rehypeAutolinkHeadings, {
+      behavior: 'prepend',
+      properties: { className: ['anchor-link'], ariaHidden: 'true', tabIndex: -1 },
+      content: [],
+    })
     .use(rehypeScopeClasses, { prefix: 'md-' })
     .use(rehypeCodeBlockCopy)
     // wrap images with skeleton placeholders (after scope classes to avoid double-prefixing)

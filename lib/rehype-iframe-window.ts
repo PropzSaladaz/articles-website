@@ -61,7 +61,7 @@ const rehypeIframeWindow: Plugin<[], Root> = () => {
                             'rounded-xl', // Make it rounded-xl for standard macOS window shape
                             'border',
                             'border-slate-800', // Enforce dark border to match the dark top bar
-                            'my-8',
+                            'my-14',
                             'bg-slate-900', // Background is also dark so the card fits seamlessly
                             'flex',
                             'flex-col'

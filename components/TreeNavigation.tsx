@@ -141,7 +141,9 @@ function SubjectBranch({ node, depth, active, expandedKeys, onToggle }: TreeNode
       <div
         className={cn(
           'flex items-center gap-2 rounded-md px-2 py-1 text-sm font-medium transition-colors',
-          isActive ? 'bg-muted text-foreground' : 'text-muted-foreground'
+          isActive
+            ? 'bg-primary/[0.08] text-primary/80 border-l-2 border-primary/70 pl-[calc(0.5rem-2px)]'
+            : 'text-muted-foreground/70 hover:text-foreground'
         )}
         style={{ paddingLeft: depth * 12 }}
       >
@@ -202,7 +204,9 @@ function CollectionBranch({
       <div
         className={cn(
           'flex items-center gap-2 rounded-md px-2 py-1 text-sm transition-colors',
-          isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground'
+          isActive
+            ? 'bg-primary/[0.08] text-primary/80 border-l-2 border-primary/70'
+            : 'text-muted-foreground/70 hover:text-foreground'
         )}
         style={{ paddingLeft: depth * 12 }}
       >
@@ -251,7 +255,9 @@ function StandaloneLeaf({ node, depth, active }: { node: StandaloneArticle; dept
       href={href}
       className={cn(
         'flex items-center gap-2 rounded-md px-2 py-1 text-sm transition-colors',
-        isActive ? 'bg-primary/10 font-medium text-primary' : 'text-muted-foreground hover:text-foreground'
+        isActive
+          ? 'bg-primary/[0.08] font-semibold text-primary/80 border-l-2 border-primary/70'
+          : 'text-muted-foreground/70 hover:text-foreground'
       )}
       style={{ paddingLeft: depth * 12 + TOGGLE_SIZE }}
     >

@@ -23,9 +23,9 @@ export function ArticleCard({ article }: { article: Article }) {
           </div>
         </header>
 
-        {article.summary.text && (
+        {article.description && (
           <p className="text-muted-foreground line-clamp-2">
-            {article.summary.text}
+            {article.description}
           </p>
         )}
 

@@ -25,9 +25,8 @@ type ArticlePreviewCardProps = {
 
 export function ArticlePreviewCard({ article, variant = 'default', className, style }: ArticlePreviewCardProps) {
   const href = article.collectionSlug ? `/collections/${article.slug}/` : `/articles/${article.slug}/`;
-  const summary = article.summary;
   const excerptLength = variant === 'featured' ? 220 : variant === 'compact' ? 140 : 160;
-  const excerpt = truncate(summary.text, excerptLength);
+  const excerpt = truncate(article.description, excerptLength);
 
   const variantClasses: Record<Variant, string> = {
     default: 'gap-5 p-6 sm:p-7',

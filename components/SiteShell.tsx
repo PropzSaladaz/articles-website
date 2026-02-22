@@ -202,7 +202,7 @@ export function SiteShell({ tree, collections, children }: SiteShellProps) {
           tabIndex={-1}
           className={cn(
             'hidden w-2 cursor-col-resize select-none transition-colors duration-150 lg:block self-stretch',
-            isSidebarCollapsed ? 'border-l border-transparent' : 'border-l border-border',
+            isSidebarCollapsed ? 'border-l border-transparent' : 'border-l border-border/25',
             isDragging ? 'bg-border' : 'bg-transparent hover:bg-border/60'
           )}
           style={{ touchAction: 'none' }}

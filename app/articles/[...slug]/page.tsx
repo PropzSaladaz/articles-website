@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
   return {
     title: article.title,
-    description: article.summary.text,
+    description: article.description,
     alternates: {
       canonical: getArticleCanonicalUrl(article),
     },

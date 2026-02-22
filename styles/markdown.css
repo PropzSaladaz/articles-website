@@ -5,8 +5,9 @@
 
 /* Typography */
 .md .md-p {
+  font-size: 17px;
   margin: 1em 0;
-  line-height: 1.75;
+  line-height: 1.8;
 }
 
 .md .md-heading {
@@ -51,10 +52,40 @@
 }
 
 /* Remove underlines added by autolink wrapper */
-.md .md-heading a {
+.md .md-heading a:not(.anchor-link) {
   color: inherit;
   text-decoration: none;
   font-weight: inherit;
+}
+
+/* Anchor link icon on heading hover */
+.md .md-heading {
+  position: relative;
+}
+
+.md .md-heading a.anchor-link {
+  position: absolute;
+  left: -1.4rem;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  font-size: 0.85em;
+  color: var(--link, #93c5fd);
+  text-decoration: none;
+  transition: opacity 0.15s ease;
+  user-select: none;
+}
+
+.md .md-heading a.anchor-link::before {
+  content: '#';
+}
+
+.md .md-heading:hover a.anchor-link {
+  opacity: 0.55;
+}
+
+.md .md-heading a.anchor-link:hover {
+  opacity: 1;
 }
 
 /* Emphasis, strong, links */
@@ -466,7 +497,7 @@
    ================================ */
 
 .md-alert {
-  margin: 1.5rem 0;
+  margin: 2.5rem 0;
   padding: 0;
   border-radius: 0.5rem;
   border-left: 4px solid;
@@ -520,95 +551,103 @@
   padding-bottom: 1rem;
 }
 
-/* NOTE - Blue */
+/* NOTE - Steel blue */
 .md-alert-note {
-  background: rgba(59, 130, 246, 0.08);
-  border-color: #3b82f6;
+  background: rgba(99, 155, 220, 0.06);
+  border-color: rgba(99, 155, 220, 0.5);
 }
 
 .md-alert-note .md-alert-title {
-  color: #3b82f6;
+  color: #7eafd9;
 }
 
 .md-alert-note .md-alert-title::before {
-  content: 'ℹ️';
+  content: 'ℹ';
+  font-style: normal;
+  font-size: 0.95rem;
 }
 
-/* TIP - Green */
+/* TIP - Sage green */
 .md-alert-tip {
-  background: rgba(34, 197, 94, 0.08);
-  border-color: #22c55e;
+  background: rgba(74, 172, 120, 0.06);
+  border-color: rgba(74, 172, 120, 0.5);
 }
 
 .md-alert-tip .md-alert-title {
-  color: #22c55e;
+  color: #6abf90;
 }
 
 .md-alert-tip .md-alert-title::before {
-  content: '💡';
+  content: '✦';
+  font-size: 0.8rem;
 }
 
-/* IMPORTANT - Purple */
+/* IMPORTANT - soft violet */
 .md-alert-important {
-  background: rgba(168, 85, 247, 0.08);
-  border-color: #a855f7;
+  background: rgba(148, 100, 210, 0.06);
+  border-color: rgba(148, 100, 210, 0.5);
 }
 
 .md-alert-important .md-alert-title {
-  color: #a855f7;
+  color: #b08ed8;
 }
 
 .md-alert-important .md-alert-title::before {
-  content: '📌';
+  content: '!';
+  font-weight: 700;
+  font-style: normal;
+  font-size: 1rem;
 }
 
-/* WARNING - Yellow/Orange */
+/* WARNING - amber */
 .md-alert-warning {
-  background: rgba(234, 179, 8, 0.08);
-  border-color: #eab308;
+  background: rgba(200, 150, 50, 0.06);
+  border-color: rgba(200, 150, 50, 0.5);
 }
 
 .md-alert-warning .md-alert-title {
-  color: #ca8a04;
+  color: #c8a252;
 }
 
 .md-alert-warning .md-alert-title::before {
-  content: '⚠️';
+  content: '△';
+  font-size: 0.9rem;
 }
 
-/* CAUTION - Red */
+/* CAUTION - muted red */
 .md-alert-caution {
-  background: rgba(239, 68, 68, 0.08);
-  border-color: #ef4444;
+  background: rgba(200, 80, 80, 0.06);
+  border-color: rgba(200, 80, 80, 0.5);
 }
 
 .md-alert-caution .md-alert-title {
-  color: #ef4444;
+  color: #c47070;
 }
 
 .md-alert-caution .md-alert-title::before {
-  content: '🛑';
+  content: '⊗';
+  font-size: 0.95rem;
 }
 
-/* Dark mode adjustments */
+/* Dark mode - subtly increase bg opacity */
 .dark .md-alert-note {
-  background: rgba(59, 130, 246, 0.12);
+  background: rgba(99, 155, 220, 0.08);
 }
 
 .dark .md-alert-tip {
-  background: rgba(34, 197, 94, 0.12);
+  background: rgba(74, 172, 120, 0.08);
 }
 
 .dark .md-alert-important {
-  background: rgba(168, 85, 247, 0.12);
+  background: rgba(148, 100, 210, 0.08);
 }
 
 .dark .md-alert-warning {
-  background: rgba(234, 179, 8, 0.12);
+  background: rgba(200, 150, 50, 0.08);
 }
 
 .dark .md-alert-caution {
-  background: rgba(239, 68, 68, 0.12);
+  background: rgba(200, 80, 80, 0.08);
 }
 
 /* Content styling inside alerts */
@@ -621,11 +660,7 @@
    ================================ */
 .md-iframe-window {
   position: relative;
-  margin: 1.5rem 0;
-  border-radius: 0.75rem;
   overflow: hidden;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
 }
 
 /* The iframe itself */
@@ -648,7 +683,7 @@
    ================================ */
 /* Make all math slightly larger */
 .md .katex {
-  font-size: 1.35em;
+  font-size: 1.2em;
 }
 
 /* Add generous vertical whitespace to display math blocks */

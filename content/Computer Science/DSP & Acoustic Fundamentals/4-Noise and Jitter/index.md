@@ -41,7 +41,7 @@ Where $y[s]$ is the noisy signal, $x[s]$ is the original signal, and $n[s]$ is t
 
 But a spoiler - white noise is what you are most familiar with - it's the sound of static on an untuned radio.
 
-## 1.3 Noise has colors
+## 1.3. White Noise - The Sound of Static
 
 The color of noise refers to its **Power Spectral Density (PSD)** — essentially, how its energy is distributed across the frequency spectrum.
 
@@ -54,9 +54,6 @@ The color of noise refers to its **Power Spectral Density (PSD)** — essentiall
 > * **Brown (or Red) Noise:** This one has a dual origin! It is officially named **Brown noise** after botanist Robert Brown, who discovered the erratic "Brownian motion" that mathematically defines its random walk. However, acousticians also call it **Red noise**. In optics, red light sits at the absolute lowest frequency of the visible spectrum. Since this noise has its energy heavily concentrated at the lowest audio frequencies, "red" is the perfect optical equivalent.
 > * **Pink Noise:** Pink sits mathematically halfway between White noise (a flat spectrum) and Red noise (a steeply falling spectrum). If you take flat white light and skew the energy toward the lower-frequency red end of the spectrum—mixing white and red—you literally get pink.
 
----
-
-### A. White Noise - The Sound of Static
 
 **The Math** 
 
@@ -72,9 +69,8 @@ It is basically the same as tossing a coin for each new sample. The result of cu
 
 Because human ears are more sensitive to high frequencies, and because there are mathematically way more high frequencies than low ones (there are 10,000 Hz between 10kHz and 20kHz, but only 20 Hz between 20Hz and 40Hz), white noise sounds incredibly harsh, bright, and hissy. Think of old TV static or a steam leak.
 
----
 
-### B. Brown Noise - The Sound of a Waterfall
+## 1.4. Brown Noise - The Sound of a Waterfall
 
 **The Math** 
 
@@ -97,9 +93,7 @@ The following animation shows how this coefficient affects the noise. You can se
 You may have noticed the lower frequencies come out more as you make the persistence factor near $$1$$. And if you make it $$0$$, you get simple white noise (as expected by the formula).
 
 
----
-
-### C. Pink Noise
+## 1.5. Pink Noise
 
 **The Math**
 
@@ -138,8 +132,6 @@ Where:
 >
 > In short: **Pink noise is not just “many Brown noises added together.”**  
 > It is a **carefully shaped mix** of random motion across multiple time scales.
-
-<br>
 
 **The Intuition: "Memory at Every Scale"**
 

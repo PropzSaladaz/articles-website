@@ -64,19 +64,20 @@ function extractFirstParagraph(markdown: string): string {
   return paragraph;
 }
 
-function summarySource(folderAbs: string, front: any, fallbackMarkdown: string) {
-  // 1. Prefer frontmatter exactly
+/** Short one-liner for cards: from frontmatter `summary`, or first paragraph. */
+function descriptionSource(front: any, fallbackMarkdown: string): string {
   const viaFront = typeof front.summary === 'string' ? front.summary.trim() : '';
   if (viaFront.length > 0) return viaFront;
+  return extractFirstParagraph(fallbackMarkdown);
+}
 
-  // 2. Next prefer summary.md if it exists
+/** Rich article summary for the Summary view: from summary.md, or first paragraph. */
+function summarySource(folderAbs: string, fallbackMarkdown: string): string {
   const summaryPath = path.join(folderAbs, 'summary.md');
   if (isFile(summaryPath)) {
     const { content } = loadMarkdown(summaryPath);
     if (content.trim().length > 0) return content;
   }
-
-  // 3. Extract just the first paragraph as fallback, not the full content
   return extractFirstParagraph(fallbackMarkdown);
 }
 
@@ -94,7 +95,12 @@ export async function buildArticleFromFolder({
   const status = parseStatus(front.status, indexPath);
   const title = titleFromFolder(path.basename(folderAbs));
   const slug = slugPieces.join('/');
-  const summaryRaw = summarySource(folderAbs, front, content);
+
+  // Short description for cards (from frontmatter summary or first paragraph)
+  const descriptionRaw = descriptionSource(front, content);
+
+  // Rich summary for article summary view (from summary.md or first paragraph)
+  const summaryRaw = summarySource(folderAbs, content);
 
   const cover = deriveCover(front, folderAbs);
   const fileStats = fs.statSync(indexPath);
@@ -113,6 +119,7 @@ export async function buildArticleFromFolder({
     title,
     status,
     date: publishedAt,
+    description: descriptionRaw,
     summary: { text: summaryText, html: summaryHtml },
     cover,
     content,
@@ -141,7 +148,7 @@ export async function buildCollectionFromFolder({
   const slug = slugPieces.join('/');
 
   const cover = deriveCover(front, folderAbs);
-  const summaryRaw = summarySource(folderAbs, front, content);
+  const summaryRaw = descriptionSource(front, content);
   const summaryHtml = await markdownToHtml(summaryRaw, { slug, isCollection: true });
   const summaryText = await markdownToPlainText(summaryRaw);
 
