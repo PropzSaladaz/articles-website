@@ -65,16 +65,18 @@ function extractFirstParagraph(markdown: string): string {
 }
 
 function summarySource(folderAbs: string, front: any, fallbackMarkdown: string) {
+  // 1. Prefer frontmatter exactly
+  const viaFront = typeof front.summary === 'string' ? front.summary.trim() : '';
+  if (viaFront.length > 0) return viaFront;
+
+  // 2. Next prefer summary.md if it exists
   const summaryPath = path.join(folderAbs, 'summary.md');
   if (isFile(summaryPath)) {
     const { content } = loadMarkdown(summaryPath);
     if (content.trim().length > 0) return content;
   }
 
-  const viaFront = typeof front.summary === 'string' ? front.summary.trim() : '';
-  if (viaFront.length > 0) return viaFront;
-
-  // Extract just the first paragraph as fallback, not the full content
+  // 3. Extract just the first paragraph as fallback, not the full content
   return extractFirstParagraph(fallbackMarkdown);
 }
 

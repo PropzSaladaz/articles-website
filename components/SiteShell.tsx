@@ -174,8 +174,7 @@ export function SiteShell({ tree, collections, children }: SiteShellProps) {
       <div className="flex flex-1 items-stretch" ref={containerRef}>
         <aside
           className={cn(
-            'hidden shrink-0 overflow-hidden bg-background backdrop-blur transition-[width] duration-200 ease-out lg:flex sticky self-start',
-            isSidebarCollapsed ? 'border-r border-transparent' : 'border-r border-border'
+            'hidden shrink-0 overflow-hidden bg-background backdrop-blur transition-[width] duration-200 ease-out lg:flex sticky self-start'
           )}
           style={{
             width: isSidebarCollapsed ? '0px' : `${sidebarWidth}px`,
@@ -187,7 +186,7 @@ export function SiteShell({ tree, collections, children }: SiteShellProps) {
         >
           <div
             className={cn(
-              'overflow-y-auto px-4 py-6 transition-opacity duration-200 w-full',
+              'overflow-y-auto px-4 pb-6 pt-14 transition-opacity duration-200 w-full',
               isSidebarCollapsed ? 'pointer-events-none opacity-0' : 'opacity-100'
             )}
             style={{ maxHeight: `calc(100vh - ${HEADER_HEIGHT}px)` }}
@@ -203,6 +202,7 @@ export function SiteShell({ tree, collections, children }: SiteShellProps) {
           tabIndex={-1}
           className={cn(
             'hidden w-2 cursor-col-resize select-none transition-colors duration-150 lg:block self-stretch',
+            isSidebarCollapsed ? 'border-l border-transparent' : 'border-l border-border',
             isDragging ? 'bg-border' : 'bg-transparent hover:bg-border/60'
           )}
           style={{ touchAction: 'none' }}
