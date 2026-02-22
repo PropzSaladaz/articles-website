@@ -60,7 +60,24 @@ const rehypeScopeClasses: Plugin<[Options?], Root> = (opts) => {
         case 'ol': add(cls('ol')); break;
         case 'li': add(cls('li')); break;
 
-        case 'table': add(cls('table')); break;
+        case 'table': {
+          add(cls('table'));
+          // Wrap table in a scrollable container
+          if (parent && 'children' in parent) {
+            const parentEl = parent as Element;
+            const idx = parentEl.children.indexOf(node);
+            if (idx !== -1) {
+              const wrapper: Element = {
+                type: 'element',
+                tagName: 'div',
+                properties: { className: ['md-table-wrapper'] },
+                children: [node],
+              };
+              parentEl.children.splice(idx, 1, wrapper);
+            }
+          }
+          break;
+        }
         case 'thead': add(cls('thead')); break;
         case 'tbody': add(cls('tbody')); break;
         case 'tr': add(cls('tr')); break;

@@ -125,6 +125,63 @@ export function MarkdownRenderer({ html, className, useProse = false }: Props) {
         }
       });
     });
+
+    // ── Animated details (spoilers + alerts) ─────────────────────────────
+    const allDetails = container.querySelectorAll<HTMLDetailsElement>('details');
+    const detailCleanup: Array<() => void> = [];
+
+    allDetails.forEach((details) => {
+      const summary = details.querySelector<HTMLElement>(':scope > summary');
+      if (!summary) return;
+
+      const animateOpen = () => {
+        details.open = true;
+        const contentHeight = details.scrollHeight - summary.offsetHeight;
+        details.style.height = `${summary.offsetHeight}px`;
+        details.style.overflow = 'hidden';
+        requestAnimationFrame(() => {
+          details.style.transition = 'height 0.32s cubic-bezier(0.4,0,0.2,1)';
+          details.style.height = `${summary.offsetHeight + contentHeight}px`;
+          details.addEventListener('transitionend', () => {
+            details.style.height = '';
+            details.style.overflow = '';
+            details.style.transition = '';
+          }, { once: true });
+        });
+      };
+
+      const animateClose = () => {
+        const currentHeight = details.scrollHeight;
+        details.style.height = `${currentHeight}px`;
+        details.style.overflow = 'hidden';
+        requestAnimationFrame(() => {
+          details.style.transition = 'height 0.25s cubic-bezier(0.4,0,0.2,1)';
+          details.style.height = `${summary.offsetHeight}px`;
+          details.addEventListener('transitionend', () => {
+            details.open = false;
+            details.style.height = '';
+            details.style.overflow = '';
+            details.style.transition = '';
+          }, { once: true });
+        });
+      };
+
+      const handleClick = (e: MouseEvent) => {
+        e.preventDefault();
+        if (details.open) {
+          animateClose();
+        } else {
+          animateOpen();
+        }
+      };
+
+      summary.addEventListener('click', handleClick);
+      detailCleanup.push(() => summary.removeEventListener('click', handleClick));
+    });
+
+    return () => {
+      detailCleanup.forEach(fn => fn());
+    };
   }, [html]);
 
   return (

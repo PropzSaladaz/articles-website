@@ -155,7 +155,6 @@ The point moves from the positive X-axis to the positive Y-axis, as expected:
 
 ![](./images/img4.svg)
 
----
 
 ## 1.2 Scaling in 2D
 
@@ -171,7 +170,6 @@ $$
 
 For example, scaling a point by 2 in both axes doubles its distance from the origin.
 
----
 
 ## 1.3 The Limitation: Translation Does Not Fit
 
@@ -216,7 +214,6 @@ where (M) represents the entire accumulated transformation.
 The limitation in 2D — that translation requires addition — is the motivation for extending the coordinate system.\
 The next step will show how adding a third component in 2D (homogeneous representation) solves this elegantly.
 
----
 
 ## 1.4 Solving Translation in 2D with Homogeneous Coordinates
 
