@@ -2,6 +2,8 @@
 
 A static knowledge-publishing platform built with **Next.js 14** (App Router, static export). Write articles and collections in Markdown, commit, and the site builds itself — with math, interactive simulations, syntax-highlighted code, and a responsive reading experience.
 
+![](./assets/preview.png)
+
 ---
 
 ## Table of Contents
