@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sound: Amplitude Over Time</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .wave-path {
+            fill: none;
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .clean-wave {
+            stroke: #06b6d4;
+            /* Cyan 500 */
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+
+        .noisy-wave {
+            stroke: #fbbf24;
+            /* Amber 400 */
+            filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.6));
+            transition: opacity 0.3s ease;
+        }
+
+        .stem-line {
+            stroke: #475569;
+            /* Slate 600 */
+            stroke-width: 2;
+            stroke-dasharray: 4;
+            transition: stroke 0.3s;
+        }
+
+        .stem-dot {
+            fill: #ec4899;
+            /* Pink 500 */
+            transition: fill 0.3s, r 0.3s, filter 0.3s;
+            cursor: pointer;
+        }
+
+        .stem-group:hover .stem-line {
+            stroke: #ec4899;
+            stroke-dasharray: 0;
+        }
+
+        .stem-group:hover .stem-dot {
+            r: 8;
+            fill: #f472b6;
+            /* Pink 400 */
+            filter: drop-shadow(0 0 10px rgba(236, 72, 153, 0.8));
+        }
+
+        .axis-line {
+            stroke: #334155;
+            /* Slate 700 */
+            stroke-width: 2;
+        }
+
+        .axis-text {
+            fill: #94a3b8;
+            /* Slate 400 */
+            font-size: 14px;
+            font-weight: 500;
+            user-select: none;
+        }
+
+        .tooltip {
+            position: absolute;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid #334155;
+            padding: 8px 12px;
+            border-radius: 8px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            transform: translate(-50%, -120%);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            z-index: 50;
+        }
+
+        /* Ambient background glow */
+        .glow-bg {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            transform: translate(-50%, -50%);
+            background: radial-gradient(circle, rgba(6, 182, 212, 0.05) 0%, rgba(15, 23, 42, 0) 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Diagram Container -->
+    <div class="relative w-full flex-1 p-2 sm:p-6 z-10 flex items-center justify-center" id="diagram-container">
+        <div class="glow-bg"></div>
+
+        <svg id="wave-svg" class="w-full h-full max-h-full" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid meet">
+            <!-- Content generated via JS -->
+        </svg>
+
+        <!-- Custom Tooltip -->
+        <div id="tooltip" class="tooltip">
+            <div class="text-xs text-slate-400 mb-1">Instantaneous Value</div>
+            <div class="text-sm font-mono text-cyan-400" id="tt-time">Time: 0.00ms</div>
+            <div class="text-sm font-mono text-pink-400" id="tt-amp">Amp: 0.00</div>
+        </div>
+    </div>
+
+    <!-- Legend & Controls -->
+    <div
+        class="bg-slate-900/80 p-3 sm:p-4 flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center relative z-10 border-t border-slate-800">
+        <div class="flex items-center gap-2">
+            <div class="w-4 h-0.5 bg-cyan-500"></div>
+            <span class="text-xs sm:text-sm text-slate-300">Clean Signal</span>
+        </div>
+        <div class="flex items-center gap-2">
+            <div class="w-4 h-0.5 bg-amber-400 shadow-[0_0_5px_#fbbf24]"></div>
+            <span class="text-xs sm:text-sm text-slate-300">Noisy Signal</span>
+        </div>
+        <div class="flex items-center gap-2">
+            <div class="w-3 h-3 rounded-full bg-pink-500 shadow-[0_0_5px_#ec4899]"></div>
+            <span class="text-xs sm:text-sm text-slate-300">Discrete Sample</span>
+        </div>
+
+        <!-- Noise Slider Control -->
+        <div
+            class="flex items-center gap-3 mt-2 sm:mt-0 sm:ml-4 border-t sm:border-t-0 sm:border-l border-slate-700 pt-3 sm:pt-0 sm:pl-6 w-full sm:w-auto justify-center">
+            <label for="noise-level" class="text-xs sm:text-sm text-slate-300 font-semibold">Noise Level:</label>
+            <input type="range" id="noise-level" min="0" max="60" value="0"
+                class="w-32 sm:w-40 accent-amber-400 cursor-pointer">
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const svg = document.getElementById('wave-svg');
+            const tooltip = document.getElementById('tooltip');
+            const container = document.getElementById('diagram-container');
+            const ttTime = document.getElementById('tt-time');
+            const ttAmp = document.getElementById('tt-amp');
+            const noiseSlider = document.getElementById('noise-level');
+
+            // SVG dimensions (internal viewBox resolution)
+            const width = 1000;
+            const height = 500;
+            const centerY = height / 2;
+
+            // Wave parameters
+            const amplitudeMax = 180;
+            const baseFrequency = 0.015;
+            // Changed pointsCount to 45 so step = 20, perfectly aligning with x += 2 increments
+            const pointsCount = 45;
+            const step = (width - 100) / pointsCount;
+
+            // Continuous high-frequency math function so it perfectly aligns anywhere it's sampled
+            const getNoise = (x) => {
+                return (Math.sin(x * 0.5) + Math.sin(x * 0.8 + 2) + Math.sin(x * 1.2 + 4)) / 3;
+            };
+
+            // 1. Draw Axes
+            const drawLine = (x1, y1, x2, y2, className) => {
+                const el = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                el.setAttribute('x1', x1); el.setAttribute('y1', y1);
+                el.setAttribute('x2', x2); el.setAttribute('y2', y2);
+                el.setAttribute('class', className);
+                svg.appendChild(el);
+            };
+
+            drawLine(50, centerY, width - 50, centerY, 'axis-line'); // X Axis
+            drawLine(50, 50, 50, height - 50, 'axis-line'); // Y Axis
+
+            // Axis Labels
+            const createText = (x, y, text, align = 'start') => {
+                const el = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                el.setAttribute('x', x); el.setAttribute('y', y);
+                el.setAttribute('text-anchor', align);
+                el.setAttribute('class', 'axis-text');
+                el.textContent = text;
+                svg.appendChild(el);
+            };
+
+            createText(width - 50, centerY + 25, 'Time →', 'end');
+            createText(60, 60, '+ Amplitude (Compression)');
+            createText(60, height - 50, '- Amplitude (Rarefaction)');
+            createText(20, centerY + 5, '0');
+
+            // 2. Mathematical function for clean wave
+            const getCleanY = (x) => {
+                const normalizedX = x - 50;
+                const val1 = Math.sin(normalizedX * baseFrequency);
+                const val2 = Math.sin(normalizedX * baseFrequency * 2.1) * 0.4;
+                const val3 = Math.cos(normalizedX * baseFrequency * 4.5) * 0.15;
+                const envelope = Math.sin((normalizedX / (width - 100)) * Math.PI);
+                const combined = (val1 + val2 + val3) * envelope;
+                return centerY - (combined * amplitudeMax);
+            };
+
+            // 3. Setup Wave Paths
+            const cleanWavePath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            cleanWavePath.setAttribute('class', 'wave-path clean-wave');
+            svg.appendChild(cleanWavePath);
+
+            const noisyWavePath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            noisyWavePath.setAttribute('class', 'wave-path noisy-wave');
+            svg.appendChild(noisyWavePath);
+
+            // Draw Clean Wave (Only needs to happen once)
+            let cleanD = `M 50 ${centerY} `;
+            for (let x = 50; x <= width - 50; x += 2) {
+                cleanD += `L ${x} ${getCleanY(x)} `;
+            }
+            cleanWavePath.setAttribute('d', cleanD);
+
+            // 4. Setup Discrete Data Points (Stems)
+            const stemsData = [];
+            for (let i = 0; i <= pointsCount; i++) {
+                const x = 50 + (i * step);
+
+                const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                group.setAttribute('class', 'stem-group');
+
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', x);
+                line.setAttribute('y1', centerY);
+                line.setAttribute('x2', x);
+                line.setAttribute('class', 'stem-line');
+
+                const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                dot.setAttribute('cx', x);
+                dot.setAttribute('r', 5);
+                dot.setAttribute('class', 'stem-dot');
+
+                group.appendChild(line);
+                group.appendChild(dot);
+                svg.appendChild(group);
+
+                const timeValue = (i * 1.5).toFixed(1);
+
+                // Tooltip Interaction logic
+                group.addEventListener('mouseenter', () => {
+                    const rect = container.getBoundingClientRect();
+                    const svgRect = svg.getBoundingClientRect();
+
+                    const scaleX = svgRect.width / width;
+                    const scaleY = svgRect.height / height;
+
+                    // Use the current dynamically updated 'cy' value of the dot
+                    const currentY = parseFloat(dot.getAttribute('cy'));
+                    const screenX = (x * scaleX) + svgRect.left - rect.left;
+                    const screenY = (currentY * scaleY) + svgRect.top - rect.top;
+
+                    const ampValue = ((centerY - currentY) / amplitudeMax).toFixed(2);
+
+                    ttTime.textContent = `Time: ${timeValue} ms`;
+                    ttAmp.textContent = `Amp:  ${ampValue > 0 ? '+' : ''}${ampValue}`;
+
+                    tooltip.style.left = `${screenX}px`;
+                    tooltip.style.top = `${screenY}px`;
+                    tooltip.style.opacity = '1';
+                });
+
+                group.addEventListener('mouseleave', () => {
+                    tooltip.style.opacity = '0';
+                });
+
+                // Store references to update them interactively
+                stemsData.push({ x, line, dot });
+            }
+
+            // 5. Update function triggered by Slider
+            const updateNoise = (noiseAmount) => {
+                // Adjust visibility based on noise amount
+                if (noiseAmount === 0) {
+                    noisyWavePath.style.opacity = '0';
+                    cleanWavePath.style.opacity = '1'; // Full opacity when no noise
+                } else {
+                    noisyWavePath.style.opacity = '1';
+                    cleanWavePath.style.opacity = '0.4'; // Dim clean wave slightly when noise is present
+                }
+
+                let noisyD = `M 50 ${centerY} `;
+
+                // Redraw continuous noisy wave
+                for (let x = 50; x <= width - 50; x += 2) {
+                    const y = getCleanY(x) + (getNoise(x) * noiseAmount);
+                    noisyD += `L ${x} ${y} `;
+                }
+                noisyWavePath.setAttribute('d', noisyD);
+
+                // Update discrete data point positions
+                stemsData.forEach((stem) => {
+                    const noisyY = getCleanY(stem.x) + (getNoise(stem.x) * noiseAmount);
+                    stem.line.setAttribute('y2', noisyY);
+                    stem.dot.setAttribute('cy', noisyY);
+                });
+            };
+
+            // Listeners & Initialization
+            noiseSlider.addEventListener('input', (e) => {
+                updateNoise(parseFloat(e.target.value));
+            });
+
+            // Set initial state based on default slider value (0)
+            updateNoise(parseFloat(noiseSlider.value));
+        });
+    </script>
+</body>
+
+</html>

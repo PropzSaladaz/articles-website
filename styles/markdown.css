@@ -642,3 +642,16 @@
   border-color: rgba(255, 255, 255, 0.1);
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
 }
+
+/* =============================
+      KaTeX & Math Rendering
+   ================================ */
+/* Make all math slightly larger */
+.md .katex {
+  font-size: 1.35em;
+}
+
+/* Add generous vertical whitespace to display math blocks */
+.md .katex-display {
+  margin: 4.5rem 0;
+}

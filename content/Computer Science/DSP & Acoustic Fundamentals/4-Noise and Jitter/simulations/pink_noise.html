@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pink Noise Explorer</title>
+    <style>
+        :root {
+            --bg-base: #020617;
+            --bg-card: rgba(15, 23, 42, 0.6);
+            --bg-card-active: #0f172a;
+            --border-color: #1e293b;
+            --border-active: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --color-pink: #ec4899;
+            --color-pink-hover: #be185d;
+            --color-white-sig: #cbd5e1;
+            --color-white-hover: #94a3b8;
+            --color-red: #ef4444;
+            --color-red-hover: #dc2626;
+        }
+
+        body {
+            margin: 0;
+            padding: 12px;
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: system-ui, -apple-system, sans-serif;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: inherit;
+        }
+
+        /* --- Cards --- */
+        .card {
+            display: flex;
+            flex-direction: column;
+            border-radius: 12px;
+            border: 2px solid var(--border-color);
+            background-color: var(--bg-card);
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .card.active-pink {
+            border-color: rgba(236, 72, 153, 0.4);
+            box-shadow: 0 0 20px rgba(236, 72, 153, 0.1);
+            background-color: var(--bg-card-active);
+        }
+
+        .card.active-white {
+            border-color: rgba(203, 213, 225, 0.4);
+            box-shadow: 0 0 20px rgba(203, 213, 225, 0.1);
+            background-color: var(--bg-card-active);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(2, 6, 23, 0.4);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .card-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .live-badge {
+            display: none;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        /* --- Buttons --- */
+        .play-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.15s;
+            color: #fff;
+        }
+
+        .play-btn svg {
+            width: 14px;
+            height: 14px;
+            fill: currentColor;
+        }
+
+        .btn-pink {
+            background: rgba(236, 72, 153, 0.2);
+            color: var(--color-pink);
+            border: 1px solid rgba(236, 72, 153, 0.3);
+        }
+
+        .btn-pink:hover {
+            background: rgba(236, 72, 153, 0.3);
+        }
+
+        .btn-white {
+            background: rgba(203, 213, 225, 0.15);
+            color: var(--color-white-sig);
+            border: 1px solid rgba(203, 213, 225, 0.3);
+        }
+
+        .btn-white:hover {
+            background: rgba(203, 213, 225, 0.25);
+        }
+
+        .play-btn.playing {
+            background: var(--color-red);
+            color: white;
+            border-color: var(--color-red);
+        }
+
+        .play-btn.playing:hover {
+            background: var(--color-red-hover);
+        }
+
+        /* --- SVGs Charts --- */
+        .chart-container {
+            position: relative;
+            background: #000;
+        }
+
+        svg.chart {
+            width: 100%;
+            height: 200px;
+            /* Maximized height */
+            display: block;
+        }
+
+        /* --- Footer / Controls --- */
+        .card-footer {
+            padding: 12px 16px;
+            background: rgba(2, 6, 23, 0.4);
+            border-top: 1px solid var(--border-color);
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            font-family: monospace;
+            font-size: 0.8rem;
+        }
+
+        .slider-labels span.highlight {
+            color: var(--color-pink);
+            font-weight: bold;
+        }
+
+        input[type=range] {
+            width: 100%;
+            margin: 0;
+            accent-color: var(--color-pink);
+            cursor: pointer;
+        }
+
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            color: #475569;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- PINK NOISE CARD (Multi-Stage Filter Bank) -->
+    <div id="pink-card" class="card active-pink">
+        <div class="card-header">
+            <h2 class="card-title" style="color: var(--color-pink);">
+                Pink Noise (Multi-Scale)
+                <span id="pink-badge" class="live-badge">LIVE</span>
+            </h2>
+            <button id="btn-pink" class="play-btn btn-pink" onclick="toggleMode('pink')">
+                <svg viewBox="0 0 24 24" id="icon-pink"></svg>
+                <span id="text-pink">Play</span>
+            </button>
+        </div>
+
+        <div class="chart-container">
+            <svg viewBox="0 0 500 200" class="chart">
+                <line x1="0" y1="50%" x2="100%" y2="50%" stroke="#475569" stroke-width="1" opacity="0.5" />
+                <polyline id="pink-line" fill="none" stroke="var(--color-pink)" stroke-width="2"
+                    stroke-linejoin="round" />
+            </svg>
+        </div>
+
+        <div class="card-footer slider-group">
+            <div class="slider-labels">
+                <span>Active Filter Stages (k)</span>
+                <span id="stages-val" class="highlight">5 Stages (True Pink)</span>
+            </div>
+            <input type="range" id="stages-slider" min="1" max="5" step="1" value="5">
+            <div class="flex-between">
+                <span>k=1 (Deep Brown)</span>
+                <span>k=5 (Smooth Pink)</span>
+            </div>
+            <div style="margin-top: 8px; font-size: 0.75rem; color: #64748b;">
+                <strong>Concept:</strong> Pink noise isn't one accumulator. It's a bank of leaky integrators running at
+                different memory speeds (α). Mixing them creates structure across all time scales (1/f).
+            </div>
+        </div>
+    </div>
+
+    <!-- WHITE NOISE CARD (Zero Memory) -->
+    <div id="white-card" class="card">
+        <div class="card-header">
+            <h2 class="card-title" style="color: var(--color-white-sig);">
+                White Noise (Zero Memory)
+                <span id="white-badge" class="live-badge">LIVE</span>
+            </h2>
+            <button id="btn-white" class="play-btn btn-white" onclick="toggleMode('white')">
+                <svg viewBox="0 0 24 24" id="icon-white"></svg>
+                <span id="text-white">Play</span>
+            </button>
+        </div>
+
+        <div class="chart-container">
+            <svg viewBox="0 0 500 200" class="chart">
+                <line x1="0" y1="50%" x2="100%" y2="50%" stroke="#475569" stroke-width="1" opacity="0.5" />
+                <polyline id="white-line" fill="none" stroke="var(--color-white-sig)" stroke-width="1.5"
+                    stroke-linejoin="round" opacity="0.8" />
+            </svg>
+        </div>
+
+        <div class="card-footer">
+            <strong>Concept:</strong> White noise has absolutely no memory (α = 0). Every sample is completely
+            independent. Visually, it looks like erratic static. Audibly, it sounds harsh because it contains equal
+            energy at every frequency, dominating the highs.
+        </div>
+    </div>
+
+    <script>
+        // --- Icons ---
+        const iconPlay = '<polygon points="5 3 19 12 5 21 5 3"></polygon>';
+        const iconSquare = '<rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect>';
+
+        // --- State Variables ---
+        let activeMode = 'stopped'; // 'stopped', 'pink', 'white'
+        let numStages = 5;
+
+        // Visualizer Data
+        const DATA_SIZE = 250;
+        let pinkData = new Array(DATA_SIZE).fill(0);
+        let whiteData = new Array(DATA_SIZE).fill(0);
+
+        // Audio Variables
+        let audioCtx = null;
+        let scriptNode = null;
+        let gainNode = null;
+
+        // Pink Noise Filter Bank State (Paul Kellet's approximated method)
+        // alphas represent memory retention (close to 1 = long memory, smaller = short memory)
+        const alphas = [0.99886, 0.99332, 0.96900, 0.86650, 0.55000];
+        const bGains = [0.0555179, 0.0750759, 0.1538520, 0.3104856, 0.5329522];
+        const outGains = [0.6, 0.4, 0.25, 0.2, 0.12]; // Volume compensation based on slider
+        let filterStates = [0, 0, 0, 0, 0];
+
+        // UI Init
+        document.getElementById('icon-pink').innerHTML = iconPlay;
+        document.getElementById('icon-white').innerHTML = iconPlay;
+
+        const stagesSlider = document.getElementById('stages-slider');
+        const stagesVal = document.getElementById('stages-val');
+
+        stagesSlider.addEventListener('input', (e) => {
+            numStages = parseInt(e.target.value);
+            const labels = ["1 Stage (Brown-ish)", "2 Stages", "3 Stages", "4 Stages", "5 Stages (True Pink)"];
+            stagesVal.textContent = labels[numStages - 1];
+        });
+
+        // --- Audio Engine ---
+        function initAudio() {
+            if (audioCtx) return;
+
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const BUFFER_SIZE = 2048;
+            scriptNode = audioCtx.createScriptProcessor(BUFFER_SIZE, 1, 1);
+
+            gainNode = audioCtx.createGain();
+            gainNode.gain.value = 0.5; // Master volume padding
+
+            scriptNode.onaudioprocess = (e) => {
+                const output = e.outputBuffer.getChannelData(0);
+
+                // Run the signal loop
+                for (let i = 0; i < BUFFER_SIZE; i++) {
+                    const whiteNoise = (Math.random() - 0.5) * 2; // -1 to +1
+
+                    // 1. Calculate Pink Noise (Bank of Leaky Integrators)
+                    let pinkOut = 0;
+                    for (let s = 0; s < 5; s++) {
+                        // Always process all filters to prevent pops when moving the slider
+                        filterStates[s] = alphas[s] * filterStates[s] + bGains[s] * whiteNoise;
+
+                        // Only mix in the 'active' stages
+                        if (s < numStages) {
+                            pinkOut += filterStates[s];
+                        }
+                    }
+
+                    // Add tiny high-frequency hiss if fully pink
+                    if (numStages === 5) pinkOut += whiteNoise * 0.1;
+
+                    // Scale output down depending on how many stages are active
+                    const finalPink = pinkOut * outGains[numStages - 1];
+
+                    // 2. Calculate White Noise
+                    const finalWhite = whiteNoise * 0.4;
+
+                    // 3. Routing
+                    let outSample = 0;
+                    if (activeMode === 'pink') {
+                        outSample = finalPink;
+                    } else if (activeMode === 'white') {
+                        outSample = finalWhite;
+                    }
+
+                    // Hard clip output (just in case)
+                    output[i] = Math.max(-1, Math.min(1, outSample));
+
+                    // 4. Update visualizer arrays (subsampled heavily to avoid lagging UI)
+                    if (i % 4 === 0) {
+                        if (activeMode === 'pink') {
+                            pinkData.push(finalPink);
+                            pinkData.shift();
+                        } else if (activeMode === 'white') {
+                            whiteData.push(finalWhite);
+                            whiteData.shift();
+                        }
+                    }
+                }
+            };
+
+            scriptNode.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+        }
+
+        // --- Toggling & UI ---
+        window.toggleMode = function (mode) {
+            initAudio();
+
+            if (activeMode === mode) {
+                activeMode = 'stopped';
+                audioCtx.suspend();
+            } else {
+                if (activeMode === 'stopped') {
+                    pinkData.fill(0);
+                    whiteData.fill(0);
+                }
+                activeMode = mode;
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+            }
+            updateUI();
+        };
+
+        function updateUI() {
+            const btnPink = document.getElementById('btn-pink');
+            const btnWhite = document.getElementById('btn-white');
+
+            if (activeMode === 'pink') {
+                btnPink.classList.add('playing');
+                document.getElementById('icon-pink').innerHTML = iconSquare;
+                document.getElementById('text-pink').textContent = 'Stop';
+            } else {
+                btnPink.classList.remove('playing');
+                document.getElementById('icon-pink').innerHTML = iconPlay;
+                document.getElementById('text-pink').textContent = 'Play';
+            }
+
+            if (activeMode === 'white') {
+                btnWhite.classList.add('playing');
+                document.getElementById('icon-white').innerHTML = iconSquare;
+                document.getElementById('text-white').textContent = 'Stop';
+            } else {
+                btnWhite.classList.remove('playing');
+                document.getElementById('icon-white').innerHTML = iconPlay;
+                document.getElementById('text-white').textContent = 'Play';
+            }
+        }
+
+        // --- Visualizer Mapping ---
+        function updateChart(prefix, data, isActive) {
+            const card = document.getElementById(`${prefix}-card`);
+            const badge = document.getElementById(`${prefix}-badge`);
+
+            if (isActive) {
+                card.classList.add(`active-${prefix}`);
+                badge.style.display = 'block';
+            } else {
+                card.classList.remove(`active-${prefix}`);
+                badge.style.display = 'none';
+            }
+
+            const width = 500;
+            const height = 200;
+            const padding = 15;
+
+            // Fixed Y-scale for better visual comparison between noises
+            const dynamicYMax = 1.0;
+            const mapY = (val) => height / 2 - (val / dynamicYMax) * (height / 2 - padding);
+
+            const points = data.map((val, i) => {
+                const x = (i / (data.length - 1)) * width;
+                return `${x},${mapY(val)}`;
+            }).join(' ');
+
+            document.getElementById(`${prefix}-line`).setAttribute('points', points);
+        }
+
+        function drawLoop() {
+            updateChart('pink', pinkData, activeMode === 'pink');
+            updateChart('white', whiteData, activeMode === 'white');
+            requestAnimationFrame(drawLoop);
+        }
+
+        // Start render loop
+        drawLoop();
+    </script>
+</body>
+
+</html>

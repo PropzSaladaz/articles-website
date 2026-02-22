@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jitter vs. Noise</title>
+    <style>
+        :root {
+            --bg-base: #020617;
+            --bg-card: rgba(15, 23, 42, 0.6);
+            --bg-card-active: #0f172a;
+            --border-color: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+
+            --color-ideal: #06b6d4;
+            /* Cyan */
+            --color-noise: #fbbf24;
+            /* Amber */
+            --color-jitter: #a855f7;
+            /* Purple */
+            --color-red: #ef4444;
+            --color-red-hover: #dc2626;
+        }
+
+        body {
+            margin: 0;
+            padding: 12px;
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: system-ui, -apple-system, sans-serif;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: inherit;
+        }
+
+        /* --- Cards --- */
+        .card {
+            display: flex;
+            flex-direction: column;
+            border-radius: 12px;
+            border: 2px solid var(--border-color);
+            background-color: var(--bg-card);
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .card.active-noise {
+            border-color: rgba(251, 191, 36, 0.4);
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.1);
+            background-color: var(--bg-card-active);
+        }
+
+        .card.active-jitter {
+            border-color: rgba(168, 85, 247, 0.4);
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.1);
+            background-color: var(--bg-card-active);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(2, 6, 23, 0.4);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .card-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .live-badge {
+            display: none;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        /* --- Buttons --- */
+        .play-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.15s;
+            color: #fff;
+        }
+
+        .play-btn svg {
+            width: 14px;
+            height: 14px;
+            fill: currentColor;
+        }
+
+        .btn-noise {
+            background: rgba(251, 191, 36, 0.15);
+            color: var(--color-noise);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+
+        .btn-noise:hover {
+            background: rgba(251, 191, 36, 0.25);
+        }
+
+        .btn-jitter {
+            background: rgba(168, 85, 247, 0.15);
+            color: var(--color-jitter);
+            border: 1px solid rgba(168, 85, 247, 0.3);
+        }
+
+        .btn-jitter:hover {
+            background: rgba(168, 85, 247, 0.25);
+        }
+
+        .play-btn.playing {
+            background: var(--color-red);
+            color: white;
+            border-color: var(--color-red);
+        }
+
+        .play-btn.playing:hover {
+            background: var(--color-red-hover);
+        }
+
+        /* --- SVGs Charts --- */
+        .chart-container {
+            position: relative;
+            background: #000;
+        }
+
+        svg.chart {
+            width: 100%;
+            height: 180px;
+            display: block;
+        }
+
+        /* SVG Elements */
+        .ideal-wave {
+            fill: none;
+            stroke: var(--color-ideal);
+            stroke-width: 2;
+            opacity: 0.3;
+        }
+
+        .center-line {
+            stroke: #334155;
+            stroke-width: 1;
+            opacity: 0.5;
+        }
+
+        .stem-noise {
+            stroke: #475569;
+            stroke-width: 1.5;
+            stroke-dasharray: 2;
+        }
+
+        .dot-noise {
+            fill: var(--color-noise);
+        }
+
+        .stem-jitter {
+            stroke: #475569;
+            stroke-width: 1.5;
+            stroke-dasharray: 2;
+        }
+
+        .dot-jitter {
+            fill: var(--color-jitter);
+        }
+
+        /* --- Footer / Controls --- */
+        .card-footer {
+            padding: 12px 16px;
+            background: rgba(2, 6, 23, 0.4);
+            border-top: 1px solid var(--border-color);
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            font-family: monospace;
+            font-size: 0.8rem;
+        }
+
+        .label-noise {
+            color: var(--color-noise);
+            font-weight: bold;
+        }
+
+        .label-jitter {
+            color: var(--color-jitter);
+            font-weight: bold;
+        }
+
+        input[type=range] {
+            width: 100%;
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .slider-noise {
+            accent-color: var(--color-noise);
+        }
+
+        .slider-jitter {
+            accent-color: var(--color-jitter);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- NOISE CARD (Amplitude Error) -->
+    <div id="noise-card" class="card active-noise">
+        <div class="card-header">
+            <h2 class="card-title" style="color: var(--color-noise);">
+                Noise (Amplitude Error)
+                <span id="noise-badge" class="live-badge">LIVE</span>
+            </h2>
+            <button id="btn-noise" class="play-btn btn-noise" onclick="toggleMode('noise')">
+                <svg viewBox="0 0 24 24" id="icon-noise"></svg>
+                <span id="text-noise">Play</span>
+            </button>
+        </div>
+
+        <div class="chart-container">
+            <svg viewBox="0 0 500 180" class="chart" id="svg-noise">
+                <line class="center-line" x1="0" y1="90" x2="500" y2="90" />
+                <path class="ideal-wave" id="wave-noise" d="" />
+                <g id="samples-noise"></g>
+            </svg>
+        </div>
+
+        <div class="card-footer">
+            <div class="slider-group">
+                <div class="slider-labels">
+                    <span>Amplitude Error Level</span>
+                    <span id="noise-val" class="label-noise">20%</span>
+                </div>
+                <input type="range" id="noise-slider" class="slider-noise" min="0" max="100" value="20">
+            </div>
+            <strong>Concept:</strong> The timing (X-axis space between stems) is perfectly rigid. The error occurs
+            purely in the Y-axis value (static/hiss).
+        </div>
+    </div>
+
+    <!-- JITTER CARD (Timing Error) -->
+    <div id="jitter-card" class="card">
+        <div class="card-header">
+            <h2 class="card-title" style="color: var(--color-jitter);">
+                Jitter (Timing Error)
+                <span id="jitter-badge" class="live-badge">LIVE</span>
+            </h2>
+            <button id="btn-jitter" class="play-btn btn-jitter" onclick="toggleMode('jitter')">
+                <svg viewBox="0 0 24 24" id="icon-jitter"></svg>
+                <span id="text-jitter">Play</span>
+            </button>
+        </div>
+
+        <div class="chart-container">
+            <svg viewBox="0 0 500 180" class="chart" id="svg-jitter">
+                <line class="center-line" x1="0" y1="90" x2="500" y2="90" />
+                <path class="ideal-wave" id="wave-jitter" d="" />
+                <g id="samples-jitter"></g>
+            </svg>
+        </div>
+
+        <div class="card-footer">
+            <div class="slider-group">
+                <div class="slider-labels">
+                    <span>Timing Wobble Level</span>
+                    <span id="jitter-val" class="label-jitter">20%</span>
+                </div>
+                <input type="range" id="jitter-slider" class="slider-jitter" min="0" max="100" value="20">
+            </div>
+            <strong>Concept:</strong> The amplitude readings are 100% accurate, but the clock taking them is wobbly.
+            Samples slide left and right (X-axis) creating phase distortion.
+        </div>
+    </div>
+
+    <script>
+        // --- Icons ---
+        const iconPlay = '<polygon points="5 3 19 12 5 21 5 3"></polygon>';
+        const iconSquare = '<rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect>';
+
+        // --- State ---
+        let activeMode = 'stopped'; // 'stopped', 'noise', 'jitter'
+        let noiseLevel = 0.2;  // 0.0 to 1.0
+        let jitterLevel = 0.2; // 0.0 to 1.0
+
+        // Audio Engine Variables
+        let audioCtx = null;
+        let scriptNode = null;
+        let gainNode = null;
+        let globalPhase = 0;
+        const TONE_FREQ = 220; // A3, comfortable frequency to hear distortion
+
+        // UI Setup
+        document.getElementById('icon-noise').innerHTML = iconPlay;
+        document.getElementById('icon-jitter').innerHTML = iconPlay;
+
+        document.getElementById('noise-slider').addEventListener('input', (e) => {
+            noiseLevel = e.target.value / 100;
+            document.getElementById('noise-val').textContent = e.target.value + '%';
+        });
+
+        document.getElementById('jitter-slider').addEventListener('input', (e) => {
+            jitterLevel = e.target.value / 100;
+            document.getElementById('jitter-val').textContent = e.target.value + '%';
+        });
+
+        // --- Audio Engine ---
+        function initAudio() {
+            if (audioCtx) return;
+
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const BUFFER_SIZE = 2048;
+            scriptNode = audioCtx.createScriptProcessor(BUFFER_SIZE, 1, 1);
+
+            gainNode = audioCtx.createGain();
+            gainNode.gain.value = 0.2; // Protect ears
+
+            scriptNode.onaudioprocess = (e) => {
+                const output = e.outputBuffer.getChannelData(0);
+                const sampleRate = audioCtx.sampleRate;
+                const phaseIncrement = (2 * Math.PI * TONE_FREQ) / sampleRate;
+
+                for (let i = 0; i < BUFFER_SIZE; i++) {
+                    let outSample = 0;
+
+                    if (activeMode === 'noise') {
+                        // Amplitude Noise: Add random value to Y-axis
+                        const cleanVal = Math.sin(globalPhase);
+                        const error = (Math.random() - 0.5) * 2 * noiseLevel; // White noise
+                        outSample = cleanVal + error;
+                    }
+                    else if (activeMode === 'jitter') {
+                        // Phase/Timing Jitter: Evaluate clean signal at a wobbled X-axis time
+                        // Max jitter scales with slider. At 1.0, it wobbles up to +/- PI/2 (extreme distortion)
+                        const timingError = (Math.random() - 0.5) * 2 * jitterLevel * (Math.PI / 1.5);
+                        outSample = Math.sin(globalPhase + timingError);
+                    }
+                    else {
+                        outSample = 0;
+                    }
+
+                    // Soft clip just in case
+                    output[i] = Math.max(-1, Math.min(1, outSample));
+                    globalPhase += phaseIncrement;
+                }
+            };
+
+            scriptNode.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+        }
+
+        // --- Toggling & UI ---
+        window.toggleMode = function (mode) {
+            initAudio();
+
+            if (activeMode === mode) {
+                activeMode = 'stopped';
+                audioCtx.suspend();
+            } else {
+                activeMode = mode;
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+            }
+
+            // UI Classes Updates
+            document.getElementById('noise-card').classList.toggle('active-noise', activeMode === 'noise');
+            document.getElementById('noise-badge').style.display = activeMode === 'noise' ? 'block' : 'none';
+            document.getElementById('btn-noise').classList.toggle('playing', activeMode === 'noise');
+            document.getElementById('icon-noise').innerHTML = activeMode === 'noise' ? iconSquare : iconPlay;
+            document.getElementById('text-noise').textContent = activeMode === 'noise' ? 'Stop' : 'Play';
+
+            document.getElementById('jitter-card').classList.toggle('active-jitter', activeMode === 'jitter');
+            document.getElementById('jitter-badge').style.display = activeMode === 'jitter' ? 'block' : 'none';
+            document.getElementById('btn-jitter').classList.toggle('playing', activeMode === 'jitter');
+            document.getElementById('icon-jitter').innerHTML = activeMode === 'jitter' ? iconSquare : iconPlay;
+            document.getElementById('text-jitter').textContent = activeMode === 'jitter' ? 'Stop' : 'Play';
+        };
+
+        // --- Visualizer Engine ---
+        const SVG_W = 500;
+        const SVG_H = 180;
+        const CENTER_Y = SVG_H / 2;
+        const AMP = 60; // Visual amplitude
+        const NUM_SAMPLES = 35; // Number of discrete dots
+        const SPACING = SVG_W / NUM_SAMPLES;
+        const VIS_FREQ = (Math.PI * 2 * 2.5) / SVG_W; // Show ~2.5 full waves across screen
+
+        let visTime = 0;
+
+        // Initialize SVG elements to avoid re-creating DOM nodes every frame
+        function setupSVGLayer(groupId, stemClass, dotClass) {
+            const group = document.getElementById(groupId);
+            const elements = [];
+            for (let i = 0; i <= NUM_SAMPLES; i++) {
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('class', stemClass);
+
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('class', dotClass);
+                circle.setAttribute('r', '4');
+
+                group.appendChild(line);
+                group.appendChild(circle);
+                elements.push({ line, circle });
+            }
+            return elements;
+        }
+
+        const noiseVisElements = setupSVGLayer('samples-noise', 'stem-noise', 'dot-noise');
+        const jitterVisElements = setupSVGLayer('samples-jitter', 'stem-jitter', 'dot-jitter');
+
+        function drawLoop() {
+            visTime -= 0.05; // Scroll wave to the left
+
+            // 1. Draw Ideal Continuous Waves
+            let pathD = `M 0 ${CENTER_Y} `;
+            for (let x = 0; x <= SVG_W; x += 5) {
+                const y = CENTER_Y + Math.sin(x * VIS_FREQ + visTime) * AMP;
+                pathD += `L ${x} ${y} `;
+            }
+            document.getElementById('wave-noise').setAttribute('d', pathD);
+            document.getElementById('wave-jitter').setAttribute('d', pathD);
+
+            // 2. Update Noise Visualization (Perfect X timing, Bouncing Y amplitude)
+            for (let i = 0; i <= NUM_SAMPLES; i++) {
+                const idealX = i * SPACING;
+                const idealY = CENTER_Y + Math.sin(idealX * VIS_FREQ + visTime) * AMP;
+
+                // Noise adds vertical variance
+                const errorY = (Math.random() - 0.5) * noiseLevel * (AMP * 2);
+                const finalY = idealY + errorY;
+
+                const els = noiseVisElements[i];
+                els.line.setAttribute('x1', idealX);
+                els.line.setAttribute('y1', CENTER_Y);
+                els.line.setAttribute('x2', idealX);
+                els.line.setAttribute('y2', finalY);
+
+                els.circle.setAttribute('cx', idealX);
+                els.circle.setAttribute('cy', finalY);
+            }
+
+            // 3. Update Jitter Visualization (Wobbling X timing, Perfect Y mapping)
+            for (let i = 0; i <= NUM_SAMPLES; i++) {
+                const idealX = i * SPACING;
+
+                // Jitter adds horizontal variance (samples are taken too early or too late)
+                // Max jitter allows sliding left/right by almost a full sample spacing
+                const timingErrorX = (Math.random() - 0.5) * jitterLevel * (SPACING * 1.8);
+                const jitteredX = idealX + timingErrorX;
+
+                // Because amplitude is measured exactly as it was at that incorrect time,
+                // the dot ALWAYS sits perfectly on the ideal cyan wave curve.
+                const sampledY = CENTER_Y + Math.sin(jitteredX * VIS_FREQ + visTime) * AMP;
+
+                const els = jitterVisElements[i];
+                // The stem shows the irregular intervals on the X axis
+                els.line.setAttribute('x1', jitteredX);
+                els.line.setAttribute('y1', CENTER_Y);
+                els.line.setAttribute('x2', jitteredX);
+                els.line.setAttribute('y2', sampledY);
+
+                els.circle.setAttribute('cx', jitteredX);
+                els.circle.setAttribute('cy', sampledY);
+            }
+
+            requestAnimationFrame(drawLoop);
+        }
+
+        // Start render loop
+        drawLoop();
+    </script>
+</body>
+
+</html>

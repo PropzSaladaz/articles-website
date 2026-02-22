@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brownian Noise Explorer</title>
+    <style>
+        :root {
+            --bg-base: #020617;
+            --bg-card: rgba(15, 23, 42, 0.6);
+            --bg-card-active: #0f172a;
+            --border-color: #1e293b;
+            --border-active: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --color-pure: #fb923c;
+            --color-leaky: #60a5fa;
+            --color-red: #ef4444;
+            --color-red-hover: #dc2626;
+        }
+
+        body {
+            margin: 0;
+            padding: 12px;
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: system-ui, -apple-system, sans-serif;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: inherit;
+        }
+
+        /* --- Cards --- */
+        .card {
+            display: flex;
+            flex-direction: column;
+            border-radius: 12px;
+            border: 2px solid var(--border-color);
+            background-color: var(--bg-card);
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .card.active-pure {
+            border-color: rgba(251, 146, 60, 0.4);
+            box-shadow: 0 0 20px rgba(251, 146, 60, 0.1);
+            background-color: var(--bg-card-active);
+        }
+
+        .card.active-leaky {
+            border-color: rgba(96, 165, 250, 0.4);
+            box-shadow: 0 0 20px rgba(96, 165, 250, 0.1);
+            background-color: var(--bg-card-active);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(2, 6, 23, 0.4);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .card-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .live-badge {
+            display: none;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        /* --- Buttons --- */
+        .play-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.15s;
+            color: #fff;
+        }
+
+        .play-btn svg {
+            width: 14px;
+            height: 14px;
+            fill: currentColor;
+        }
+
+        .btn-pure {
+            background: rgba(251, 146, 60, 0.2);
+            color: var(--color-pure);
+            border: 1px solid rgba(251, 146, 60, 0.3);
+        }
+
+        .btn-pure:hover {
+            background: rgba(251, 146, 60, 0.3);
+        }
+
+        .btn-leaky {
+            background: rgba(96, 165, 250, 0.2);
+            color: var(--color-leaky);
+            border: 1px solid rgba(96, 165, 250, 0.3);
+        }
+
+        .btn-leaky:hover {
+            background: rgba(96, 165, 250, 0.3);
+        }
+
+        .play-btn.playing {
+            background: var(--color-red);
+            color: white;
+            border-color: var(--color-red);
+        }
+
+        .play-btn.playing:hover {
+            background: var(--color-red-hover);
+        }
+
+        /* --- SVGs Charts --- */
+        .chart-container {
+            position: relative;
+            background: #000;
+        }
+
+        svg.chart {
+            width: 100%;
+            height: 200px;
+            /* Maximized height */
+            display: block;
+        }
+
+        .clip-warning {
+            display: none;
+            position: absolute;
+            inset: 0;
+            align-items: center;
+            justify-content: center;
+            background: rgba(127, 29, 29, 0.2);
+            backdrop-filter: blur(1px);
+        }
+
+        .clip-pill {
+            background: #450a0a;
+            border: 1px solid var(--color-red);
+            color: var(--color-red);
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-weight: 700;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        /* --- Footer / Controls --- */
+        .card-footer {
+            padding: 12px 16px;
+            background: rgba(2, 6, 23, 0.4);
+            border-top: 1px solid var(--border-color);
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            font-family: monospace;
+            font-size: 0.8rem;
+        }
+
+        .slider-labels span.highlight {
+            color: var(--color-leaky);
+            font-weight: bold;
+        }
+
+        input[type=range] {
+            width: 100%;
+            margin: 0;
+            accent-color: var(--color-leaky);
+            cursor: pointer;
+        }
+
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            color: #475569;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- PURE WALK CARD -->
+    <div id="pure-card" class="card">
+        <div class="card-header">
+            <h2 class="card-title" style="color: var(--color-pure);">
+                α = 1
+                <span id="pure-badge" class="live-badge">LIVE</span>
+            </h2>
+            <button id="btn-pure" class="play-btn btn-pure" onclick="toggleMode('pure')">
+                <svg viewBox="0 0 24 24" id="icon-pure"></svg>
+                <span id="text-pure">Play</span>
+            </button>
+        </div>
+
+        <div class="chart-container">
+            <!-- Viewbox expanded to match 200px height relative ratio -->
+            <svg viewBox="0 0 500 200" class="chart">
+                <line id="pure-limit-top" x1="0" x2="100%" stroke="#ef4444" stroke-width="1" stroke-dasharray="4"
+                    opacity="0.6" />
+                <line id="pure-limit-bottom" x1="0" x2="100%" stroke="#ef4444" stroke-width="1" stroke-dasharray="4"
+                    opacity="0.6" />
+
+                <text id="pure-label-top" x="8" fill="#ef4444" font-size="11" font-family="monospace" opacity="0.8">+1.0
+                    Max</text>
+                <text id="pure-label-bottom" x="100%" dx="-8" text-anchor="end" fill="#ef4444" font-size="11"
+                    font-family="monospace" opacity="0.8">-1.0 Min</text>
+
+                <line x1="0" y1="50%" x2="100%" y2="50%" stroke="#475569" stroke-width="1" opacity="0.5" />
+
+                <polyline id="pure-line" fill="none" stroke="var(--color-pure)" stroke-width="2"
+                    stroke-linejoin="round" />
+            </svg>
+            <div id="pure-warning" class="clip-warning">
+                <div class="clip-pill">
+                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+                        <path
+                            d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
+                        </path>
+                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    CLIPPING
+                </div>
+            </div>
+        </div>
+
+        <div class="card-footer">
+            <strong>Warning:</strong> Pure random walks have infinite memory. The signal quickly wanders past ±1.0,
+            causing harsh speaker distortion.
+        </div>
+    </div>
+
+    <!-- LEAKY WALK CARD -->
+    <div id="leaky-card" class="card">
+        <div class="card-header">
+            <h2 class="card-title" style="color: var(--color-leaky);">
+                α &lt; 1
+                <span id="leaky-badge" class="live-badge">LIVE</span>
+            </h2>
+            <button id="btn-leaky" class="play-btn btn-leaky" onclick="toggleMode('leaky')">
+                <svg viewBox="0 0 24 24" id="icon-leaky"></svg>
+                <span id="text-leaky">Play</span>
+            </button>
+        </div>
+
+        <div class="chart-container">
+            <svg viewBox="0 0 500 200" class="chart">
+                <line id="leaky-limit-top" x1="0" x2="100%" stroke="#ef4444" stroke-width="1" stroke-dasharray="4"
+                    opacity="0.6" />
+                <line id="leaky-limit-bottom" x1="0" x2="100%" stroke="#ef4444" stroke-width="1" stroke-dasharray="4"
+                    opacity="0.6" />
+
+                <text id="leaky-label-top" x="8" fill="#ef4444" font-size="11" font-family="monospace"
+                    opacity="0.8">+1.0 Max</text>
+                <text id="leaky-label-bottom" x="100%" dx="-8" text-anchor="end" fill="#ef4444" font-size="11"
+                    font-family="monospace" opacity="0.8">-1.0 Min</text>
+
+                <line x1="0" y1="50%" x2="100%" y2="50%" stroke="#475569" stroke-width="1" opacity="0.5" />
+
+                <polyline id="leaky-line" fill="none" stroke="var(--color-leaky)" stroke-width="2"
+                    stroke-linejoin="round" />
+            </svg>
+        </div>
+
+        <div class="card-footer slider-group">
+            <div class="slider-labels">
+                <span>Persistence factor (α)</span>
+                <span id="coeff-val" class="highlight">0.990</span>
+            </div>
+            <input type="range" id="coeff-slider" min="0.800" max="0.999" step="0.001" value="0.990">
+            <div class="flex-between">
+                <span>More "White" Noise (0.800)</span>
+                <span>Deep "Brown" Noise (0.999)</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Icons ---
+        const iconPlay = '<polygon points="5 3 19 12 5 21 5 3"></polygon>';
+        const iconSquare = '<rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect>';
+
+        // --- State Variables ---
+        let activeMode = 'stopped';
+        let coefficient = 0.990;
+
+        const DATA_SIZE = 150;
+        let pureData = new Array(DATA_SIZE).fill(0);
+        let leakyData = new Array(DATA_SIZE).fill(0);
+        let isClipping = false;
+
+        // Audio Variables
+        let audioCtx = null;
+        let scriptNode = null;
+        let gainNode = null;
+        let pureSum = 0;
+        let leakySum = 0;
+
+        // UI Init
+        document.getElementById('icon-pure').innerHTML = iconPlay;
+        document.getElementById('icon-leaky').innerHTML = iconPlay;
+
+        const coeffSlider = document.getElementById('coeff-slider');
+        const coeffVal = document.getElementById('coeff-val');
+
+        coeffSlider.addEventListener('input', (e) => {
+            coefficient = parseFloat(e.target.value);
+            coeffVal.textContent = coefficient.toFixed(3);
+        });
+
+        // --- Audio Engine ---
+        function initAudio() {
+            if (audioCtx) return;
+
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const BUFFER_SIZE = 2048;
+            scriptNode = audioCtx.createScriptProcessor(BUFFER_SIZE, 1, 1);
+
+            gainNode = audioCtx.createGain();
+            gainNode.gain.value = 0.5; // Master volume
+
+            scriptNode.onaudioprocess = (e) => {
+                const output = e.outputBuffer.getChannelData(0);
+                let clippedThisFrame = false;
+
+                for (let i = 0; i < BUFFER_SIZE; i++) {
+                    const noise = (Math.random() - 0.5) * 0.05;
+
+                    pureSum = pureSum + noise;
+                    leakySum = (coefficient * leakySum) + noise;
+
+                    let outSample = 0;
+                    if (activeMode === 'pure') {
+                        outSample = pureSum;
+                        if (outSample > 1.0 || outSample < -1.0) clippedThisFrame = true;
+                    } else if (activeMode === 'leaky') {
+                        outSample = leakySum;
+                    }
+
+                    // Hard clip output
+                    output[i] = Math.max(-1, Math.min(1, outSample));
+                }
+
+                if (activeMode !== 'stopped') {
+                    isClipping = clippedThisFrame;
+                    pureData.push(pureSum); pureData.shift();
+                    leakyData.push(leakySum); leakyData.shift();
+                }
+            };
+
+            scriptNode.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+        }
+
+        // --- Toggling & UI ---
+        window.toggleMode = function (mode) {
+            initAudio();
+
+            if (activeMode === mode) {
+                activeMode = 'stopped';
+                audioCtx.suspend();
+            } else {
+                if (activeMode === 'stopped') {
+                    pureSum = 0; leakySum = 0;
+                    pureData.fill(0); leakyData.fill(0);
+                }
+                activeMode = mode;
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+            }
+            updateUI();
+        };
+
+        function updateUI() {
+            const btnPure = document.getElementById('btn-pure');
+            const btnLeaky = document.getElementById('btn-leaky');
+
+            if (activeMode === 'pure') {
+                btnPure.classList.add('playing');
+                document.getElementById('icon-pure').innerHTML = iconSquare;
+                document.getElementById('text-pure').textContent = 'Stop';
+            } else {
+                btnPure.classList.remove('playing');
+                document.getElementById('icon-pure').innerHTML = iconPlay;
+                document.getElementById('text-pure').textContent = 'Play';
+            }
+
+            if (activeMode === 'leaky') {
+                btnLeaky.classList.add('playing');
+                document.getElementById('icon-leaky').innerHTML = iconSquare;
+                document.getElementById('text-leaky').textContent = 'Stop';
+            } else {
+                btnLeaky.classList.remove('playing');
+                document.getElementById('icon-leaky').innerHTML = iconPlay;
+                document.getElementById('text-leaky').textContent = 'Play';
+            }
+        }
+
+        // --- Visualizer Mapping ---
+        function updateChart(prefix, data, isActive, showClipWarning) {
+            const card = document.getElementById(`${prefix}-card`);
+            const badge = document.getElementById(`${prefix}-badge`);
+            const warning = document.getElementById(`${prefix}-warning`);
+
+            if (isActive) {
+                card.classList.add(`active-${prefix}`);
+                badge.style.display = 'block';
+                if (showClipWarning && isClipping) warning.style.display = 'flex';
+                else if (warning) warning.style.display = 'none';
+            } else {
+                card.classList.remove(`active-${prefix}`);
+                badge.style.display = 'none';
+                if (warning) warning.style.display = 'none';
+            }
+
+            // Updated Dimensions to match viewBox
+            const width = 500;
+            const height = 200;
+            const padding = 15;
+
+            const maxDataVal = Math.max(...data.map(Math.abs));
+            const dynamicYMax = Math.max(1.2, maxDataVal * 1.1);
+            const mapY = (val) => height / 2 - (val / dynamicYMax) * (height / 2 - padding);
+
+            // Update limits
+            document.getElementById(`${prefix}-limit-top`).setAttribute('y1', mapY(1.0));
+            document.getElementById(`${prefix}-limit-top`).setAttribute('y2', mapY(1.0));
+            document.getElementById(`${prefix}-limit-bottom`).setAttribute('y1', mapY(-1.0));
+            document.getElementById(`${prefix}-limit-bottom`).setAttribute('y2', mapY(-1.0));
+
+            document.getElementById(`${prefix}-label-top`).setAttribute('y', mapY(1.0) - 5);
+            document.getElementById(`${prefix}-label-bottom`).setAttribute('y', mapY(-1.0) + 12);
+
+            // Plot line
+            const points = data.map((val, i) => {
+                const x = (i / (data.length - 1)) * width;
+                return `${x},${mapY(val)}`;
+            }).join(' ');
+
+            document.getElementById(`${prefix}-line`).setAttribute('points', points);
+        }
+
+        function drawLoop() {
+            updateChart('pure', pureData, activeMode === 'pure', true);
+            updateChart('leaky', leakyData, activeMode === 'leaky', false);
+            requestAnimationFrame(drawLoop);
+        }
+
+        drawLoop();
+    </script>
+</body>
+
+</html>

@@ -19,12 +19,55 @@ const rehypeIframeWindow: Plugin<[], Root> = () => {
             if (!parent || index === undefined) return;
 
             if (node.tagName === 'iframe') {
+                // Create the macOS-style top bar
+                const topBar: Element = {
+                    type: 'element',
+                    tagName: 'div',
+                    properties: {
+                        className: [
+                            'flex',
+                            'items-center',
+                            'h-10',
+                            'px-4',
+                            'bg-slate-900', // Always dark
+                            'border-b',
+                            'border-slate-800', // Always dark
+                            'sim-top-bar' // identifier for attaching the button later
+                        ]
+                    },
+                    children: [
+                        {
+                            type: 'element',
+                            tagName: 'div',
+                            properties: { className: ['flex', 'gap-2'] },
+                            children: [
+                                { type: 'element', tagName: 'div', properties: { className: ['w-3', 'h-3', 'rounded-full', 'bg-red-400', 'dark:bg-red-500'] }, children: [] },
+                                { type: 'element', tagName: 'div', properties: { className: ['w-3', 'h-3', 'rounded-full', 'bg-amber-400', 'dark:bg-amber-500'] }, children: [] },
+                                { type: 'element', tagName: 'div', properties: { className: ['w-3', 'h-3', 'rounded-full', 'bg-green-400', 'dark:bg-green-500'] }, children: [] }
+                            ]
+                        }
+                    ]
+                };
+
                 // Create a simple wrapper with rounded corners
                 const wrapper: Element = {
                     type: 'element',
                     tagName: 'div',
-                    properties: { className: ['md-iframe-window'] },
-                    children: [node], // The original iframe
+                    properties: {
+                        className: [
+                            'md-iframe-window',
+                            'relative',
+                            'overflow-hidden',
+                            'rounded-xl', // Make it rounded-xl for standard macOS window shape
+                            'border',
+                            'border-slate-800', // Enforce dark border to match the dark top bar
+                            'my-8',
+                            'bg-slate-900', // Background is also dark so the card fits seamlessly
+                            'flex',
+                            'flex-col'
+                        ],
+                    },
+                    children: [topBar, node], // The top bar, then the original iframe
                 };
 
                 // Replace the iframe with the wrapped version

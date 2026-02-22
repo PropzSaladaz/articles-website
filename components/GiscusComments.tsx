@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { useTheme } from 'next-themes';
 
 type GiscusCommentsProps = {
   discussionIdentifier: string;
@@ -19,7 +20,7 @@ const GISCUS_LANG = process.env.NEXT_PUBLIC_GISCUS_LANG ?? 'en';
 const GISCUS_LOADING = process.env.NEXT_PUBLIC_GISCUS_LOADING ?? 'lazy';
 const GISCUS_THEME = process.env.NEXT_PUBLIC_GISCUS_THEME ?? 'preferred_color_scheme';
 
-function createScriptAttributes(discussionIdentifier: string) {
+function createScriptAttributes(discussionIdentifier: string, theme: string) {
   const attributes: Record<string, string> = {
     src: 'https://giscus.app/client.js',
     'data-repo': GISCUS_REPO ?? '',
@@ -31,7 +32,7 @@ function createScriptAttributes(discussionIdentifier: string) {
     'data-reactions-enabled': GISCUS_REACTIONS_ENABLED,
     'data-emit-metadata': GISCUS_EMIT_METADATA,
     'data-input-position': GISCUS_INPUT_POSITION,
-    'data-theme': GISCUS_THEME,
+    'data-theme': theme,
     'data-lang': GISCUS_LANG,
     'data-loading': GISCUS_LOADING,
     crossorigin: 'anonymous',
@@ -45,6 +46,7 @@ function createScriptAttributes(discussionIdentifier: string) {
 }
 
 export function GiscusComments({ discussionIdentifier }: GiscusCommentsProps) {
+  const { resolvedTheme } = useTheme();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const isConfigured = Boolean(
     GISCUS_REPO && GISCUS_REPO_ID && GISCUS_CATEGORY && GISCUS_CATEGORY_ID,
@@ -65,13 +67,31 @@ export function GiscusComments({ discussionIdentifier }: GiscusCommentsProps) {
     }
 
     const script = document.createElement('script');
-    const attributes = createScriptAttributes(discussionIdentifier);
+    const theme = resolvedTheme === 'dark' ? 'dark' : 'light';
+    const attributes = createScriptAttributes(discussionIdentifier, theme);
     Object.entries(attributes).forEach(([key, value]) => {
       script.setAttribute(key, value);
     });
     script.async = true;
     container.appendChild(script);
   }, [discussionIdentifier, isConfigured]);
+
+  useEffect(() => {
+    const iframe = document.querySelector<HTMLIFrameElement>('iframe.giscus-frame');
+    if (!iframe || !iframe.contentWindow) return;
+
+    const giscusTheme = resolvedTheme === 'dark' ? 'dark' : 'light';
+    iframe.contentWindow.postMessage(
+      {
+        giscus: {
+          setConfig: {
+            theme: giscusTheme,
+          },
+        },
+      },
+      'https://giscus.app'
+    );
+  }, [resolvedTheme]);
 
   if (!isConfigured) {
     if (process.env.NODE_ENV === 'development') {
