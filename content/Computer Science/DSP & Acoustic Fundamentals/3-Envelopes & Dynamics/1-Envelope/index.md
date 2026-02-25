@@ -1,5 +1,5 @@
 ---
-status: "publish"
+status: "published"
 date: "2026-02-24"
 summary: "Envelope in DSP: the time-shape behind how sounds feel alive"
 ---
