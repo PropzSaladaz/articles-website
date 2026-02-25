@@ -97,9 +97,9 @@ You may have noticed the lower frequencies come out more as you make the persist
 
 **The Math**
 
-Pink noise is the middle ground between white and brown noise — but not in the sense of “just pick an $$\alpha$$ somewhere in the middle.”
+Pink noise **is the middle ground between white and brown noise** — but not in the sense of “just pick an $$\alpha$$ somewhere in the middle.”
 
-A single leaky integrator gives you one memory timescale. Pink noise needs something more subtle: memory at multiple scales at the same time — short memory (fast changes), medium memory, and long memory (slow drift).
+A single leaky integrator gives you one memory timescale. Pink noise needs something more subtle: **memory at multiple scales** at the same time — short memory (fast changes), medium memory, and long memory (slow drift).
 
 So instead of one accumulator, we use a bank of leaky integrators (multiple accumulators with different persistence factors), and then mix them together:
 
@@ -192,10 +192,10 @@ The data itself is perfectly intact, but its arrival schedule has been corrupted
 
 ## 2.1. The Conveyor Belt Analogy
 
-Imagine a pristine factory conveyor belt (your pipe) delivering identical boxes (your data samples) to a worker at exactly one box per second.
+Imagine a pristine factory conveyor belt delivering identical boxes (your data samples) to a worker at exactly one box per second.
 
-- **Ideal Pipe:** The worker receives a box at exactly 1.0s, 2.0s, 3.0s, 4.0s. The flow is metronomic and perfect.
-- **Jittery Pipe:** The conveyor belt motor stutters. The worker receives boxes at 1.0s, 1.9s, 3.2s, 3.8s.
+- **Ideal:** The worker receives a box at exactly 1.0s, 2.0s, 3.0s, 4.0s. The flow is metronomic and perfect.
+- **Jittery:** The conveyor belt motor stutters. The worker receives boxes at 1.0s, 1.9s, 3.2s, 3.8s.
 
 None of the boxes are damaged (there is no noise), but the unpredictable delivery creates chaos for the worker trying to process them. In real-time DSP, if a sample arrives too late, the system might have nothing to play, causing an audio dropout or video stutter. If a sample arrives too early, it might get discarded because the system isn't ready for it.
 
@@ -203,13 +203,13 @@ None of the boxes are damaged (there is no noise), but the unpredictable deliver
 
 To model jitter in your DSP code, you don't touch the amplitude of the signal $$x[n]$$ at all. Instead, you manipulate the delay line.
 
-In a perfect pipe, the transit time is a constant delay, which we will call $$D$$. The output $$y[n]$$ is just the input shifted back by that exact amount of time:
+In a perfect scenario, the transit time is a constant delay, which we will call $$D$$. The output $$y[n]$$ is just the input shifted back by that exact amount of time:
 
 $$
 y[n] = x[n-D]
 $$
 
-To introduce jitter, we make that delay variable. We introduce a jitter sequence, j[n], which represents the random timing fluctuations at each step. The new equation for the pipe becomes:
+To introduce jitter, we make that delay variable. We introduce a jitter sequence, j[n], which represents the random timing fluctuations at each step. The new equation becomes:
 
 $$
 y[n] = x[n-(D+j[n])]

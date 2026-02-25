@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced ADSR Custom Curves</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .axis-line { stroke: #334155; stroke-width: 2; }
+        .axis-text { fill: #94a3b8; font-size: 14px; font-weight: 500; user-select: none; }
+        
+        .phase-zone { fill: currentColor; opacity: 0.05; transition: opacity 0.2s; }
+        .phase-zone.active { opacity: 0.15; }
+        .phase-label { fill: #64748b; font-size: 12px; font-weight: 600; letter-spacing: 0.1em; user-select: none; pointer-events: none; }
+        .phase-label.active { fill: #f8fafc; }
+
+        .wave-path { fill: none; stroke: #fbbf24; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 4px rgba(251, 191, 36, 0.5)); opacity: 0.5; pointer-events: none; }
+        
+        .env-line { fill: none; stroke: #ec4899; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 6px rgba(236, 72, 153, 0.6)); pointer-events: none; }
+        .env-fill { fill: url(#grad-env); opacity: 0.6; pointer-events: none; }
+
+        .glow-bg { position: absolute; top: 50%; left: 50%; width: 100%; height: 100%; transform: translate(-50%, -50%); background: radial-gradient(circle, rgba(236, 72, 153, 0.05) 0%, rgba(15, 23, 42, 0) 70%); pointer-events: none; z-index: 0; }
+
+        .play-cursor { stroke: #f8fafc; stroke-width: 2; filter: drop-shadow(0 0 6px rgba(248, 250, 252, 0.8)); opacity: 0; pointer-events: none; }
+
+        /* Draggable Handle Styles */
+        .tens-track { stroke: #06b6d4; stroke-width: 1; stroke-dasharray: 4; opacity: 0.4; pointer-events: none; }
+        
+        .node-primary { fill: #0f172a; stroke: #ec4899; stroke-width: 3; cursor: move; transition: r 0.1s, filter 0.1s; }
+        .node-primary:hover, .node-primary.dragging { r: 12; fill: #ec4899; filter: drop-shadow(0 0 12px rgba(236, 72, 153, 0.9)); }
+        
+        .node-tension { fill: #0f172a; stroke: #06b6d4; stroke-width: 3; cursor: ns-resize; transition: r 0.1s, filter 0.1s; }
+        .node-tension:hover, .node-tension.dragging { r: 10; fill: #06b6d4; filter: drop-shadow(0 0 10px rgba(6, 182, 212, 0.9)); }
+
+        .tooltip { position: absolute; background: rgba(15, 23, 42, 0.95); border: 1px solid #334155; padding: 8px 12px; border-radius: 8px; pointer-events: none; opacity: 0; transition: opacity 0.2s; transform: translate(-50%, -120%); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5); z-index: 50; }
+
+        /* Button styles */
+        #play-btn { user-select: none; -webkit-touch-callout: none; transition: all 0.1s; }
+        #play-btn.active-hold { transform: scale(0.95); background-color: #be185d; box-shadow: 0 0 30px rgba(236, 72, 153, 0.8); }
+    </style>
+</head>
+
+<body>
+
+    <!-- Diagram Container -->
+    <div class="relative w-full flex-1 p-2 sm:p-6 z-10 flex items-center justify-center" id="diagram-container">
+        <div class="glow-bg"></div>
+
+        <svg id="wave-svg" class="w-full h-full max-h-full touch-none" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid meet">
+            <defs>
+                <linearGradient id="grad-env" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#ec4899" stop-opacity="0.4" />
+                    <stop offset="100%" stop-color="#ec4899" stop-opacity="0.0" />
+                </linearGradient>
+            </defs>
+            <!-- Content generated via JS -->
+        </svg>
+
+        <!-- Custom Tooltip -->
+        <div id="tooltip" class="tooltip">
+            <div class="text-xs text-slate-400 mb-1" id="tt-label">Node</div>
+            <div class="text-sm font-mono text-pink-400" id="tt-val1">Time: 0ms</div>
+            <div class="text-sm font-mono text-cyan-400" id="tt-val2">Curve: Linear</div>
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="bg-slate-900/90 p-4 flex flex-col sm:flex-row gap-6 justify-center items-center relative z-20 border-t border-slate-800 shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
+        
+        <!-- Play Button -->
+        <button id="play-btn" class="flex flex-col items-center justify-center bg-pink-600 hover:bg-pink-500 text-white px-10 py-3 rounded-xl font-bold transition-all shadow-[0_0_15px_rgba(236,72,153,0.4)] hover:shadow-[0_0_25px_rgba(236,72,153,0.6)] cursor-pointer min-w-[250px]">
+            <div class="flex items-center gap-2">
+                <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+                <span>Press & Hold Note</span>
+            </div>
+            <span class="text-[10px] text-pink-200 font-normal uppercase tracking-wider mt-1 opacity-80">(Release to trigger fade)</span>
+        </button>
+
+        <div class="h-10 w-px bg-slate-700 hidden sm:block"></div>
+
+        <!-- Legend -->
+        <div class="flex flex-col gap-2 text-xs sm:text-sm text-slate-300">
+            <div class="flex items-center gap-2">
+                <div class="w-3 h-3 rounded-full bg-pink-500 border-2 border-slate-900 shadow-[0_0_5px_#ec4899]"></div>
+                <span>Time / Level Limiters</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <div class="w-3 h-3 rounded-full bg-cyan-500 border-2 border-slate-900 shadow-[0_0_5px_#06b6d4]"></div>
+                <span>Exponentiation (Curve Tension)</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const svg = document.getElementById('wave-svg');
+            const tooltip = document.getElementById('tooltip');
+            const container = document.getElementById('diagram-container');
+            const playBtn = document.getElementById('play-btn');
+
+            // --- Configuration & ADSR State ---
+            const width = 1000;
+            const height = 500;
+            const marginX = 40;
+            const centerY = height / 2;
+            const envMaxY = 60;       // Max visual amplitude = 1.0
+            const envMinY = centerY;  // Min visual amplitude = 0.0
+            
+            const maxVisualTime = 1600; // Total ms available on screen
+            const visSHold = 200;       // Visual width of the sustained segment in ms
+
+            // Internal state
+            let state = {
+                a_time: 200,   a_tens: 1.0,  p_level: 1.0, // Attack Time, Tension, and Peak Level
+                d_time: 300,   d_tens: 2.5,  // Decay Time and Tension
+                s_level: 0.4,                // Sustain Level
+                r_time: 400,   r_tens: 2.0   // Release Time and Tension
+            };
+
+            // Audio visual background composite
+            const wavePoints = 800;
+            const sourceData = new Float32Array(wavePoints);
+            for(let i = 0; i < wavePoints; i++) {
+                const t = i / wavePoints;
+                sourceData[i] = Math.sin(t * Math.PI * 40) * 0.6 + Math.sin(t * Math.PI * 120) * 0.4;
+            }
+
+            // --- Math Helpers ---
+            const timeToX = (t) => marginX + (t / maxVisualTime) * (width - 2 * marginX);
+            const levelToY = (l) => envMinY - (l * (envMinY - envMaxY));
+            const xToTime = (x) => Math.max(0, Math.min(maxVisualTime, ((x - marginX) / (width - 2 * marginX)) * maxVisualTime));
+            const yToLevel = (y) => Math.max(0, Math.min(1, (envMinY - y) / (envMinY - envMaxY)));
+
+            // Envelope Math Evaluator
+            const getLevel = (t) => {
+                if (t <= 0) return 0;
+                
+                // Attack Phase (Mapping 0->1 to 0->Peak based on tension)
+                if (t <= state.a_time) {
+                    const x = t / state.a_time;
+                    return state.p_level * Math.pow(x, state.a_tens);
+                }
+                
+                // Decay Phase (Mapping 0->1 to Peak->S based on tension)
+                if (t <= state.a_time + state.d_time) {
+                    const x = (t - state.a_time) / state.d_time;
+                    return state.s_level + (state.p_level - state.s_level) * Math.pow(1 - x, state.d_tens);
+                }
+                
+                // Sustain Phase
+                if (t <= state.a_time + state.d_time + visSHold) {
+                    return state.s_level;
+                }
+                
+                // Release Phase (Mapping 0->1 to S->0 based on tension)
+                const releaseEnd = state.a_time + state.d_time + visSHold + state.r_time;
+                if (t <= releaseEnd) {
+                    const x = (t - (state.a_time + state.d_time + visSHold)) / state.r_time;
+                    return state.s_level * Math.pow(1 - x, state.r_tens);
+                }
+                
+                return 0;
+            };
+
+            // --- SVG Generation Utilities ---
+            const createElement = (tag, attrs, parent = svg) => {
+                const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+                for (let k in attrs) el.setAttribute(k, attrs[k]);
+                parent.appendChild(el);
+                return el;
+            };
+
+            // Axes
+            createElement('line', { x1: marginX, y1: centerY, x2: width - marginX + 20, y2: centerY, class: 'axis-line' });
+            createElement('line', { x1: marginX, y1: 40, x2: marginX, y2: height - 40, class: 'axis-line' });
+            createElement('text', { x: width - marginX + 20, y: centerY + 20, 'text-anchor': 'end', class: 'axis-text' }).textContent = 'Time →';
+            createElement('text', { x: marginX + 10, y: 50, 'text-anchor': 'start', class: 'axis-text' }).textContent = 'Max Amp (1.0)';
+            createElement('text', { x: marginX + 10, y: height - 40, 'text-anchor': 'start', class: 'axis-text' }).textContent = 'Min Amp (-1.0)';
+
+            // Background Zones (A, D, S, R)
+            const zones = {
+                a: { rect: createElement('rect', {class: 'phase-zone text-pink-500/20'}), text: createElement('text', {class: 'phase-label'}) },
+                d: { rect: createElement('rect', {class: 'phase-zone text-orange-500/20'}), text: createElement('text', {class: 'phase-label'}) },
+                s: { rect: createElement('rect', {class: 'phase-zone text-cyan-500/20'}), text: createElement('text', {class: 'phase-label'}) },
+                r: { rect: createElement('rect', {class: 'phase-zone text-purple-500/20'}), text: createElement('text', {class: 'phase-label'}) }
+            };
+            zones.a.text.textContent = 'ATTACK'; zones.d.text.textContent = 'DECAY'; 
+            zones.s.text.textContent = 'SUSTAIN'; zones.r.text.textContent = 'RELEASE';
+
+            const wavePath = createElement('path', { class: 'wave-path' });
+            const envFillPath = createElement('path', { class: 'env-fill' });
+            const envLinePath = createElement('path', { class: 'env-line' });
+            
+            // Tension Tracks (Vertical dashed lines)
+            const tracks = {
+                a: createElement('line', {class: 'tens-track'}),
+                d: createElement('line', {class: 'tens-track'}),
+                r: createElement('line', {class: 'tens-track'})
+            };
+
+            // Nodes (Primary and Tension)
+            const nodes = {
+                nA: createElement('circle', {class: 'node-primary', id: 'nA', r: 8}),
+                nD: createElement('circle', {class: 'node-primary', id: 'nD', r: 8}),
+                nR: createElement('circle', {class: 'node-primary', id: 'nR', r: 8}),
+                tA: createElement('circle', {class: 'node-tension', id: 'tA', r: 6}),
+                tD: createElement('circle', {class: 'node-tension', id: 'tD', r: 6}),
+                tR: createElement('circle', {class: 'node-tension', id: 'tR', r: 6})
+            };
+
+            const playCursor = createElement('line', { x1: marginX, y1: 40, x2: marginX, y2: height - 40, class: 'play-cursor' });
+
+            // --- Drawing Function ---
+            const updateVisuals = () => {
+                // 1. Calculate Absolute Times
+                const tA = state.a_time;
+                const tD = tA + state.d_time;
+                const tS = tD + visSHold;
+                const tR = tS + state.r_time;
+
+                // 2. Update Zones
+                const updateZone = (z, startT, endT) => {
+                    const x1 = timeToX(startT), x2 = timeToX(endT);
+                    z.rect.setAttribute('x', x1); z.rect.setAttribute('width', Math.max(0, x2 - x1));
+                    z.rect.setAttribute('y', 0); z.rect.setAttribute('height', height);
+                    z.text.setAttribute('x', x1 + 10); z.text.setAttribute('y', 20);
+                };
+                updateZone(zones.a, 0, tA);
+                updateZone(zones.d, tA, tD);
+                updateZone(zones.s, tD, tS);
+                updateZone(zones.r, tS, tR);
+
+                // 3. Update Envelope Geometry (High density path for smooth curves)
+                let dPath = `M ${timeToX(0)} ${centerY} `;
+                for(let t = 0; t <= tR; t += 2) {
+                    dPath += `L ${timeToX(t)} ${levelToY(getLevel(t))} `;
+                }
+                const fillPathStr = dPath + `L ${timeToX(tR)} ${centerY} Z`;
+                envLinePath.setAttribute('d', dPath);
+                envFillPath.setAttribute('d', fillPathStr);
+
+                // 4. Position Primary Nodes
+                nodes.nA.setAttribute('cx', timeToX(tA)); nodes.nA.setAttribute('cy', levelToY(state.p_level));
+                nodes.nD.setAttribute('cx', timeToX(tD)); nodes.nD.setAttribute('cy', levelToY(state.s_level));
+                nodes.nR.setAttribute('cx', timeToX(tR)); nodes.nR.setAttribute('cy', levelToY(0));
+
+                // 5. Position Tension Nodes & Tracks
+                const tmA = tA * 0.5;
+                const tmD = tA + (state.d_time * 0.5);
+                const tmR = tS + (state.r_time * 0.5);
+
+                const posTens = (node, track, t, bottomL, topL) => {
+                    const cx = timeToX(t);
+                    const cy = levelToY(getLevel(t));
+                    node.setAttribute('cx', cx); node.setAttribute('cy', cy);
+                    track.setAttribute('x1', cx); track.setAttribute('x2', cx);
+                    track.setAttribute('y1', levelToY(bottomL)); track.setAttribute('y2', levelToY(topL));
+                };
+
+                posTens(nodes.tA, tracks.a, tmA, 0, state.p_level);
+                posTens(nodes.tD, tracks.d, tmD, state.s_level, state.p_level);
+                posTens(nodes.tR, tracks.r, tmR, 0, state.s_level);
+
+                // 6. Update Inner Waveform Geometry
+                let waveD = `M ${timeToX(0)} ${centerY} `;
+                const stepX = (width - 2 * marginX) / wavePoints;
+                const maxAmpHeight = centerY - envMaxY;
+
+                for (let i = 0; i <= wavePoints; i++) {
+                    const currentX = timeToX(0) + (i * stepX);
+                    const t = xToTime(currentX);
+                    if (t > tR) break;
+                    
+                    const rawVal = sourceData[i % wavePoints];
+                    const envVal = getLevel(t);
+                    waveD += `L ${currentX} ${centerY - (rawVal * envVal * maxAmpHeight)} `;
+                }
+                wavePath.setAttribute('d', waveD);
+            };
+
+            // --- Interaction Logic ---
+            let activeHandle = null;
+
+            const getMouseCoords = (e) => {
+                const pt = svg.createSVGPoint();
+                if (e.touches && e.touches.length > 0) {
+                    pt.x = e.touches[0].clientX; pt.y = e.touches[0].clientY;
+                } else {
+                    pt.x = e.clientX; pt.y = e.clientY;
+                }
+                return pt.matrixTransform(svg.getScreenCTM().inverse());
+            };
+
+            const formatTens = (t) => {
+                if(t > 1.1) return `Exponential (${t.toFixed(1)})`;
+                if(t < 0.9) return `Logarithmic (${t.toFixed(1)})`;
+                return `Linear (${t.toFixed(1)})`;
+            };
+
+            const handleDefs = {
+                'nA': {
+                    label: 'Attack Time / Peak Limit',
+                    update: (mx, my) => {
+                        const posD = state.a_time + state.d_time;
+                        state.a_time = Math.max(10, Math.min(xToTime(mx), posD - 10));
+                        state.d_time = posD - state.a_time; // Keep absolute Decay End fixed visually
+                        state.p_level = Math.max(state.s_level + 0.05, Math.min(1.0, yToLevel(my)));
+                    },
+                    getTT: () => [ `Time: ${state.a_time.toFixed(0)}ms`, `Peak: ${(state.p_level*100).toFixed(0)}%` ]
+                },
+                'nD': {
+                    label: 'Decay Time / Sustain Limit',
+                    update: (mx, my) => {
+                        const newPosD = Math.max(state.a_time + 10, Math.min(xToTime(mx), maxVisualTime - visSHold - state.r_time - 10));
+                        state.d_time = newPosD - state.a_time;
+                        state.s_level = Math.max(0.0, Math.min(state.p_level - 0.05, yToLevel(my))); // Keep below peak, allow hitting 0
+                    },
+                    getTT: () => [ `Time: ${state.d_time.toFixed(0)}ms`, `Level: ${(state.s_level*100).toFixed(0)}%` ]
+                },
+                'nR': {
+                    label: 'Release Limit',
+                    update: (mx, my) => {
+                        const posS = state.a_time + state.d_time + visSHold;
+                        const newPosR = Math.max(posS + 10, Math.min(xToTime(mx), maxVisualTime));
+                        state.r_time = newPosR - posS;
+                    },
+                    getTT: () => [ `Time: ${state.r_time.toFixed(0)}ms`, `Level: 0%` ]
+                },
+                'tA': {
+                    label: 'Attack Tension',
+                    update: (mx, my) => {
+                        let midL = Math.max(0.01, Math.min(state.p_level - 0.01, yToLevel(my)));
+                        let norm = midL / state.p_level;
+                        state.a_tens = Math.log(norm) / Math.log(0.5);
+                    },
+                    getTT: () => [ `Curve: ${formatTens(state.a_tens)}`, '' ]
+                },
+                'tD': {
+                    label: 'Decay Tension',
+                    update: (mx, my) => {
+                        let midL = Math.max(state.s_level + 0.01, Math.min(state.p_level - 0.01, yToLevel(my)));
+                        let norm = (midL - state.s_level) / (state.p_level - state.s_level);
+                        state.d_tens = Math.log(norm) / Math.log(0.5);
+                    },
+                    getTT: () => [ `Curve: ${formatTens(state.d_tens)}`, '' ]
+                },
+                'tR': {
+                    label: 'Release Tension',
+                    update: (mx, my) => {
+                        let safeSLevel = Math.max(0.001, state.s_level);
+                        let midL = Math.max(0.0001, Math.min(safeSLevel - 0.0001, yToLevel(my)));
+                        let norm = midL / safeSLevel;
+                        state.r_tens = Math.log(norm) / Math.log(0.5);
+                    },
+                    getTT: () => [ `Curve: ${formatTens(state.r_tens)}`, '' ]
+                }
+            };
+
+            const updateTooltip = (e, def) => {
+                const rect = container.getBoundingClientRect();
+                const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+                const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+                
+                tooltip.style.left = `${clientX - rect.left}px`;
+                tooltip.style.top = `${clientY - rect.top - 20}px`;
+                tooltip.style.opacity = '1';
+
+                document.getElementById('tt-label').textContent = def.label;
+                const texts = def.getTT();
+                document.getElementById('tt-val1').textContent = texts[0];
+                document.getElementById('tt-val2').textContent = texts[1];
+                document.getElementById('tt-val2').style.display = texts[1] ? 'block' : 'none';
+            };
+
+            Object.values(nodes).forEach(node => {
+                const startDrag = (e) => {
+                    e.preventDefault();
+                    activeHandle = node.id;
+                    node.classList.add('dragging');
+                    updateTooltip(e, handleDefs[activeHandle]);
+                };
+                
+                node.addEventListener('mousedown', startDrag);
+                node.addEventListener('touchstart', startDrag, {passive: false});
+                
+                node.addEventListener('mouseenter', (e) => {
+                    if(!activeHandle) updateTooltip(e, handleDefs[node.id]);
+                });
+                node.addEventListener('mouseleave', () => {
+                    if(!activeHandle) tooltip.style.opacity = '0';
+                });
+            });
+
+            const onMove = (e) => {
+                if (!activeHandle) return;
+                e.preventDefault();
+                const pt = getMouseCoords(e);
+                handleDefs[activeHandle].update(pt.x, pt.y);
+                updateVisuals();
+                updateTooltip(e, handleDefs[activeHandle]);
+            };
+
+            const onEnd = () => {
+                if (activeHandle) {
+                    nodes[activeHandle].classList.remove('dragging');
+                    activeHandle = null;
+                    tooltip.style.opacity = '0';
+                }
+            };
+
+            window.addEventListener('mousemove', onMove);
+            window.addEventListener('touchmove', onMove, {passive: false});
+            window.addEventListener('mouseup', onEnd);
+            window.addEventListener('touchend', onEnd);
+
+
+            // --- Audio Engine (Web Audio API) ---
+            let audioCtx = null;
+            let currentOsc = null;
+            let currentGain = null;
+            let currentFilter = null;
+            let animationFrameId = null;
+            let isNoteOn = false;
+            let noteOnTime = 0;
+            let releaseStartTime = 0;
+
+            // Custom WebAudio parameter ramp generator that respects our math
+            const scheduleCurve = (param, startTime, duration, startVal, endVal, tension, isDecayFormat) => {
+                const segments = 30; // High resolution for smooth audio
+                for (let i = 1; i <= segments; i++) {
+                    const x = i / segments;
+                    let val;
+                    if (isDecayFormat) {
+                        val = endVal + (startVal - endVal) * Math.pow(1 - x, tension);
+                    } else {
+                        val = startVal + (endVal - startVal) * Math.pow(x, tension);
+                    }
+                    const t = startTime + (duration * x);
+                    param.linearRampToValueAtTime(Math.max(0.0001, val), t);
+                }
+            };
+
+            const animateCursor = (now) => {
+                let cursorT = 0;
+                
+                if (isNoteOn) {
+                    const elapsed = now - noteOnTime;
+                    const maxHoldTime = state.a_time + state.d_time + visSHold;
+                    cursorT = Math.min(elapsed, maxHoldTime);
+                } else {
+                    const elapsed = now - releaseStartTime;
+                    const releaseStartT = state.a_time + state.d_time + visSHold;
+                    cursorT = releaseStartT + elapsed;
+                    
+                    if (elapsed >= state.r_time + 50) {
+                        playCursor.style.opacity = '0';
+                        zones.r.rect.classList.remove('active'); zones.r.text.classList.remove('active');
+                        return;
+                    }
+                }
+
+                // Update Phase Highlighting
+                Object.values(zones).forEach(z => { z.rect.classList.remove('active'); z.text.classList.remove('active'); });
+                if (cursorT <= state.a_time) { zones.a.rect.classList.add('active'); zones.a.text.classList.add('active'); }
+                else if (cursorT <= state.a_time + state.d_time) { zones.d.rect.classList.add('active'); zones.d.text.classList.add('active'); }
+                else if (cursorT <= state.a_time + state.d_time + visSHold && isNoteOn) { zones.s.rect.classList.add('active'); zones.s.text.classList.add('active'); }
+                else { zones.r.rect.classList.add('active'); zones.r.text.classList.add('active'); }
+
+                // Move visual line
+                const cursorX = timeToX(cursorT);
+                playCursor.setAttribute('x1', cursorX);
+                playCursor.setAttribute('x2', cursorX);
+                
+                animationFrameId = requestAnimationFrame(animateCursor);
+            };
+
+            const triggerNoteOn = (e) => {
+                if(e) e.preventDefault();
+                if(isNoteOn) return;
+                isNoteOn = true;
+                
+                playBtn.classList.add('active-hold');
+                playCursor.style.opacity = '1';
+                noteOnTime = performance.now();
+
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+
+                if (currentOsc) { currentOsc.stop(); currentOsc.disconnect(); }
+                if (currentGain) { currentGain.disconnect(); }
+                if (currentFilter) { currentFilter.disconnect(); }
+
+                const t0 = audioCtx.currentTime;
+                
+                currentGain = audioCtx.createGain();
+                currentGain.connect(audioCtx.destination);
+                
+                currentGain.gain.cancelScheduledValues(t0);
+                currentGain.gain.setValueAtTime(0.0001, t0);
+                
+                // Attack Curve
+                scheduleCurve(currentGain.gain, t0, state.a_time/1000, 0, state.p_level, state.a_tens, false);
+                
+                // Decay Curve
+                const tDecayStart = t0 + state.a_time/1000;
+                scheduleCurve(currentGain.gain, tDecayStart, state.d_time/1000, state.p_level, state.s_level, state.d_tens, true);
+
+                // Setup Source (Rich Sawtooth)
+                currentOsc = audioCtx.createOscillator();
+                currentOsc.type = 'sawtooth';
+                currentOsc.frequency.setValueAtTime(110, t0); // A2
+
+                // Map a Lowpass Filter to the exact same envelope for classic synth sound
+                currentFilter = audioCtx.createBiquadFilter();
+                currentFilter.type = 'lowpass';
+                currentFilter.Q.value = 4;
+                
+                currentFilter.frequency.cancelScheduledValues(t0);
+                currentFilter.frequency.setValueAtTime(200, t0);
+                scheduleCurve(currentFilter.frequency, t0, state.a_time/1000, 200, Math.max(200, 4000 * state.p_level), state.a_tens, false);
+                scheduleCurve(currentFilter.frequency, tDecayStart, state.d_time/1000, Math.max(200, 4000 * state.p_level), Math.max(200, 4000 * state.s_level), state.d_tens, true);
+
+                currentOsc.connect(currentFilter).connect(currentGain);
+                currentOsc.start(t0);
+
+                if(animationFrameId) cancelAnimationFrame(animationFrameId);
+                animationFrameId = requestAnimationFrame(animateCursor);
+            };
+
+            const triggerNoteOff = (e) => {
+                if(e) e.preventDefault();
+                if(!isNoteOn) return;
+                isNoteOn = false;
+                
+                playBtn.classList.remove('active-hold');
+                releaseStartTime = performance.now();
+
+                if (audioCtx && currentGain) {
+                    const t0 = audioCtx.currentTime;
+                    
+                    // We need to know exactly where the envelope is right now to prevent clicks.
+                    // Calculate the actual live sustain state rather than the fixed visual one.
+                    const elapsedMs = releaseStartTime - noteOnTime;
+                    let activeVol = 0;
+                    
+                    if (elapsedMs <= state.a_time) {
+                        // Still in Attack
+                        activeVol = state.p_level * Math.pow(elapsedMs / state.a_time, state.a_tens);
+                    } else if (elapsedMs <= state.a_time + state.d_time) {
+                        // Still in Decay
+                        const x = (elapsedMs - state.a_time) / state.d_time;
+                        activeVol = state.s_level + (state.p_level - state.s_level) * Math.pow(1 - x, state.d_tens);
+                    } else {
+                        // Held indefinitely in Sustain
+                        activeVol = state.s_level; 
+                    }
+                    
+                    const currentCalculatedVol = Math.max(0.0001, activeVol);
+                    
+                    currentGain.gain.cancelScheduledValues(t0);
+                    currentGain.gain.setValueAtTime(currentCalculatedVol, t0);
+                    
+                    // Schedule Release Curve
+                    scheduleCurve(currentGain.gain, t0, state.r_time/1000, currentCalculatedVol, 0, state.r_tens, true);
+                    currentGain.gain.linearRampToValueAtTime(0, t0 + state.r_time/1000 + 0.05);
+                    
+                    if (currentFilter) {
+                        currentFilter.frequency.cancelScheduledValues(t0);
+                        const currentFreq = Math.max(200, 4000 * currentCalculatedVol);
+                        currentFilter.frequency.setValueAtTime(currentFreq, t0);
+                        scheduleCurve(currentFilter.frequency, t0, state.r_time/1000, currentFreq, 200, state.r_tens, true);
+                    }
+
+                    if (currentOsc) currentOsc.stop(t0 + state.r_time/1000 + 0.1);
+                }
+            };
+
+            playBtn.addEventListener('mousedown', triggerNoteOn);
+            playBtn.addEventListener('touchstart', triggerNoteOn, {passive: false});
+            
+            // Release listeners mapped to window to prevent getting stuck if mouse leaves button
+            window.addEventListener('mouseup', triggerNoteOff);
+            window.addEventListener('touchend', triggerNoteOff);
+
+            // --- Window PostMessage API to Control ADSR ---
+            window.addEventListener('message', (event) => {
+                const data = event.data;
+                if (data && data.type === 'SET_ADSR') {
+                    const payload = data.payload;
+                    
+                    // Safely update state if the property exists in the payload
+                    if (payload.a_time !== undefined) state.a_time = payload.a_time;
+                    if (payload.a_tens !== undefined) state.a_tens = payload.a_tens;
+                    if (payload.p_level !== undefined) state.p_level = payload.p_level;
+                    if (payload.d_time !== undefined) state.d_time = payload.d_time;
+                    if (payload.d_tens !== undefined) state.d_tens = payload.d_tens;
+                    if (payload.s_level !== undefined) state.s_level = payload.s_level;
+                    if (payload.r_time !== undefined) state.r_time = payload.r_time;
+                    if (payload.r_tens !== undefined) state.r_tens = payload.r_tens;
+                    
+                    // Trigger UI redraw
+                    updateVisuals();
+                }
+            });
+
+            // Init drawing
+            updateVisuals();
+        });
+    </script>
+</body>
+
+</html>

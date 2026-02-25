@@ -1,7 +1,7 @@
 ---
 status: "draft"
-date: "2026-02-21"
-summary: "Fundamentals on how Audio works, and how we can represent it in a computer"
+date: "2026-02-24"
+summary: "In this article we explore what an Helmholtz Resonator is, and how it works"
 ---
 
 # 1. What is Audio?

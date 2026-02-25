@@ -5,6 +5,20 @@
   <link>https://example.com/</link>
   <description>Latest articles</description>
   <item>
+    <title><![CDATA[The Helmholtz Resonator]]></title>
+    <link>https://example.com/articles/computer-science/dsp-acoustic-fundamentals/acoustic-physics/the-helmholtz-resonator/</link>
+    <guid>https://example.com/articles/computer-science/dsp-acoustic-fundamentals/acoustic-physics/the-helmholtz-resonator/</guid>
+    <pubDate>Tue, 24 Feb 2026 00:00:00 GMT</pubDate>
+    <description><![CDATA[]]></description>
+  </item>
+  <item>
+    <title><![CDATA[Envelope]]></title>
+    <link>https://example.com/collections/computer-science/dsp-acoustic-fundamentals/envelopes-dynamics/envelope/</link>
+    <guid>https://example.com/collections/computer-science/dsp-acoustic-fundamentals/envelopes-dynamics/envelope/</guid>
+    <pubDate>Tue, 24 Feb 2026 00:00:00 GMT</pubDate>
+    <description><![CDATA[If filters shape which frequencies a sound contains, an envelope shapes how the sound evolves over time.]]></description>
+  </item>
+  <item>
     <title><![CDATA[Noise And Jitter]]></title>
     <link>https://example.com/articles/computer-science/dsp-acoustic-fundamentals/noise-and-jitter/</link>
     <guid>https://example.com/articles/computer-science/dsp-acoustic-fundamentals/noise-and-jitter/</guid>
@@ -17,13 +31,6 @@
     <guid>https://example.com/collections/computer-science/3d-programming/coordinate-systems-and-transformations-in-3d-graphics/rotation-representations-euler-vs-quaternions/</guid>
     <pubDate>Sat, 21 Feb 2026 14:20:46 GMT</pubDate>
     <description><![CDATA[Rotations in 3D can be represented in multiple ways. The two most common are Euler angles and quaternions. Both describe orientation, but they behave very differently and are suited for...]]></description>
-  </item>
-  <item>
-    <title><![CDATA[The Helmholtz Resonator]]></title>
-    <link>https://example.com/articles/computer-science/dsp-acoustic-fundamentals/acoustic-physics/the-helmholtz-resonator/</link>
-    <guid>https://example.com/articles/computer-science/dsp-acoustic-fundamentals/acoustic-physics/the-helmholtz-resonator/</guid>
-    <pubDate>Sat, 21 Feb 2026 00:00:00 GMT</pubDate>
-    <description><![CDATA[]]></description>
   </item>
   <item>
     <title><![CDATA[Audio And DSP Basics]]></title>
