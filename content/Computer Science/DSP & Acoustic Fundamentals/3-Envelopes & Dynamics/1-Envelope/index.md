@@ -14,7 +14,6 @@ At the simplest level, an envelope is just a curve. It tells a parameter what to
 
 That is the key idea: an envelope is not really “about volume.” It is about **change over time**.
 
----
 
 ## 1. The Intuition: Sounds Are Events, Not Static Objects
 
