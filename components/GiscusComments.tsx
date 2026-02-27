@@ -45,6 +45,26 @@ function createScriptAttributes(discussionIdentifier: string, theme: string) {
   return attributes satisfies Record<string, string>;
 }
 
+function applyThemeToGiscus(theme: string) {
+  const iframe = document.querySelector<HTMLIFrameElement>('iframe.giscus-frame');
+  if (!iframe || !iframe.contentWindow) {
+    return false;
+  }
+
+  iframe.contentWindow.postMessage(
+    {
+      giscus: {
+        setConfig: {
+          theme,
+        },
+      },
+    },
+    'https://giscus.app'
+  );
+
+  return true;
+}
+
 export function GiscusComments({ discussionIdentifier }: GiscusCommentsProps) {
   const { resolvedTheme } = useTheme();
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -77,20 +97,24 @@ export function GiscusComments({ discussionIdentifier }: GiscusCommentsProps) {
   }, [discussionIdentifier, isConfigured]);
 
   useEffect(() => {
-    const iframe = document.querySelector<HTMLIFrameElement>('iframe.giscus-frame');
-    if (!iframe || !iframe.contentWindow) return;
-
     const giscusTheme = resolvedTheme === 'dark' ? 'dark' : 'light';
-    iframe.contentWindow.postMessage(
-      {
-        giscus: {
-          setConfig: {
-            theme: giscusTheme,
-          },
-        },
-      },
-      'https://giscus.app'
-    );
+    if (applyThemeToGiscus(giscusTheme)) {
+      return;
+    }
+
+    const container = containerRef.current;
+    if (!container) {
+      return;
+    }
+
+    const observer = new MutationObserver(() => {
+      if (applyThemeToGiscus(giscusTheme)) {
+        observer.disconnect();
+      }
+    });
+
+    observer.observe(container, { childList: true, subtree: true });
+    return () => observer.disconnect();
   }, [resolvedTheme]);
 
   if (!isConfigured) {
