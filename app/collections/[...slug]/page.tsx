@@ -87,9 +87,10 @@ export default async function CollectionSlugPage({ params }: PageProps) {
     notFound();
   }
 
-  const [parentCollection, knowledgePath] = await Promise.all([
+  const [parentCollection, knowledgePath, collections] = await Promise.all([
     getCollectionBySlug(article.collectionSlug),
     getKnowledgePathForSlug(slug),
+    getCollections(),
   ]);
 
   // Find sibling articles for navigation
@@ -117,7 +118,7 @@ export default async function CollectionSlugPage({ params }: PageProps) {
         >
           ← Back to {parentCollection ? parentCollection.title : 'collection'}
         </Link>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between lg:hidden">
           <span className="text-sm uppercase tracking-wide text-muted-foreground">Article view</span>
           <Suspense fallback={null}>
             <ArticleViewToggle />
@@ -131,6 +132,7 @@ export default async function CollectionSlugPage({ params }: PageProps) {
           knowledgePath={knowledgePath}
           previousArticle={previousArticle}
           nextArticle={nextArticle}
+          collectionSlugs={collections.map((collection) => collection.slug)}
         />
       </Suspense>
     </div>

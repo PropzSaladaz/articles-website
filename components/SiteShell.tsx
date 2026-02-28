@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   useCallback,
   useEffect,
@@ -14,13 +15,14 @@ import { getBasePath } from '../lib/paths';
 import { cn } from '../lib/utils';
 import { TreeNavigation } from './TreeNavigation';
 import { ThemeToggle } from './ThemeToggle';
-import { PanelLeftClose, PanelLeft } from 'lucide-react';
+import { PanelLeftClose, PanelLeft, Menu, X } from 'lucide-react';
 
 const DEFAULT_SIDEBAR_WIDTH = 288;
 const MIN_SIDEBAR_WIDTH = 224;
 const MAX_SIDEBAR_WIDTH = 460;
 const COLLAPSE_THRESHOLD = 80;
 const HEADER_HEIGHT = 72;
+const AUTO_COLLAPSE_BREAKPOINT = 1280;
 
 type SiteShellProps = {
   tree: SubjectNode;
@@ -29,6 +31,7 @@ type SiteShellProps = {
 };
 
 export function SiteShell({ tree, collections, children }: SiteShellProps) {
+  const pathname = usePathname();
   const basePath = getBasePath();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const dragOriginRef = useRef(0);
@@ -36,6 +39,7 @@ export function SiteShell({ tree, collections, children }: SiteShellProps) {
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   useEffect(() => {
     if (!isSidebarCollapsed && sidebarWidth > 0) {
@@ -120,6 +124,25 @@ export function SiteShell({ tree, collections, children }: SiteShellProps) {
   }, [isDragging]);
 
   useEffect(() => {
+    setIsMobileNavOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    const syncSidebarForViewport = () => {
+      if (window.innerWidth >= AUTO_COLLAPSE_BREAKPOINT) return;
+      setIsSidebarCollapsed(true);
+      setSidebarWidth(0);
+    };
+
+    syncSidebarForViewport();
+    window.addEventListener('resize', syncSidebarForViewport, { passive: true });
+
+    return () => {
+      window.removeEventListener('resize', syncSidebarForViewport);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!isDragging) return;
     const previousCursor = document.body.style.cursor;
     const previousUserSelect = document.body.style.userSelect;
@@ -166,8 +189,33 @@ export function SiteShell({ tree, collections, children }: SiteShellProps) {
       </button>
 
       <div className="border-b border-border bg-background lg:hidden">
-        <div className="mx-auto max-h-80 w-full max-w-6xl overflow-y-auto px-4 py-4 ">
-          <TreeNavigation tree={tree} collections={collections} />
+        <div className="mx-auto w-full max-w-6xl px-3 py-2 sm:px-4">
+          <button
+            type="button"
+            onClick={() => setIsMobileNavOpen((prev) => !prev)}
+            className="flex w-full items-center justify-between rounded-lg border border-border bg-card px-3 py-2.5 text-sm font-medium text-foreground"
+            aria-expanded={isMobileNavOpen}
+            aria-controls="mobile-navigation-panel"
+          >
+            <span className="inline-flex items-center gap-2">
+              <Menu className="h-4 w-4" />
+              Browse topics
+            </span>
+            {isMobileNavOpen ? <X className="h-4 w-4" /> : <span className="text-xs text-muted-foreground">Open</span>}
+          </button>
+          <div
+            id="mobile-navigation-panel"
+            className={cn(
+              'grid transition-[grid-template-rows,opacity] duration-200 ease-out',
+              isMobileNavOpen ? 'mt-2 grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+            )}
+          >
+            <div className="overflow-hidden">
+              <div className="max-h-[60vh] overflow-y-auto rounded-lg border border-border bg-background px-2 py-2">
+                <TreeNavigation tree={tree} collections={collections} />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -210,7 +258,7 @@ export function SiteShell({ tree, collections, children }: SiteShellProps) {
           onDoubleClick={handleDoubleClick}
         />
         <main className="flex-1 min-w-0">
-          <div className="mx-auto w-full max-w-7xl px-4 py-12 sm:py-16">{children}</div>
+          <div className="mx-auto w-full max-w-7xl px-3 py-8 sm:px-4 sm:py-12 lg:py-16">{children}</div>
         </main>
       </div>
 

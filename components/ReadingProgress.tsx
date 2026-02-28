@@ -149,7 +149,7 @@ export function TableOfContents({ headings }: { headings: Heading[] }) {
     }, [headings]);
 
     return (
-        <nav className="hidden lg:block sticky top-[88px] self-start max-h-[calc(100vh-104px)] overflow-y-auto">
+        <nav>
             <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 text-sm shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
                 <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">On this page</h2>
                 <ul className="mt-3 space-y-2">

@@ -6,6 +6,7 @@ import {
   getAllArticles,
   getArticleBySlug,
   getArticleCanonicalUrl,
+  getCollections,
   getKnowledgePathForSlug,
 } from '../../../lib/content/content';
 import { Suspense } from 'react';
@@ -42,9 +43,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ArticlePage({ params }: PageProps) {
   const slug = Array.isArray(params.slug) ? params.slug.join('/') : params.slug ?? '';
-  const [article, knowledgePath] = await Promise.all([
+  const [article, knowledgePath, collections] = await Promise.all([
     getArticleBySlug(slug),
     getKnowledgePathForSlug(slug),
+    getCollections(),
   ]);
   if (!article || article.collectionSlug) {
     notFound();
@@ -52,7 +54,7 @@ export default async function ArticlePage({ params }: PageProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between lg:hidden">
         <span className="text-sm uppercase tracking-wide text-slate-500 dark:text-slate-400">
           Article view
         </span>
@@ -64,7 +66,11 @@ export default async function ArticlePage({ params }: PageProps) {
 
       {/* If ArticleContent uses client hooks, wrap it too */}
       <Suspense fallback={null}>
-        <ArticleContent article={article} knowledgePath={knowledgePath} />
+        <ArticleContent
+          article={article}
+          knowledgePath={knowledgePath}
+          collectionSlugs={collections.map((collection) => collection.slug)}
+        />
       </Suspense>
 
       <CopyCodeButtons />
