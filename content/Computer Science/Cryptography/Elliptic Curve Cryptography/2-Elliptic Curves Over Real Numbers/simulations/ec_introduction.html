@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="sim-paper" content="full">
+  <title>Elliptic Curve Fullscreen Loop</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap');
+
+    body {
+      font-family: 'Fira Code', monospace;
+    }
+  </style>
+</head>
+<body class="sk-page w-screen h-screen overflow-hidden m-0 p-0 relative flex items-center justify-center">
+
+  <!-- Fullscreen Interactive Canvas -->
+  <canvas id="curveCanvas" class="absolute inset-0 w-full h-full block"></canvas>
+
+  <!-- Margin-note style HUD: sk-sticky/.ink-*/.sk-hand come from sim-lib's
+       paper-ui.css (injected via the sim-paper meta tag above), shared with
+       every other migrated simulation rather than hand-rolled here. -->
+  <div class="absolute top-4 left-4 md:top-6 md:left-6 z-10 max-w-sm sk-sticky sk-sticky--pointer-none">
+    <!-- Equation Display -->
+    <div id="equationDisplay" class="sk-hand text-2xl md:text-3xl font-semibold tracking-wide ink-black mb-2">
+      y² = x³ <span class="ink-blue">+ ax</span> <span class="ink-red">+ b</span>
+    </div>
+
+    <!-- Parameter Values -->
+    <div class="flex items-center gap-4 text-xs font-mono ink-pencil">
+      <span class="sk-badge">
+        <span class="sk-dot bg-ink-blue"></span>
+        <span>a = <span id="val_a" class="ink-black font-bold">0.00</span></span>
+      </span>
+      <span class="sk-badge">
+        <span class="sk-dot bg-ink-red"></span>
+        <span>b = <span id="val_b" class="ink-black font-bold">0.00</span></span>
+      </span>
+      <span class="sk-badge border-l border-black/10 pl-4">
+        <span id="badgeDot" class="sk-dot bg-ink-blue"></span>
+        <span id="badgeText" class="sk-hand font-semibold text-sm ink-blue">Calculating</span>
+      </span>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('curveCanvas');
+    const sk = Sketch.attach(canvas);
+
+    // Simple Animation State
+    let state = {
+      a: 0,
+      b: 0,
+      zoom: 65,      // Adjusted automatically relative to screen size in initCanvas
+      morphPhase: 0
+    };
+
+    // Shared style for the animated curve branches. roughness is lower than
+    // the theme default (1) so boiling doesn't skew the curve's apparent
+    // path; boiling itself is left ON (inherits the sketch's ~5Hz default)
+    // because turning it off made the wobble pattern frozen — as the curve's
+    // geometry moves via a/b, a static wobble on top just looks like a fixed
+    // sketch being stretched, not a hand re-drawing it.
+    const CURVE_STYLE = { width: 2.5, roughness: 0.6 };
+
+    // Cardano's algorithm for accurate root calculations
+    function solveCubicRoots(a, b) {
+      const p = a;
+      const q = b;
+      const Q = p / 3;
+      const R = -q / 2;
+      const disc = Q*Q*Q + R*R;
+      const roots = [];
+
+      if (disc < 0) {
+        const theta = Math.acos(R / Math.sqrt(-Q*Q*Q));
+        const sqrt_Q = Math.sqrt(-Q);
+        roots.push(2 * sqrt_Q * Math.cos(theta / 3));
+        roots.push(2 * sqrt_Q * Math.cos((theta + 2 * Math.PI) / 3));
+        roots.push(2 * sqrt_Q * Math.cos((theta + 4 * Math.PI) / 3));
+        roots.sort((x, y) => x - y);
+      } else {
+        const s = Math.sign(R + Math.sqrt(disc)) * Math.pow(Math.abs(R + Math.sqrt(disc)), 1/3);
+        const t = Math.sign(R - Math.sqrt(disc)) * Math.pow(Math.abs(R - Math.sqrt(disc)), 1/3);
+        roots.push(s + t);
+        if (Math.abs(disc) < 1e-7) {
+          roots.push(- (s + t) / 2);
+          roots.push(- (s + t) / 2);
+          roots.sort((x, y) => x - y);
+        }
+      }
+      return roots;
+    }
+
+    function getECY(x) {
+      const val = x*x*x + state.a*x + state.b;
+      // Tolerance guards against exactly the flicker this looks like: val
+      // should be 0 at a root, but Cardano's trig solver has a small residual
+      // error, so val can land a hair below 0 depending on rounding — and
+      // that hair flips sign frame to frame as a/b animate, blinking the
+      // curve's tip in and out right at y≈0. Clamp instead of rejecting.
+      return val >= -1e-6 ? Math.sqrt(Math.max(val, 0)) : null;
+    }
+
+    // Coordinate conversions
+    function toScreenX(mathX) {
+      return canvas.width / 2 + mathX * state.zoom;
+    }
+
+    // Centered vertically
+    function toScreenY(mathY) {
+      return canvas.height / 2 - mathY * state.zoom;
+    }
+
+    function toMathX(screenX) {
+      return (screenX - canvas.width / 2) / state.zoom;
+    }
+
+    function toMathY(screenY) {
+      return (canvas.height / 2 - screenY) / state.zoom;
+    }
+
+    function draw() {
+      // Flat page + a math-aligned grid (same originX/originY/step as the
+      // axes below) so the grid lines land exactly on the axis ticks.
+      sk.clear({ paper: false });
+      sk.grid({ originX: canvas.width / 2, originY: canvas.height / 2, step: state.zoom });
+      sk.axes({ originX: canvas.width / 2, originY: canvas.height / 2, step: state.zoom, ink: 'pencil' });
+
+      // Draw Curve
+      const roots = solveCubicRoots(state.a, state.b);
+
+      if (roots.length === 3) {
+        // Two separate components (closed loop + infinite branch)
+
+        // Trace Closed Loop component
+        const r1 = roots[0];
+        const r2 = roots[1];
+        // Moderate sample count: too many (the original 150) makes rough.js's
+        // independent per-point jitter buzz; too few makes the same jitter
+        // skew the spline's tangents over a longer arc, reading as the curve
+        // being *displaced* rather than textured. roughness/boil below are
+        // the other half of that balance — see CURVE_STYLE.
+        const steps = 34;
+        const loopPts = [];
+        for (let i = 0; i <= steps; i++) {
+          const t = i / steps;
+          const x = r1 + (r2 - r1) * (0.5 - 0.5 * Math.cos(t * Math.PI));
+          const y = getECY(x);
+          if (y !== null) loopPts.push([toScreenX(x), toScreenY(y)]);
+        }
+        for (let i = steps; i >= 0; i--) {
+          const t = i / steps;
+          const x = r1 + (r2 - r1) * (0.5 - 0.5 * Math.cos(t * Math.PI));
+          const y = getECY(x);
+          if (y !== null) loopPts.push([toScreenX(x), toScreenY(-y)]);
+        }
+        sk.curve(loopPts, { ink: 'green', ...CURVE_STYLE });
+
+        // Trace Right-side Infinite Branch
+        const r3 = roots[2];
+        const limitX = toMathX(canvas.width + 100);
+        const stepsB = 34;
+        const branchPts = [];
+        for (let i = 0; i <= stepsB; i++) {
+          const norm = i / stepsB;
+          const x = r3 + Math.pow(norm, 2) * (limitX - r3);
+          const y = getECY(x);
+          if (y !== null) branchPts.push([toScreenX(x), toScreenY(y)]);
+        }
+        for (let i = stepsB; i >= 0; i--) {
+          const norm = i / stepsB;
+          const x = r3 + Math.pow(norm, 2) * (limitX - r3);
+          const y = getECY(x);
+          if (y !== null) branchPts.push([toScreenX(x), toScreenY(-y)]);
+        }
+        sk.curve(branchPts, { ink: 'green', ...CURVE_STYLE });
+
+        // Update UI Indicator values
+        document.getElementById('badgeText').textContent = "2 Components";
+        document.getElementById('badgeText').className = "sk-hand font-semibold text-sm ink-green";
+        document.getElementById('badgeDot').className = "sk-dot bg-ink-green";
+
+      } else {
+        // Single component continuous branch
+        const startX = roots[0];
+        const limitX = toMathX(canvas.width + 100);
+        const stepsOne = 44;
+        const pts = [];
+        for (let i = 0; i <= stepsOne; i++) {
+          const norm = i / stepsOne;
+          const x = startX + Math.pow(norm, 2) * (limitX - startX);
+          const y = getECY(x);
+          if (y !== null) pts.push([toScreenX(x), toScreenY(y)]);
+        }
+        for (let i = stepsOne; i >= 0; i--) {
+          const norm = i / stepsOne;
+          const x = startX + Math.pow(norm, 2) * (limitX - startX);
+          const y = getECY(x);
+          if (y !== null) pts.push([toScreenX(x), toScreenY(-y)]);
+        }
+        sk.curve(pts, { ink: 'blue', ...CURVE_STYLE });
+
+        // Update UI Indicator values
+        document.getElementById('badgeText').textContent = "1 Component";
+        document.getElementById('badgeText').className = "sk-hand font-semibold text-sm ink-blue";
+        document.getElementById('badgeDot').className = "sk-dot bg-ink-blue";
+      }
+
+      updateEquationHUD();
+    }
+
+    function updateEquationHUD() {
+      // Numerical signs and strings
+      document.getElementById('val_a').textContent = (state.a >= 0 ? '+' : '') + state.a.toFixed(2);
+      document.getElementById('val_b').textContent = (state.b >= 0 ? '+' : '') + state.b.toFixed(2);
+
+      const aTerm = state.a === 0 ? "" : (state.a > 0 ? `+ ${state.a.toFixed(2)}x` : `- ${Math.abs(state.a).toFixed(2)}x`);
+      const bTerm = state.b === 0 ? "" : (state.b > 0 ? `+ ${state.b.toFixed(2)}` : `- ${Math.abs(state.b).toFixed(2)}`);
+
+      document.getElementById('equationDisplay').innerHTML = `y² = x³ <span class="ink-blue">${aTerm}</span> <span class="ink-red">${bTerm}</span>`;
+    }
+
+    function animationLoop() {
+      state.morphPhase += 0.005; // speed speed parameter
+
+      // Cycle smooth Lissajous pattern over time to morph parameters
+      state.a = -2.2 + Math.sin(state.morphPhase) * 2.2;
+      state.b = 0.5 + Math.cos(state.morphPhase * 1.4) * 2.0;
+
+      draw();
+      requestAnimationFrame(animationLoop);
+    }
+
+    function initCanvas() {
+      // Set responsive zoom based on device screen height or width
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      // Make zoom scale dynamically adapt to the smaller dimension of the screen
+      state.zoom = Math.min(canvas.width, canvas.height) / 10;
+
+      draw();
+    }
+
+    // Window events
+    window.addEventListener('resize', initCanvas);
+    window.onload = () => {
+      initCanvas();
+      animationLoop();
+    };
+  </script>
+</body>
+</html>

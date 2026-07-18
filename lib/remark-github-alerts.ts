@@ -1,23 +1,23 @@
 /**
  * Remark plugin to transform GitHub-style alerts into styled HTML.
- * 
+ *
  * Syntax:
  *   > [!NOTE]
  *   > **Custom Title Here**
  *   > Content here...
- * 
- * Supported types: NOTE, TIP, IMPORTANT, WARNING, CAUTION
- * 
+ *
+ * Supported types: NOTE, TIP, IMPORTANT, WARNING, CAUTION, EXERCISE, EXAMPLE
+ *
  * The first **bold** line becomes the clickable title.
  * Everything else becomes the collapsible content.
  */
 import { visit } from 'unist-util-visit';
 import { toString } from 'mdast-util-to-string';
 
-const ALERT_TYPES = ['NOTE', 'TIP', 'IMPORTANT', 'WARNING', 'CAUTION'] as const;
+const ALERT_TYPES = ['NOTE', 'TIP', 'IMPORTANT', 'WARNING', 'CAUTION', 'EXERCISE', 'EXAMPLE'] as const;
 type AlertType = typeof ALERT_TYPES[number];
 
-const ALERT_REGEX = /^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*$/i;
+const ALERT_REGEX = /^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION|EXERCISE|EXAMPLE)\](?:[ \t]*\r?\n|[ \t]*$)/i;
 
 export default function remarkGithubAlerts() {
     return (tree: any) => {
@@ -37,7 +37,7 @@ export default function remarkGithubAlerts() {
             const alertType = match[1].toUpperCase() as AlertType;
 
             // Remove the [!TYPE] marker
-            const remainingText = firstText.value.replace(ALERT_REGEX, '').trim();
+            const remainingText = firstText.value.slice(match[0].length).replace(/^[ \t]+/, '');
             if (remainingText) {
                 firstText.value = remainingText;
             } else {

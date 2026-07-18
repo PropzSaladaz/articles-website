@@ -1,0 +1,104 @@
+/**
+ * paper-ui.css — reusable DOM chrome for simulation HUDs (equations, legends,
+ * stat readouts) that pairs with sketch.js's canvas drawing API. Where
+ * sketch.js gives you `ink: 'blue'` for canvas strokes, this file gives you
+ * `class="ink-blue"` for surrounding HTML — same palette, one source of
+ * truth in spirit (kept in sync by hand with sketch.js's `theme.inks`, since
+ * this is a plain <link> stylesheet with no build step to generate one from
+ * the other).
+ *
+ * Typical usage:
+ *   <body class="sk-page">
+ *     <div class="absolute top-4 left-4 z-10 max-w-sm sk-sticky">
+ *       <div class="sk-hand text-2xl ink-black">y² = x³ <span class="ink-blue">+ ax</span></div>
+ *       <div class="sk-badge"><span class="sk-dot bg-ink-green"></span> 2 components</div>
+ *     </div>
+ *   </body>
+ */
+
+:root {
+  --sk-paper-bg: #fbf6ea;
+  --sk-sticky-bg: #fdf9b8;
+  --sk-ink-blue: #2f4f8f;
+  --sk-ink-black: #2d2a26;
+  --sk-ink-red: #c34a3d;
+  --sk-ink-green: #4a7c59;
+  --sk-ink-purple: #6b4d9e;
+  --sk-ink-orange: #c9762b;
+  --sk-ink-pink: #b5548f;
+  --sk-ink-pencil: #5f5b56;
+  --sk-ink-pencil-light: #a09b93;
+}
+
+body.sk-page {
+  background: var(--sk-paper-bg);
+}
+
+.sk-hand {
+  font-family: 'Caveat', 'Segoe Print', 'Bradley Hand', cursive;
+}
+
+/* Hand-written sticky-note / margin-note card — the default HUD container
+   for equations, legends and stats. Caller positions it (top-4 left-4, etc).
+   Tilt is a custom property so a sim can vary it per-note via inline style
+   (e.g. style="--sk-tilt: 0.6deg") instead of every note looking identical. */
+.sk-sticky {
+  background: var(--sk-sticky-bg);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 2px;
+  box-shadow: 2px 3px 8px rgba(0, 0, 0, 0.18);
+  padding: 14px 18px;
+  transform: rotate(var(--sk-tilt, -1deg));
+  user-select: none;
+}
+
+.sk-sticky--pointer-none {
+  pointer-events: none;
+}
+
+/* A colored-dot + label row, e.g. a legend entry or status readout. */
+.sk-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sk-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+/* A label+value content row — the discriminant/coordinate/stat display
+   pattern repeated across sims. Pair with `border border-current` plus an
+   ink-* class for a colored outline, e.g.
+   class="sk-row border border-current ink-green". */
+.sk-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.ink-blue        { color: var(--sk-ink-blue); }
+.ink-black       { color: var(--sk-ink-black); }
+.ink-red         { color: var(--sk-ink-red); }
+.ink-green       { color: var(--sk-ink-green); }
+.ink-purple      { color: var(--sk-ink-purple); }
+.ink-orange      { color: var(--sk-ink-orange); }
+.ink-pink        { color: var(--sk-ink-pink); }
+.ink-pencil      { color: var(--sk-ink-pencil); }
+.ink-pencil-light{ color: var(--sk-ink-pencil-light); }
+
+.bg-ink-blue   { background-color: var(--sk-ink-blue); }
+.bg-ink-black  { background-color: var(--sk-ink-black); }
+.bg-ink-red    { background-color: var(--sk-ink-red); }
+.bg-ink-green  { background-color: var(--sk-ink-green); }
+.bg-ink-purple { background-color: var(--sk-ink-purple); }
+.bg-ink-orange { background-color: var(--sk-ink-orange); }
+.bg-ink-pink   { background-color: var(--sk-ink-pink); }
+.bg-ink-pencil { background-color: var(--sk-ink-pencil); }

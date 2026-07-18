@@ -3,6 +3,7 @@
 import fs from 'fs';
 import fsp from 'fs/promises';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import 'dotenv/config';
 
 const PROJECT_ROOT = process.cwd();
@@ -11,6 +12,14 @@ const PUBLIC_ROOT = path.join(PROJECT_ROOT, 'public');
 
 const INDEX_FILENAME = 'index.md';
 const IMAGE_SUFFIX = 'images';
+
+// Shared hand-drawn renderer kit. Committed at sim-lib/ (public/ is generated),
+// copied verbatim into public/sim-lib/ so simulations can load it, and its
+// <script>/<link> tags are injected into opted-in simulation HTML (see
+// injectSimLib). Bump SIM_LIB_VERSION alongside the sim-lib/vN directory.
+const SIM_LIB_SRC = path.join(PROJECT_ROOT, 'sim-lib');
+const SIM_LIB_DEST = path.join(PUBLIC_ROOT, 'sim-lib');
+const SIM_LIB_VERSION = 'v1';
 
 const ENV_REPO_NAME = `/${process.env.NEXT_REPO_NAME}` || '';
 
@@ -202,18 +211,78 @@ async function findAssetDirectories(entry) {
   return results;
 }
 
-async function copyDirectory(src, dest) {
+/**
+ * Inject the sim-lib <script>/<link> tags into a simulation's HTML, opt-in via
+ *   <meta name="sim-paper" content="full">
+ * (any value other than "full"/"off" is ignored so future modes fail closed).
+ *
+ * Script paths are computed relative to the destination file so they resolve
+ * correctly under any deployment basePath (e.g. GitHub Pages project sites).
+ * No-op for HTML without the meta tag, so un-migrated simulations are untouched.
+ *
+ * @param {string} html      source HTML
+ * @param {string} destFile  absolute destination path (for relative URL math)
+ * @returns {string} possibly-transformed HTML
+ */
+function injectSimLib(html, destFile) {
+  const meta = html.match(/<meta\s+name=["']sim-paper["']\s+content=["']([^"']*)["'][^>]*>/i);
+  if (!meta) return html;
+  const mode = meta[1].trim().toLowerCase();
+  if (mode !== 'full') return html;
+
+  if (/data-sim-lib/i.test(html)) return html; // already injected
+
+  const relDir = path
+    .relative(path.dirname(destFile), path.join(SIM_LIB_DEST, SIM_LIB_VERSION))
+    .split(path.sep)
+    .join('/');
+  const base = relDir === '' ? '.' : relDir;
+
+  const tags =
+    [
+      '<!-- sim-lib: injected by prepare-content.mjs -->',
+      '<link data-sim-lib rel="preconnect" href="https://fonts.googleapis.com">',
+      '<link data-sim-lib rel="preconnect" href="https://fonts.gstatic.com" crossorigin>',
+      '<link data-sim-lib rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&display=swap">',
+      `<link data-sim-lib rel="stylesheet" href="${base}/paper-ui.css">`,
+      `<script data-sim-lib src="${base}/vendor/rough.js"></script>`,
+      `<script data-sim-lib src="${base}/sketch.js"></script>`,
+    ].join('\n  ') + '\n';
+
+  if (/<\/head>/i.test(html)) {
+    return html.replace(/<\/head>/i, `  ${tags}</head>`);
+  }
+  if (/<body[^>]*>/i.test(html)) {
+    return html.replace(/(<body[^>]*>)/i, `$1\n  ${tags}`);
+  }
+  return tags + html;
+}
+
+async function copyDirectory(src, dest, opts = {}) {
   await fsp.mkdir(dest, { recursive: true });
   const entries = await fsp.readdir(src, { withFileTypes: true });
   for (const entry of entries) {
     const srcPath = path.join(src, entry.name);
     const destPath = path.join(dest, entry.name);
     if (entry.isDirectory()) {
-      await copyDirectory(srcPath, destPath);
+      await copyDirectory(srcPath, destPath, opts);
     } else if (entry.isFile()) {
-      await fsp.copyFile(srcPath, destPath);
+      if (opts.injectSim && entry.name.toLowerCase().endsWith('.html')) {
+        const html = await fsp.readFile(srcPath, 'utf8');
+        await fsp.writeFile(destPath, injectSimLib(html, destPath));
+      } else {
+        await fsp.copyFile(srcPath, destPath);
+      }
     }
   }
+}
+
+/** Copy the committed sim-lib/ kit into public/sim-lib/ (verbatim, no injection). */
+async function copySimLib() {
+  if (!fs.existsSync(SIM_LIB_SRC)) return null;
+  await fsp.rm(SIM_LIB_DEST, { recursive: true, force: true });
+  await copyDirectory(SIM_LIB_SRC, SIM_LIB_DEST);
+  return { from: SIM_LIB_SRC, to: SIM_LIB_DEST };
 }
 
 async function copyAssets(entry) {
@@ -233,7 +302,8 @@ async function copyAssets(entry) {
       relativeDir
     );
     await fsp.rm(destBase, { recursive: true, force: true });
-    await copyDirectory(srcDir, destBase);
+    const injectSim = path.basename(srcDir) === 'simulations';
+    await copyDirectory(srcDir, destBase, { injectSim });
     copied.push({ from: srcDir, to: destBase });
   }
   return copied;
@@ -250,6 +320,11 @@ async function main() {
     copiedAssets: [],
   };
 
+  const simLib = await copySimLib();
+  if (simLib) {
+    console.log(`Copied sim-lib from ${simLib.from} to ${simLib.to}`);
+  }
+
   for (const entry of entries) {
     const copied = await copyAssets(entry);
     summary.copiedAssets.push(...copied);
@@ -262,9 +337,17 @@ async function main() {
   }
 }
 
-try {
-  await main();
-} catch (error) {
-  console.error(error);
-  process.exit(1);
+export { injectSimLib };
+
+// Only run the pipeline when invoked as a script (not when imported for tests).
+const invokedAsScript =
+  process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (invokedAsScript) {
+  try {
+    await main();
+  } catch (error) {
+    console.error(error);
+    process.exit(1);
+  }
 }

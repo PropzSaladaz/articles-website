@@ -5,6 +5,7 @@ import remarkRehype from 'remark-rehype';
 import remarkDirective from 'remark-directive';
 import remarkMath from 'remark-math';
 import remarkSpoiler from './remark-spoiler';
+import remarkDefinition from './remark-definition';
 import remarkGithubAlerts from './remark-github-alerts';
 import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
@@ -32,9 +33,14 @@ interface MarkdownOptions {
   isCollection?: boolean;
 }
 
+function normalizeDefinitionDirectives(markdown: string): string {
+  return markdown.replace(/^([ \t]*):::[ \t]+definition(?=\[|[ \t]*$)/gim, '$1:::definition');
+}
+
 export async function markdownToHtml(markdown: string, options?: MarkdownOptions): Promise<string> {
   const isDev = process.env.NODE_ENV === 'development';
   const slug = options?.slug || '';
+  const normalizedMarkdown = normalizeDefinitionDirectives(markdown);
 
   let processor = unified()
     .use(remarkParse)
@@ -45,6 +51,7 @@ export async function markdownToHtml(markdown: string, options?: MarkdownOptions
     // 2) Enable directives and convert :::spoiler → <details><summary>…</summary>…</details>
     .use(remarkDirective)
     .use(remarkSpoiler)
+    .use(remarkDefinition)
     // GitHub-style alerts: > [!NOTE], > [!TIP], etc.
     .use(remarkGithubAlerts)
 
@@ -94,7 +101,7 @@ export async function markdownToHtml(markdown: string, options?: MarkdownOptions
 
   const file = await processor
     .use(rehypeStringify, { allowDangerousHtml: true })
-    .process(markdown);
+    .process(normalizedMarkdown);
 
   return String(file);
 }

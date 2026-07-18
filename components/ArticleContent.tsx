@@ -72,8 +72,8 @@ export function ArticleContent({
       {!isSummary && <ReadingProgressBar contentSelector="article" />}
 
       <div className="grid gap-6 sm:gap-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-16">
-        <div className="reading-shell rounded-2xl border border-slate-200 bg-white px-4 py-6 shadow-md dark:border-slate-700/30 dark:bg-slate-900/50 dark:shadow-[0_4px_16px_rgba(0,0,0,0.25)] sm:px-8 sm:py-10 lg:px-10 lg:py-12">
-          <article className="prose prose-base sm:prose-lg prose-slate max-w-none dark:prose-invert">
+        <div className="reading-shell min-w-0 rounded-2xl border border-slate-200 bg-white px-4 py-6 shadow-md dark:border-slate-700/30 dark:bg-slate-900/50 dark:shadow-[0_4px_16px_rgba(0,0,0,0.25)] sm:px-8 sm:py-10 lg:px-10 lg:py-12">
+          <article className="prose prose-base sm:prose-lg prose-slate min-w-0 max-w-none dark:prose-invert">
             <header className="not-prose mb-8 flex flex-col gap-4">
               {knowledgePath.length > 0 && (
                 <nav aria-label="Knowledge path" className="mb-2">

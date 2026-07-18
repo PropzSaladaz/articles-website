@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="sim-paper" content="full">
+  <title>ECC 3P Addition Steps</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="sk-page w-screen h-screen overflow-hidden m-0 p-0 relative flex items-center justify-center select-none">
+
+  <!-- Fullscreen Canvas -->
+  <canvas id="curveCanvas" class="absolute inset-0 w-full h-full block"></canvas>
+
+  <!-- Minimal Bottom-Center Controls: sk-sticky, flattened (--sk-tilt: 0deg)
+       since a symmetric nav control looks better level than tilted like a
+       corner note. -->
+  <div class="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 sk-sticky flex items-center gap-3" style="--sk-tilt: 0deg;">
+    <button onclick="prevStep()" class="p-2 bg-black/5 hover:bg-black/10 ink-pencil rounded-xl transition-colors">
+      <i data-lucide="chevron-left" class="w-4 h-4"></i>
+    </button>
+    <span id="progressIndicator" class="text-xs font-semibold ink-pencil font-mono min-w-[70px] text-center">Step 1/3</span>
+    <button onclick="nextStep()" class="p-2 bg-black/5 hover:bg-black/10 ink-pencil rounded-xl transition-colors">
+      <i data-lucide="chevron-right" class="w-4 h-4"></i>
+    </button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('curveCanvas');
+    const sk = Sketch.attach(canvas);
+
+    // Shared curve style: matches the rest of the Elliptic Curve sim family.
+    const CURVE_STYLE = { width: 3, roughness: 0.6, ink: 'pencil' };
+
+    // Curve Configuration (y^2 = x^3 + ax + b)
+    const curve = {
+      a: -3.0,
+      b: 3.5
+    };
+
+    // Concrete Precomputed Math Values for exact alignment
+    const points = {
+      P:  { x: 1.0, y: 1.2247 },   // y^2 = 1.5 => y = sqrt(1.5) approx 1.2247
+      R1: { x: -2.0, y: 1.2247 },  // intersection point of tangent at P (top branch)
+      P2: { x: -2.0, y: -1.2247 }, // 2P = P + P (reflected to bottom branch)
+      R2: { x: 1.6667, y: 1.7638 }, // intersection of secant line P and 2P (top branch)
+      P3: { x: 1.6667, y: -1.7638 }  // 3P = 2P + P (reflected to bottom branch)
+    };
+
+    // Current interactive slide step
+    let currentStep = 1;
+    let state = {
+      zoom: 70
+    };
+
+    // Cardano's formula root solver for flawless, gapless nose rendering
+    function findLeftmostRoot(a, b) {
+      const p = a;
+      const q = b;
+      const Q = p / 3;
+      const R = -q / 2;
+      const disc = Q*Q*Q + R*R;
+
+      if (disc >= 0) {
+        const s = Math.sign(R + Math.sqrt(disc)) * Math.pow(Math.abs(R + Math.sqrt(disc)), 1/3);
+        const t = Math.sign(R - Math.sqrt(disc)) * Math.pow(Math.abs(R - Math.sqrt(disc)), 1/3);
+        return s + t;
+      } else {
+        const theta = Math.acos(R / Math.sqrt(-Q*Q*Q));
+        const sqrt_Q = Math.sqrt(-Q);
+        const r1 = 2 * sqrt_Q * Math.cos(theta / 3);
+        const r2 = 2 * sqrt_Q * Math.cos((theta + 2 * Math.PI) / 3);
+        const r3 = 2 * sqrt_Q * Math.cos((theta + 4 * Math.PI) / 3);
+        return Math.min(r1, r2, r3);
+      }
+    }
+
+    let minRootX = findLeftmostRoot(curve.a, curve.b);
+    for (let i = 0; i < 5; i++) {
+      const f = minRootX*minRootX*minRootX + curve.a*minRootX + curve.b;
+      const df = 3*minRootX*minRootX + curve.a;
+      if (Math.abs(df) > 1e-12) {
+        minRootX -= f / df;
+      }
+    }
+
+    function getECY(x) {
+      const val = x*x*x + curve.a*x + curve.b;
+      if (val < 0) {
+        if (val > -1e-5) return 0;
+        return null;
+      }
+      return Math.sqrt(val);
+    }
+
+    // Grid Coordinates Converters
+    function toScreenX(mathX) {
+      return canvas.width / 2 + mathX * state.zoom;
+    }
+
+    function toScreenY(mathY) {
+      return canvas.height / 2 - mathY * state.zoom;
+    }
+
+    function toMathX(screenX) {
+      return (screenX - canvas.width / 2) / state.zoom;
+    }
+
+    function toMathY(screenY) {
+      return (canvas.height / 2 - screenY) / state.zoom;
+    }
+
+    // Step state controller
+    function setStep(stepNum) {
+      currentStep = stepNum;
+      document.getElementById('progressIndicator').textContent = `Step ${stepNum}/3`;
+      draw();
+    }
+
+    function nextStep() {
+      if (currentStep < 3) setStep(currentStep + 1);
+    }
+
+    function prevStep() {
+      if (currentStep > 1) setStep(currentStep - 1);
+    }
+
+    // Draw the continuous single-component curve perfectly closed at the nose
+    function drawCurve() {
+      const steps = 44;
+      const limitX = toMathX(canvas.width + 100);
+      const pts = [];
+
+      // Trace bottom branch from infinity back to the nose
+      for (let i = steps; i >= 0; i--) {
+        const norm = i / steps;
+        const x = minRootX + Math.pow(norm, 2.5) * (limitX - minRootX);
+        const y = getECY(x);
+        if (y !== null) pts.push([toScreenX(x), toScreenY(-y)]);
+      }
+
+      // Hit exact root nose
+      pts.push([toScreenX(minRootX), toScreenY(0)]);
+
+      // Trace top branch forward to infinity
+      for (let i = 0; i <= steps; i++) {
+        const norm = i / steps;
+        const x = minRootX + Math.pow(norm, 2.5) * (limitX - minRootX);
+        const y = getECY(x);
+        if (y !== null) pts.push([toScreenX(x), toScreenY(y)]);
+      }
+
+      sk.curve(pts, CURVE_STYLE);
+    }
+
+    // Addition line calculation & drawing per step
+    function drawAdditionSteps() {
+      if (currentStep === 1) {
+        // Just render Point P
+        drawMarker(points.P.x, points.P.y, 'green', 'P');
+      }
+      else if (currentStep === 2) {
+        // Step 2: Tangent at P (intersects at R1 on top, reflects to P2 on bottom)
+
+        // Draw horizontal tangent line — ruler(), not line(): must pass
+        // exactly through P, hand-drawn wobble would undermine that.
+        const xLeft = toMathX(-100);
+        const xRight = toMathX(canvas.width + 100);
+        sk.ruler(toScreenX(xLeft), toScreenY(points.P.y), toScreenX(xRight), toScreenY(points.P.y), { ink: 'purple', width: 2 });
+
+        // Draw intersection root point R'
+        drawMarker(points.R1.x, points.R1.y, 'pink', "R'", true);
+
+        // Draw vertical reflection guide line — same exactness reasoning.
+        sk.ruler(toScreenX(points.R1.x), toScreenY(points.R1.y), toScreenX(points.P2.x), toScreenY(points.P2.y), { ink: 'orange', width: 1.5, dash: [2, 4] });
+
+        // Render markers
+        drawMarker(points.P.x, points.P.y, 'green', 'P');
+        drawMarker(points.P2.x, points.P2.y, 'blue', '2P');
+      }
+      else if (currentStep === 3) {
+        // Step 3: Secant line between P and 2P (intersects at R2 on top, reflects to P3 on bottom)
+        const m = (points.P2.y - points.P.y) / (points.P2.x - points.P.x); // approx 0.816
+
+        // Draw secant line — ruler(), same reasoning as the tangent above.
+        const xLeft = toMathX(-100);
+        const xRight = toMathX(canvas.width + 100);
+        sk.ruler(
+          toScreenX(xLeft), toScreenY(points.P.y + m * (xLeft - points.P.x)),
+          toScreenX(xRight), toScreenY(points.P.y + m * (xRight - points.P.x)),
+          { ink: 'purple', width: 2 }
+        );
+
+        // Draw intersection root point R'' (top branch)
+        drawMarker(points.R2.x, points.R2.y, 'pink', "R''", true);
+
+        // Draw vertical reflection guide line
+        sk.ruler(toScreenX(points.R2.x), toScreenY(points.R2.y), toScreenX(points.P3.x), toScreenY(points.P3.y), { ink: 'orange', width: 1.5, dash: [2, 4] });
+
+        // Render P, 2P and 3P markers
+        drawMarker(points.P.x, points.P.y, 'green', 'P');
+        drawMarker(points.P2.x, points.P2.y, 'blue', '2P');
+        drawMarker(points.P3.x, points.P3.y, 'orange', '3P');
+      }
+    }
+
+    function drawMarker(mx, my, ink, label, isGhost = false, isHighlighted = false) {
+      const sx = toScreenX(mx);
+      const sy = toScreenY(my);
+
+      if (sx < 0 || sx > canvas.width || sy < 0 || sy > canvas.height) return;
+
+      const coreRadius = isGhost ? 3 : (isHighlighted ? 7 : 5);
+
+      // Highlight halo: a hachure-filled circle stands in for the old glow.
+      if (isHighlighted) {
+        sk.circle(sx, sy, coreRadius + 7, { ink, fill: ink, fillStyle: 'hachure', roughness: 0.8 });
+      }
+
+      // Solid core dot
+      sk.circle(sx, sy, coreRadius, { ink, fill: ink, fillStyle: 'solid', roughness: 0.6 });
+
+      // Label
+      sk.text(label, sx + 14, sy - 6, { ink, size: isHighlighted ? 17 : 15, boil: false });
+    }
+
+    // Unified render function
+    function draw() {
+      sk.clear({ paper: false });
+      sk.grid({ originX: canvas.width / 2, originY: canvas.height / 2, step: state.zoom });
+      sk.axes({ originX: canvas.width / 2, originY: canvas.height / 2, step: state.zoom, ink: 'pencil' });
+      drawCurve();
+      drawAdditionSteps();
+    }
+
+    function initCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      state.zoom = Math.min(canvas.width, canvas.height) / 7.5;
+      draw();
+    }
+
+    window.addEventListener('resize', initCanvas);
+    window.onload = () => {
+      initCanvas();
+      lucide.createIcons();
+      setStep(1); // Start on first step
+    };
+  </script>
+</body>
+</html>

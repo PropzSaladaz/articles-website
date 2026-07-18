@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const contentDir = path.join(__dirname, '../content');
+const simLibDir = path.join(__dirname, '../sim-lib');
 const prepareScript = path.join(__dirname, 'prepare-content.mjs');
 
 let isProcessing = false;
@@ -45,9 +46,10 @@ function runPrepareContent() {
 }
 
 console.log('👀 Watching content directory for changes...');
-console.log(`📁 ${contentDir}\n`);
+console.log(`📁 ${contentDir}`);
+console.log(`📁 ${simLibDir}\n`);
 
-const watcher = chokidar.watch(contentDir, {
+const watcher = chokidar.watch([contentDir, simLibDir], {
     ignored: /(^|[\/\\])\../, // ignore dotfiles
     persistent: true,
     ignoreInitial: true,

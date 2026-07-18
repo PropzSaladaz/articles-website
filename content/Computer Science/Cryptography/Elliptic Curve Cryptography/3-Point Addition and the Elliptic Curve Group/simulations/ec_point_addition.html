@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="sim-paper" content="full">
+  <title>ECC Point Addition Visualizer</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap');
+
+    body {
+      font-family: 'Fira Code', monospace;
+    }
+  </style>
+</head>
+<body class="sk-page w-screen h-screen overflow-hidden m-0 p-0 relative flex items-center justify-center select-none">
+
+  <!-- Fullscreen Interactive Canvas (touch-action none ensures swipe dragging doesn't scroll page) -->
+  <canvas id="curveCanvas" class="absolute inset-0 w-full h-full block" style="touch-action: none;"></canvas>
+
+  <!-- Floating HUD Panel: one sk-sticky card, same component as the other
+       migrated sims, just with more content (controls + coordinate list). -->
+  <div class="absolute left-4 top-4 md:left-6 md:top-6 z-10 w-[210px] sm:w-[230px] pointer-events-none">
+
+    <div class="sk-sticky pointer-events-auto flex flex-col gap-2.5">
+
+      <!-- Title & State Controls -->
+      <div class="flex flex-col gap-1.5 border-b border-black/10 pb-2">
+        <div class="flex items-center justify-between">
+          <h1 class="sk-hand text-lg font-semibold ink-black tracking-tight">ECC Addition</h1>
+          <div class="flex items-center gap-1">
+            <!-- Animation Toggle Button -->
+            <button id="playPauseBtn" class="p-1 bg-black/5 hover:bg-black/10 rounded transition-colors flex items-center justify-center" title="Toggle Animation">
+              <i id="playPauseIcon" data-lucide="pause" class="w-3 h-3 ink-green"></i>
+            </button>
+            <!-- Reset button -->
+            <button id="resetBtn" class="p-1 bg-black/5 hover:bg-black/10 rounded transition-colors flex items-center justify-center ink-pencil" title="Reset Simulation">
+              <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
+            </button>
+          </div>
+        </div>
+        <span class="text-[10px] ink-pencil font-mono font-semibold">y² = x³ - 3x + 3.5</span>
+      </div>
+
+      <!-- Main Coordinates List (1 Item per Line) -->
+      <div class="flex flex-col gap-1 text-[10px] font-mono">
+        <div class="sk-row border border-current ink-green">
+          <span class="font-bold text-[9px] uppercase tracking-wider">P</span>
+          <span id="coordP" class="ink-black font-semibold text-[10px]">-</span>
+        </div>
+        <div class="sk-row border border-current ink-blue">
+          <span class="font-bold text-[9px] uppercase tracking-wider">Q</span>
+          <span id="coordQ" class="ink-black font-semibold text-[10px]">-</span>
+        </div>
+        <div class="sk-row border border-current ink-orange">
+          <span class="font-bold text-[9px] uppercase tracking-wider">P+Q</span>
+          <span id="coordSum" class="ink-black font-semibold text-[10px] text-right">-</span>
+        </div>
+      </div>
+
+      <!-- Slope HUD Row -->
+      <div class="border-t border-black/10 pt-2 font-mono text-[10px]">
+        <div class="sk-row">
+          <span class="ink-pencil-light text-[9px] uppercase tracking-wider font-semibold">Slope (m)</span>
+          <span id="calcSlope" class="ink-purple font-bold text-[10px]">-</span>
+        </div>
+      </div>
+
+      <!-- Special Cases Selector (1 Item per Line) -->
+      <div class="border-t border-black/10 pt-2 flex flex-col gap-1 font-mono">
+        <span class="ink-pencil-light text-[9px] uppercase tracking-wider font-semibold">Special Cases</span>
+        <div class="flex flex-col gap-1">
+          <button id="caseDoublingBtn" class="sk-row w-full border border-transparent hover:border-current ink-green font-medium transition-colors text-left">
+            <span class="font-bold text-[10px]">P = Q</span>
+            <span class="text-[9px] ink-pencil-light">Doubling</span>
+          </button>
+          <button id="caseInfinityBtn" class="sk-row w-full border border-transparent hover:border-current ink-orange font-medium transition-colors text-left">
+            <span class="font-bold text-[10px]">P = -Q</span>
+            <span class="text-[9px] ink-pencil-light">Vertical</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="text-[9px] ink-pencil-light text-center italic mt-0.5 sk-hand">
+        Drag points or click curve to move manually
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('curveCanvas');
+    const sk = Sketch.attach(canvas);
+
+    // Shared curve style: same reasoning as ec_introduction.html/ec_singularity.html
+    // — roughness lower than the theme default of 1 keeps the sparse sample from
+    // reading as displaced (see sketch.js's plot() docstring). This curve's own
+    // shape never animates (only the P/Q points slide along it), so boil stays
+    // on at the sketch's default rate for a gentle "hand redrawing it" quality.
+    const CURVE_STYLE = { width: 3, roughness: 0.6, ink: 'pencil' };
+
+    // Curve Parameters (y^2 = x^3 + ax + b)
+    const curve = {
+      a: -3.0,
+      b: 3.5
+    };
+
+    // State Variables
+    let state = {
+      zoom: 65,
+      isAnimating: true,
+      timeP: 1.0,
+      timeQ: 4.2,
+      p: { x: 0, y: 0 },
+      q: { x: 0, y: 0 },
+      draggingPoint: null, // 'P' or 'Q'
+      hoveredPoint: null   // 'P' or 'Q'
+    };
+
+    // Cardanos formula solver to find leftmost root
+    function findLeftmostRoot(a, b) {
+      const p = a;
+      const q = b;
+      const Q = p / 3;
+      const R = -q / 2;
+      const disc = Q*Q*Q + R*R;
+
+      if (disc >= 0) {
+        const s = Math.sign(R + Math.sqrt(disc)) * Math.pow(Math.abs(R + Math.sqrt(disc)), 1/3);
+        const t = Math.sign(R - Math.sqrt(disc)) * Math.pow(Math.abs(R - Math.sqrt(disc)), 1/3);
+        return s + t;
+      } else {
+        const theta = Math.acos(R / Math.sqrt(-Q*Q*Q));
+        const sqrt_Q = Math.sqrt(-Q);
+        const r1 = 2 * sqrt_Q * Math.cos(theta / 3);
+        const r2 = 2 * sqrt_Q * Math.cos((theta + 2 * Math.PI) / 3);
+        const r3 = 2 * sqrt_Q * Math.cos((theta + 4 * Math.PI) / 3);
+        return Math.min(r1, r2, r3);
+      }
+    }
+
+    // Refine root calculation using Newton-Raphson to ensure perfect 1e-15 nose accuracy
+    let minRootX = findLeftmostRoot(curve.a, curve.b);
+    for (let i = 0; i < 5; i++) {
+      const f = minRootX*minRootX*minRootX + curve.a*minRootX + curve.b;
+      const df = 3*minRootX*minRootX + curve.a;
+      if (Math.abs(df) > 1e-12) {
+        minRootX -= f / df;
+      }
+    }
+
+    // Evaluate y coordinate of the curve with floating point safety guard
+    function getECY(x) {
+      const val = x*x*x + curve.a*x + curve.b;
+      if (val < 0) {
+        if (val > -1e-5) return 0; // Guard against tiny floating point noise near the root
+        return null;
+      }
+      return Math.sqrt(val);
+    }
+
+    // Coordinate translation functions
+    function toScreenX(mathX) {
+      return canvas.width / 2 + mathX * state.zoom;
+    }
+
+    // Center vertically
+    function toScreenY(mathY) {
+      return canvas.height / 2 - mathY * state.zoom;
+    }
+
+    function toMathX(screenX) {
+      return (screenX - canvas.width / 2) / state.zoom;
+    }
+
+    // Centered vertically
+    function toMathY(screenY) {
+      return (canvas.height / 2 - screenY) / state.zoom;
+    }
+
+    // Translate smooth orbital phase parameter [0, 2pi] to valid coordinate (x,y)
+    function getPointAtPhase(phase) {
+      const cosVal = Math.cos(phase);
+      const sinVal = Math.sin(phase);
+
+      const xRange = 4.0 - minRootX;
+      const x = minRootX + (0.5 + 0.5 * cosVal) * xRange;
+
+      const rawY = getECY(x);
+      const y = (sinVal >= 0) ? rawY : -rawY;
+
+      return { x, y };
+    }
+
+    // Reverse map coordinates (x, y) back to phase [0, 2pi] for smooth drag resume
+    function getPhaseAtPoint(x, y) {
+      const xRange = 4.0 - minRootX;
+      const ratio = (x - minRootX) / xRange;
+      const cosVal = Math.max(-1, Math.min(1, 2 * ratio - 1));
+      let phase = Math.acos(cosVal);
+      if (y < 0) {
+        phase = 2 * Math.PI - phase;
+      }
+      return phase;
+    }
+
+    // Point Addition calculation
+    function calculateAddition(P, Q) {
+      let m, x3, y3, specialCase = "";
+      const deltaX = Q.x - P.x;
+      const deltaY = Q.y - P.y;
+
+      if (Math.abs(deltaX) < 1e-5) {
+        if (Math.abs(deltaY) < 1e-5) {
+          // Tangent Addition (P == Q)
+          if (Math.abs(P.y) < 1e-4) {
+            specialCase = "O";
+          } else {
+            m = (3 * P.x * P.x + curve.a) / (2 * P.y);
+            x3 = m * m - 2 * P.x;
+            y3 = m * (P.x - x3) - P.y;
+          }
+        } else {
+          // Vertical alignment (P and -P)
+          specialCase = "O";
+        }
+      } else {
+        // Standard Secant Addition
+        m = deltaY / deltaX;
+        x3 = m * m - P.x - Q.x;
+        y3 = m * (P.x - x3) - P.y;
+      }
+
+      return { m, x3, y3, specialCase };
+    }
+
+    // Snaps random input coordinate to the closest point on the Weierstrass curve
+    function snapToCurve(mathX, targetMathY) {
+      const clampedX = Math.max(minRootX, Math.min(6.0, mathX));
+      const rawY = getECY(clampedX);
+      if (rawY === null) return { x: minRootX, y: 0 };
+
+      const sign = (targetMathY >= 0) ? 1 : -1;
+      return { x: clampedX, y: rawY * sign };
+    }
+
+    // Screen distance from cursor to point
+    function getDistanceToPoint(screenX, screenY, point) {
+      const sx = toScreenX(point.x);
+      const sy = toScreenY(point.y);
+      return Math.hypot(screenX - sx, screenY - sy);
+    }
+
+    // Draw the continuous single-component curve perfectly closed at the nose
+    function drawCurve() {
+      const steps = 44;
+      const limitX = toMathX(canvas.width + 100);
+      const pts = [];
+
+      // Trace bottom branch from infinity back to the nose
+      for (let i = steps; i >= 0; i--) {
+        const norm = i / steps;
+        const x = minRootX + Math.pow(norm, 2.5) * (limitX - minRootX);
+        const y = getECY(x);
+        if (y !== null) pts.push([toScreenX(x), toScreenY(-y)]);
+      }
+
+      // Hit precise refined nose point
+      pts.push([toScreenX(minRootX), toScreenY(0)]);
+
+      // Trace top branch forward to infinity
+      for (let i = 0; i <= steps; i++) {
+        const norm = i / steps;
+        const x = minRootX + Math.pow(norm, 2.5) * (limitX - minRootX);
+        const y = getECY(x);
+        if (y !== null) pts.push([toScreenX(x), toScreenY(y)]);
+      }
+
+      sk.curve(pts, CURVE_STYLE);
+    }
+
+    // Addition line calculation & drawing
+    function drawAddition() {
+      const P = state.p;
+      const Q = state.q;
+
+      // Draw P & Q points
+      drawMarker(P.x, P.y, 'green', 'P', false, state.hoveredPoint === 'P' || state.draggingPoint === 'P');
+      drawMarker(Q.x, Q.y, 'blue', 'Q', false, state.hoveredPoint === 'Q' || state.draggingPoint === 'Q');
+
+      const res = calculateAddition(P, Q);
+
+      // Coordinates HUD updates
+      document.getElementById('coordP').textContent = `(${P.x.toFixed(1)}, ${P.y.toFixed(1)})`;
+      document.getElementById('coordQ').textContent = `(${Q.x.toFixed(1)}, ${Q.y.toFixed(1)})`;
+
+      if (res.specialCase === "O") {
+        document.getElementById('coordSum').textContent = "𝒪 (Inf)";
+        document.getElementById('calcSlope').textContent = "Undefined";
+
+        // Vertical reflection line — ruler(), not line(): this must sit
+        // exactly at x=P.x, not wobble around it (see drawCurve()'s CURVE_STYLE
+        // comment for the contrast: sketchy is right for the curve, wrong here).
+        sk.ruler(toScreenX(P.x), 0, toScreenX(P.x), canvas.height, { ink: 'red', width: 2, dash: [6, 6] });
+        return;
+      }
+
+      // Slope value display update
+      document.getElementById('calcSlope').textContent = res.m.toFixed(2);
+
+      // Line intersection rendering — a precise ruler line: it needs to
+      // visibly pass exactly through P and Q, which hand-drawn wobble
+      // undermines rather than decorates.
+      const xLeft = toMathX(-100);
+      const xRight = toMathX(canvas.width + 100);
+      sk.ruler(
+        toScreenX(xLeft), toScreenY(P.y + res.m * (xLeft - P.x)),
+        toScreenX(xRight), toScreenY(P.y + res.m * (xRight - P.x)),
+        { ink: 'purple', width: 2, dash: [5, 5] }
+      );
+
+      // Draw horizontal cross R' = (x3, -y3)
+      const rPrimeX = res.x3;
+      const rPrimeY = -res.y3;
+      drawMarker(rPrimeX, rPrimeY, 'pink', "R'", true);
+
+      // Draw reflection trace — same reasoning: an exact vertical distance,
+      // not a sketchy approximation of one.
+      sk.ruler(toScreenX(rPrimeX), toScreenY(rPrimeY), toScreenX(res.x3), toScreenY(res.y3), { ink: 'orange', width: 1.5, dash: [2, 4] });
+
+      // Draw final Addition point P + Q
+      drawMarker(res.x3, res.y3, 'orange', 'P + Q');
+      document.getElementById('coordSum').textContent = `(${res.x3.toFixed(1)}, ${res.y3.toFixed(1)})`;
+    }
+
+    function drawMarker(mx, my, ink, label, isGhost = false, isHighlighted = false) {
+      const sx = toScreenX(mx);
+      const sy = toScreenY(my);
+
+      if (sx < 0 || sx > canvas.width || sy < 0 || sy > canvas.height) return;
+
+      const coreRadius = isGhost ? 3 : (isHighlighted ? 7 : 5);
+
+      // Highlight halo: a hachure-filled circle stands in for the old glow.
+      // Boil left on (matching the core dot below) so the two don't desync.
+      if (isHighlighted) {
+        sk.circle(sx, sy, coreRadius + 7, { ink, fill: ink, fillStyle: 'hachure', roughness: 0.8 });
+      }
+
+      // Solid core dot
+      sk.circle(sx, sy, coreRadius, { ink, fill: ink, fillStyle: 'solid', roughness: 0.6 });
+
+      // Label
+      sk.text(label, sx + 14, sy - 6, { ink, size: isHighlighted ? 17 : 15, boil: false });
+    }
+
+    // --- Interactive Drag & Snap Handlers ---
+
+    function onPointerDown(e) {
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      // Ignore clicks that fall inside the top-left HUD bounds
+      if (mouseX < 250 && mouseY < 350) {
+        return;
+      }
+
+      const dP = getDistanceToPoint(mouseX, mouseY, state.p);
+      const dQ = getDistanceToPoint(mouseX, mouseY, state.q);
+
+      // Click directly on P (within 35 pixels threshold)
+      if (dP < 35 && dP < dQ) {
+        state.draggingPoint = 'P';
+        setAnimationState(false);
+      }
+      // Click directly on Q (within 35 pixels threshold)
+      else if (dQ < 35) {
+        state.draggingPoint = 'Q';
+        setAnimationState(false);
+      }
+      // Click anywhere else near the curve to instantly snap the closer point
+      else {
+        const snapped = snapToCurve(toMathX(mouseX), toMathY(mouseY));
+        const distToCurve = Math.hypot(mouseX - toScreenX(snapped.x), mouseY - toScreenY(snapped.y));
+
+        if (distToCurve < 45) { // If click is near the curve
+          const distToP = Math.hypot(mouseX - toScreenX(state.p.x), mouseY - toScreenY(state.p.y));
+          const distToQ = Math.hypot(mouseX - toScreenX(state.q.x), mouseY - toScreenY(state.q.y));
+
+          if (distToP < distToQ) {
+            state.p = snapped;
+            state.timeP = getPhaseAtPoint(snapped.x, snapped.y);
+            state.draggingPoint = 'P';
+          } else {
+            state.q = snapped;
+            state.timeQ = getPhaseAtPoint(snapped.x, snapped.y);
+            state.draggingPoint = 'Q';
+          }
+          setAnimationState(false);
+          draw();
+        }
+      }
+    }
+
+    function onPointerMove(e) {
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      if (state.draggingPoint) {
+        // Drag in progress
+        canvas.style.cursor = 'grabbing';
+        const snapped = snapToCurve(toMathX(mouseX), toMathY(mouseY));
+
+        if (state.draggingPoint === 'P') {
+          state.p = snapped;
+          state.timeP = getPhaseAtPoint(snapped.x, snapped.y);
+        } else if (state.draggingPoint === 'Q') {
+          state.q = snapped;
+          state.timeQ = getPhaseAtPoint(snapped.x, snapped.y);
+        }
+        draw();
+      } else {
+        // Hover logic when not dragging
+        const dP = getDistanceToPoint(mouseX, mouseY, state.p);
+        const dQ = getDistanceToPoint(mouseX, mouseY, state.q);
+
+        if (dP < 20) {
+          state.hoveredPoint = 'P';
+          canvas.style.cursor = 'grab';
+        } else if (dQ < 20) {
+          state.hoveredPoint = 'Q';
+          canvas.style.cursor = 'grab';
+        } else {
+          state.hoveredPoint = null;
+          canvas.style.cursor = 'default';
+        }
+        draw();
+      }
+    }
+
+    // Pointer up handler
+    function onPointerUp() {
+      state.draggingPoint = null;
+      draw();
+    }
+
+    // Set up unified pointer event listeners
+    canvas.addEventListener('pointerdown', onPointerDown);
+    canvas.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerUp);
+
+    // Play/Pause Action Toggle
+    function setAnimationState(play) {
+      state.isAnimating = play;
+      const icon = document.getElementById('playPauseIcon');
+
+      if (play) {
+        icon.setAttribute('data-lucide', 'pause');
+        icon.className = 'w-3 h-3 ink-green';
+      } else {
+        icon.setAttribute('data-lucide', 'play');
+        icon.className = 'w-3 h-3 ink-blue';
+      }
+      lucide.createIcons();
+    }
+
+    document.getElementById('playPauseBtn').addEventListener('click', () => {
+      setAnimationState(!state.isAnimating);
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      state.timeP = 1.0;
+      state.timeQ = 4.2;
+      setAnimationState(true);
+      draw();
+    });
+
+    // Handle Cases Triggering
+    document.getElementById('caseDoublingBtn').addEventListener('click', () => {
+      setAnimationState(false);
+
+      const targetX = 1.0;
+      const targetY = getECY(targetX);
+
+      state.p = { x: targetX, y: targetY };
+      state.q = { x: targetX, y: targetY };
+
+      state.timeP = getPhaseAtPoint(targetX, targetY);
+      state.timeQ = getPhaseAtPoint(targetX, targetY);
+
+      draw();
+    });
+
+    document.getElementById('caseInfinityBtn').addEventListener('click', () => {
+      setAnimationState(false);
+
+      const targetX = 1.0;
+      const targetY = getECY(targetX);
+
+      state.p = { x: targetX, y: targetY };
+      state.q = { x: targetX, y: -targetY };
+
+      state.timeP = getPhaseAtPoint(targetX, targetY);
+      state.timeQ = getPhaseAtPoint(targetX, -targetY);
+
+      draw();
+    });
+
+    // Main Draw & loop handlers
+    function draw() {
+      sk.clear({ paper: false });
+      sk.grid({ originX: canvas.width / 2, originY: canvas.height / 2, step: state.zoom });
+      sk.axes({ originX: canvas.width / 2, originY: canvas.height / 2, step: state.zoom, ink: 'pencil' });
+      drawCurve();
+      drawAddition();
+    }
+
+    function animationLoop() {
+      if (state.isAnimating) {
+        state.timeP += 0.005;
+        state.timeQ += 0.007;
+
+        state.p = getPointAtPhase(state.timeP);
+        state.q = getPointAtPhase(state.timeQ);
+
+        draw();
+      }
+      requestAnimationFrame(animationLoop);
+    }
+
+    function initCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      state.zoom = Math.min(canvas.width, canvas.height) / 8.5;
+      draw();
+    }
+
+    window.addEventListener('resize', initCanvas);
+    window.onload = () => {
+      initCanvas();
+      setAnimationState(true);
+      animationLoop();
+    };
+  </script>
+</body>
+</html>

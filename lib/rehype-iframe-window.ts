@@ -19,37 +19,10 @@ const rehypeIframeWindow: Plugin<[], Root> = () => {
             if (!parent || index === undefined) return;
 
             if (node.tagName === 'iframe') {
-                // Create the macOS-style top bar
-                const topBar: Element = {
-                    type: 'element',
-                    tagName: 'div',
-                    properties: {
-                        className: [
-                            'flex',
-                            'items-center',
-                            'h-10',
-                            'px-4',
-                            'bg-slate-900', // Always dark
-                            'border-b',
-                            'border-slate-800', // Always dark
-                            'sim-top-bar' // identifier for attaching the button later
-                        ]
-                    },
-                    children: [
-                        {
-                            type: 'element',
-                            tagName: 'div',
-                            properties: { className: ['flex', 'gap-2'] },
-                            children: [
-                                { type: 'element', tagName: 'div', properties: { className: ['w-3', 'h-3', 'rounded-full', 'bg-red-400', 'dark:bg-red-500'] }, children: [] },
-                                { type: 'element', tagName: 'div', properties: { className: ['w-3', 'h-3', 'rounded-full', 'bg-amber-400', 'dark:bg-amber-500'] }, children: [] },
-                                { type: 'element', tagName: 'div', properties: { className: ['w-3', 'h-3', 'rounded-full', 'bg-green-400', 'dark:bg-green-500'] }, children: [] }
-                            ]
-                        }
-                    ]
-                };
-
-                // Create a simple wrapper with rounded corners
+                // No top bar and no border: the simulation content should be
+                // the whole visible surface, not framed as an "app window".
+                // The play/pause button (injected in MarkdownRenderer.tsx)
+                // floats directly over the iframe's top-right corner instead.
                 const wrapper: Element = {
                     type: 'element',
                     tagName: 'div',
@@ -58,16 +31,12 @@ const rehypeIframeWindow: Plugin<[], Root> = () => {
                             'md-iframe-window',
                             'relative',
                             'overflow-hidden',
-                            'rounded-xl', // Make it rounded-xl for standard macOS window shape
-                            'border',
-                            'border-slate-800', // Enforce dark border to match the dark top bar
+                            'rounded-xl',
                             'my-14',
-                            'bg-slate-900', // Background is also dark so the card fits seamlessly
-                            'flex',
-                            'flex-col'
+                            'bg-slate-900', // Fallback color visible briefly while the iframe loads
                         ],
                     },
-                    children: [topBar, node], // The top bar, then the original iframe
+                    children: [node],
                 };
 
                 // Replace the iframe with the wrapped version

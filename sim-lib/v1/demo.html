@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>sketch.js demo — hand-drawn 2D renderer</title>
+  <!-- Handwriting font used by Sketch.theme.fonts.hand (demo-only; sims get this injected in stage 2) -->
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; overflow: hidden; background: #fbf6ea; }
+    canvas { display: block; width: 100vw; height: 100vh; }
+
+    /* Tuning panel — sticky-note style */
+    .panel {
+      position: absolute; top: 16px; right: 16px; z-index: 10;
+      background: #fdf9b8;
+      border: 1px solid rgba(0,0,0,0.12);
+      box-shadow: 2px 3px 8px rgba(0,0,0,0.18);
+      transform: rotate(-1.2deg);
+      padding: 14px 16px 12px;
+      font-family: 'Caveat', cursive;
+      font-size: 18px; color: #2d2a26;
+      display: flex; flex-direction: column; gap: 6px;
+      user-select: none;
+    }
+    .panel label { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+    .panel input[type=range] { width: 110px; accent-color: #2f4f8f; }
+    .panel input[type=checkbox] { accent-color: #2f4f8f; }
+    .panel select { font-family: inherit; font-size: 16px; background: transparent; border: 1px solid rgba(0,0,0,0.2); border-radius: 4px; }
+    .panel .value { font-size: 15px; color: #5f5b56; min-width: 26px; text-align: right; }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+
+  <div class="panel">
+    <label>boil <input id="boil" type="checkbox" checked></label>
+    <label>roughness <span style="display:flex;align-items:center;gap:6px"><input id="roughness" type="range" min="0" max="3" step="0.1" value="1"><span class="value" id="roughnessVal">1</span></span></label>
+    <label>bowing <span style="display:flex;align-items:center;gap:6px"><input id="bowing" type="range" min="0" max="4" step="0.1" value="1"><span class="value" id="bowingVal">1</span></span></label>
+    <label>paper <select id="rules">
+      <option value="lines" selected>lines</option>
+      <option value="blank">blank</option>
+    </select></label>
+  </div>
+
+  <script src="vendor/rough.js"></script>
+  <script src="sketch.js"></script>
+  <script>
+    const canvas = document.getElementById('canvas');
+    let sk = Sketch.attach(canvas);
+    let W = 0, H = 0;
+
+    // ── controls ─────────────────────────────────────────────────────────
+    const ui = {
+      boil: document.getElementById('boil'),
+      roughness: document.getElementById('roughness'),
+      bowing: document.getElementById('bowing'),
+      rules: document.getElementById('rules'),
+    };
+    function applySettings() {
+      sk = Sketch.attach(canvas, {
+        boil: ui.boil.checked ? 5 : false, // matches sketch.js's theme default
+        roughness: parseFloat(ui.roughness.value),
+        bowing: parseFloat(ui.bowing.value),
+      });
+      document.getElementById('roughnessVal').textContent = ui.roughness.value;
+      document.getElementById('bowingVal').textContent = ui.bowing.value;
+    }
+    Object.values(ui).forEach(el => el.addEventListener('input', applySettings));
+
+    function resize() {
+      const dims = Sketch.fit(canvas);
+      W = dims.width; H = dims.height;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+    applySettings();
+
+    // ── vignette 1: animated elliptic-curve plot (mirrors ec_introduction) ─
+    function ecY(x, a, b) {
+      const v = x * x * x + a * x + b;
+      // Tolerance avoids a root-boundary flicker: v should be exactly 0 at a
+      // root but floating-point/solver residue can push it a hair negative.
+      return v >= -1e-6 ? Math.sqrt(Math.max(v, 0)) : null;
+    }
+
+    // ── the demo scene ───────────────────────────────────────────────────
+    let phase = 0;
+
+    function draw() {
+      phase += 0.005;
+      const a = -2.2 + Math.sin(phase) * 2.2;
+      const b = 0.5 + Math.cos(phase * 1.4) * 2.0;
+
+      sk.clear({ rules: ui.rules.value === 'blank' ? 'lines' : ui.rules.value, paper: ui.rules.value === 'blank' ? false : undefined });
+
+      // ---- left half: animated function plot with axes -------------------
+      const plotCX = W * 0.30, plotCY = H * 0.46;
+      const zoom = Math.min(W, H) / 9;
+      const toX = (x) => plotCX + x * zoom;
+      const toY = (y) => plotCY - y * zoom;
+      const fromX = -plotCX / zoom, toXMath = (W * 0.60 - plotCX) / zoom;
+
+      sk.grid({ originX: plotCX, originY: plotCY, step: zoom });
+      sk.axes({ originX: plotCX, originY: plotCY, step: zoom, labelEvery: 2 });
+
+      // upper and lower branch of y² = x³ + ax + b. Lower roughness than the
+      // theme default so the boil checkbox's re-jitter (this curve already
+      // moves via a/b every frame too) stays a subtle wobble rather than
+      // visibly skewing the curve's path (see plot()'s docstring in sketch.js).
+      const curveStyle = { from: fromX, to: toXMath, toX, toY, ink: 'blue', width: 2.5, roughness: 0.6 };
+      sk.plot((x) => ecY(x, a, b), curveStyle);
+      sk.plot((x) => { const y = ecY(x, a, b); return y === null ? null : -y; }, curveStyle);
+
+      sk.text('y² = x³ ' + (a < 0 ? '− ' : '+ ') + Math.abs(a).toFixed(2) + 'x ' +
+              (b < 0 ? '− ' : '+ ') + Math.abs(b).toFixed(2),
+              84, 44, { ink: 'black', size: 26, boil: false });
+
+      // a marked point riding the curve
+      const px = 1.6 + 0.4 * Math.sin(phase * 3);
+      const py = ecY(px, a, b);
+      if (py !== null) sk.point(toX(px), toY(py), { label: 'P', ink: 'red', size: 22 });
+
+      // ---- right column: primitives showcase ------------------------------
+      const cx = W * 0.78;
+      let y = H * 0.12;
+
+      sk.text('primitives', cx - 60, y, { ink: 'pencil', size: 24, boil: false });
+      y += 30;
+
+      sk.rect(cx - 130, y, 110, 74, { ink: 'black', fill: 'highlight', fillStyle: 'solid' });
+      sk.circle(cx + 40, y + 37, 40, { ink: 'green', fill: 'green', fillStyle: 'hachure' });
+      sk.polygon([[cx + 120, y + 74], [cx + 160, y], [cx + 205, y + 60]], { ink: 'purple', fill: 'purple', fillStyle: 'cross-hatch' });
+      y += 110;
+
+      sk.arrow(cx - 130, y + 30, cx - 10, y, { ink: 'red' });
+      sk.line(cx + 10, y, cx + 130, y + 30, { ink: 'pencil', dash: true });
+      y += 70;
+
+      // waveform, like the DSP sims (straight polyline, no spline smoothing)
+      const wave = [];
+      for (let i = 0; i <= 90; i++) {
+        const t = i / 90;
+        wave.push([cx - 130 + t * 330, y + Math.sin(t * 14 + phase * 12) * Math.exp(-t * 2.2) * 42]);
+      }
+      sk.polyline(wave, { ink: 'orange', width: 2 });
+      sk.text('adsr-ish envelope', cx - 130, y + 66, { ink: 'pencilLight', size: 17 });
+
+      requestAnimationFrame(draw);
+    }
+
+    window.onload = () => requestAnimationFrame(draw);
+  </script>
+</body>
+</html>

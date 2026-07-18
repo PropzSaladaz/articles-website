@@ -180,9 +180,9 @@ The pipeline supports a rich superset of standard Markdown:
 | **GitHub Flavored Markdown** | Tables, task lists, strikethrough, etc. |
 | **Math (KaTeX)** | Inline: `$E = mc^2$` · Display: `$$…$$` |
 | **Code blocks** | Fenced blocks with language tags — syntax highlighted via Shiki |
-| **GitHub Alerts** | `> [!NOTE]`, `> [!TIP]`, `> [!IMPORTANT]`, `> [!WARNING]`, `> [!CAUTION]` |
+| **GitHub Alerts** | `> [!NOTE]`, `> [!TIP]`, `> [!IMPORTANT]`, `> [!WARNING]`, `> [!CAUTION]`, `> [!EXERCISE]`, `> [!EXAMPLE]` |
 | **Spoilers** | `:::spoiler[Title]` … `:::` — animated accordion |
-| **Section breaks** | `===` on its own line → strong horizontal rule with extra spacing |
+| **Section breaks** | `===` or `...` on its own line → strong horizontal rule with extra spacing |
 | **Heading anchors** | `#` anchor links appear on hover for easy section linking |
 | **Iframe simulations** | `<iframe src="simulations/demo.html">` — auto-wrapped in macOS-style window |
 | **Images** | Standard `![alt](./images/img.png)` — auto-path-rewritten for prod/dev |

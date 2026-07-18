@@ -4,6 +4,12 @@
 */
 
 /* Typography */
+.md {
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
 .md .md-p {
   font-size: 17px;
   margin: 1em 0;
@@ -208,6 +214,57 @@
 
 .dark .md .md-blockquote::before {
   color: rgba(139, 92, 246, 0.35);
+}
+
+/* Definition blocks */
+.md .md-definition {
+  margin: 1.75rem 0;
+  padding: 0.9rem 1.25rem;
+  background:
+    linear-gradient(180deg, rgba(14, 165, 164, 0.07), rgba(14, 165, 164, 0.035)),
+    rgba(248, 250, 252, 0.72);
+  border: 1px solid rgba(14, 116, 144, 0.18);
+  border-left: 4px solid rgba(14, 116, 144, 0.7);
+  border-radius: 0.5rem;
+  color: var(--foreground);
+}
+
+.md .md-definition-title {
+  margin: 0 0 0.65rem;
+  color: rgb(14, 116, 144);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.35;
+  text-transform: uppercase;
+}
+
+.md .md-definition .md-p:not(.md-definition-title) {
+  margin: 0.65em 0;
+}
+
+.md .md-definition .md-p:has(.katex-display) {
+  margin: 0;
+}
+
+.md .md-definition .katex-display {
+  margin: 1.1rem 0 0.75rem;
+}
+
+.md .md-definition .md-p:not(.md-definition-title):last-child {
+  margin-bottom: 0;
+}
+
+.dark .md .md-definition {
+  background:
+    linear-gradient(180deg, rgba(45, 212, 191, 0.09), rgba(45, 212, 191, 0.04)),
+    rgba(15, 23, 42, 0.42);
+  border-color: rgba(45, 212, 191, 0.18);
+  border-left-color: rgba(45, 212, 191, 0.62);
+}
+
+.dark .md .md-definition-title {
+  color: rgb(94, 234, 212);
 }
 
 /* Tables */
@@ -676,6 +733,8 @@
    ================================ */
 
 .md-alert {
+  max-width: 100%;
+  min-width: 0;
   margin: 2.5rem 0;
   padding: 0;
   border-radius: 0.5rem;
@@ -716,6 +775,15 @@
 
 /* Icon before title - should never rotate */
 .md-alert>summary.md-alert-title::before {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  height: auto;
+  background-color: transparent;
+  opacity: 1;
+  -webkit-mask-image: none;
+  mask-image: none;
   font-size: 1.1rem;
   flex-shrink: 0;
   transform: none !important;
@@ -723,6 +791,8 @@
 
 /* Content area */
 .md-alert>*:not(summary) {
+  max-width: 100%;
+  min-width: 0;
   padding: 0 1rem;
 }
 
@@ -808,6 +878,38 @@
   font-size: 0.95rem;
 }
 
+/* EXERCISE - workbook indigo */
+.md-alert-exercise {
+  background: rgba(79, 70, 229, 0.06);
+  border-color: rgba(79, 70, 229, 0.5);
+}
+
+.md-alert-exercise .md-alert-title {
+  color: #818cf8;
+}
+
+.md-alert-exercise .md-alert-title::before {
+  content: '#';
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+/* EXAMPLE - muted teal */
+.md-alert-example {
+  background: rgba(20, 184, 166, 0.06);
+  border-color: rgba(20, 184, 166, 0.5);
+}
+
+.md-alert-example .md-alert-title {
+  color: #5eead4;
+}
+
+.md-alert-example .md-alert-title::before {
+  content: '=';
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
 /* Dark mode - subtly increase bg opacity */
 .dark .md-alert-note {
   background: rgba(99, 155, 220, 0.08);
@@ -829,6 +931,14 @@
   background: rgba(200, 80, 80, 0.08);
 }
 
+.dark .md-alert-exercise {
+  background: rgba(129, 140, 248, 0.09);
+}
+
+.dark .md-alert-example {
+  background: rgba(45, 212, 191, 0.09);
+}
+
 /* Content styling inside alerts */
 .md-alert .md-p:last-child {
   margin-bottom: 0;
@@ -839,21 +949,28 @@
    ================================ */
 .md-iframe-window {
   position: relative;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   overflow: hidden;
+  /* No border anymore (see rehype-iframe-window.ts) — a soft shadow keeps
+     just enough separation from the surrounding article text. */
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
 }
 
 /* The iframe itself */
 .md-iframe-window iframe {
   display: block;
   width: 100%;
+  max-width: 100%;
   border: none;
   border-radius: 0.75rem;
   background: #0b0e14;
 }
 
-/* Dark mode adjustments */
+/* Dark mode adjustments: no border anymore (see rehype-iframe-window.ts), just
+   a soft shadow to separate the simulation from the surrounding page. */
 .dark .md-iframe-window {
-  border-color: rgba(255, 255, 255, 0.1);
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
 }
 
@@ -865,7 +982,10 @@
   font-size: 1.2em;
 }
 
-/* Add generous vertical whitespace to display math blocks */
+/* Add comfortable vertical whitespace to display math blocks */
 .md .katex-display {
-  margin: 4.5rem 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin: 2.5rem 0;
 }

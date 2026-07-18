@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="sim-paper" content="full">
+  <title>Elliptic Curve Cases</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap');
+
+    body {
+      font-family: 'Fira Code', monospace;
+    }
+  </style>
+</head>
+<body class="sk-page w-screen h-screen overflow-hidden m-0 p-0 relative flex items-center justify-center">
+
+  <!-- Fullscreen Canvas -->
+  <canvas id="curveCanvas" class="absolute inset-0 w-full h-full block"></canvas>
+
+  <!-- Floating Interactive Case HUD: one sk-sticky card (tab selector + details)
+       instead of two separate floating panels — same component ec_introduction
+       uses, just with more content inside. -->
+  <div class="absolute top-4 left-4 right-4 md:right-auto md:top-6 md:left-6 z-10 max-w-sm sk-sticky flex flex-col gap-3">
+
+    <!-- Tab Selector: underline-style rather than a filled pill, closer to a
+         notebook divider than an app segmented control. -->
+    <div class="flex gap-4 border-b border-black/10 pb-2 sk-hand text-base">
+      <button onclick="selectCase('smooth')" id="tab-smooth" class="font-semibold pb-1 border-b-2 border-current ink-blue">
+        Smooth
+      </button>
+      <button onclick="selectCase('cusp')" id="tab-cusp" class="font-semibold pb-1 border-b-2 border-transparent ink-pencil-light">
+        Cusp
+      </button>
+      <button onclick="selectCase('node')" id="tab-node" class="font-semibold pb-1 border-b-2 border-transparent ink-pencil-light">
+        Node
+      </button>
+    </div>
+
+    <!-- Meaning & Status Badge -->
+    <div class="flex items-start justify-between gap-3">
+      <div>
+        <span id="caseMeaning" class="text-xs ink-pencil font-medium block">Valid elliptic curve</span>
+        <h2 id="caseTitle" class="sk-hand text-2xl font-semibold ink-black tracking-tight mt-0.5">Smooth Curve</h2>
+      </div>
+      <span class="sk-badge">
+        <span id="statusDot" class="sk-dot bg-ink-green"></span>
+        <span id="statusBadge" class="sk-hand font-semibold text-sm ink-green">Valid</span>
+      </span>
+    </div>
+
+    <!-- Current Equation Display -->
+    <div id="equationDisplay" class="text-lg font-mono font-bold tracking-wide ink-black py-1.5 border-y border-black/10">
+      y² = x³ - x + 1
+    </div>
+
+    <!-- Mathematical Discriminant Evaluation -->
+    <div class="space-y-2 font-mono text-xs">
+      <div>
+        <span class="ink-pencil-light block text-[10px] uppercase tracking-wider mb-1">Discriminant Formula</span>
+        <div class="ink-black bg-black/5 px-3 py-2 rounded">
+          D = 4a³ + 27b²
+        </div>
+      </div>
+
+      <div>
+        <span class="ink-pencil-light block text-[10px] uppercase tracking-wider mb-1">Calculated Evaluation</span>
+        <div id="discCalculation" class="ink-black bg-black/5 px-3 py-2 rounded">
+          D = 4(-1)³ + 27(1)² = 23
+        </div>
+      </div>
+
+      <div>
+        <span class="ink-pencil-light block text-[10px] uppercase tracking-wider mb-1">Geometric Condition</span>
+        <div id="conditionResult" class="px-3 py-2 rounded border border-current font-semibold ink-green">
+          D ≠ 0 → smooth / valid
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const canvas = document.getElementById('curveCanvas');
+    const sk = Sketch.attach(canvas);
+
+    // Shared curve style: matches ec_introduction.html's CURVE_STYLE
+    // (roughness lower than the theme default of 1 keeps the sparse sample
+    // from reading as displaced; see sketch.js's plot() docstring).
+    const CURVE_STYLE = { width: 2.5, roughness: 0.6 };
+
+    // Case definitions
+    const cases = {
+      smooth: {
+        title: "Smooth Curve",
+        meaning: "Valid elliptic curve",
+        a: -1.0,
+        b: 1.0,
+        equation: "y² = x³ - x + 1",
+        calc: "D = 4(-1)³ + 27(1)² = 23",
+        status: "Valid",
+        cond: "D ≠ 0 → smooth / valid"
+      },
+      cusp: {
+        title: "Cusp",
+        meaning: "Invalid: sharp singular point",
+        a: 0.0,
+        b: 0.0,
+        equation: "y² = x³",
+        calc: "D = 4(0)³ + 27(0)² = 0",
+        status: "Invalid",
+        cond: "D = 0 → singular / invalid"
+      },
+      node: {
+        title: "Self-Intersection / Node",
+        meaning: "Invalid: curve crosses itself",
+        a: -3.0,
+        b: 2.0,
+        equation: "y² = x³ - 3x + 2",
+        calc: "D = 4(-3)³ + 27(2)² = 0",
+        status: "Invalid",
+        cond: "D = 0 → singular / invalid"
+      }
+    };
+
+    let activeCase = 'smooth';
+    let state = {
+      a: -1.0,
+      b: 1.0,
+      zoom: 65
+    };
+
+    // Cardanos algorithm for accurate root calculations
+    function solveCubicRoots(a, b) {
+      const p = a;
+      const q = b;
+      const Q = p / 3;
+      const R = -q / 2;
+      const disc = Q*Q*Q + R*R;
+      const roots = [];
+
+      if (disc < 0) {
+        const theta = Math.acos(R / Math.sqrt(-Q*Q*Q));
+        const sqrt_Q = Math.sqrt(-Q);
+        roots.push(2 * sqrt_Q * Math.cos(theta / 3));
+        roots.push(2 * sqrt_Q * Math.cos((theta + 2 * Math.PI) / 3));
+        roots.push(2 * sqrt_Q * Math.cos((theta + 4 * Math.PI) / 3));
+        roots.sort((x, y) => x - y);
+      } else {
+        const s = Math.sign(R + Math.sqrt(disc)) * Math.pow(Math.abs(R + Math.sqrt(disc)), 1/3);
+        const t = Math.sign(R - Math.sqrt(disc)) * Math.pow(Math.abs(R - Math.sqrt(disc)), 1/3);
+        roots.push(s + t);
+        if (Math.abs(disc) < 1e-7) {
+          roots.push(- (s + t) / 2);
+          roots.push(- (s + t) / 2);
+          roots.sort((x, y) => x - y);
+        }
+      }
+      return roots;
+    }
+
+    function getECY(x) {
+      const val = x*x*x + state.a*x + state.b;
+      // Tolerance guards against a root-boundary flicker: val should be 0 at
+      // a root but Cardano's trig solver has a small residual error (see
+      // ec_introduction.html for the fuller explanation).
+      return val >= -1e-6 ? Math.sqrt(Math.max(val, 0)) : null;
+    }
+
+    // Coordinate conversions
+    function toScreenX(mathX) {
+      return canvas.width / 2 + mathX * state.zoom;
+    }
+
+    function toScreenY(mathY) {
+      return canvas.height / 2 - mathY * state.zoom;
+    }
+
+    function toMathX(screenX) {
+      return (screenX - canvas.width / 2) / state.zoom;
+    }
+
+    function toMathY(screenY) {
+      return (canvas.height / 2 - screenY) / state.zoom;
+    }
+
+    function selectCase(caseKey) {
+      activeCase = caseKey;
+      const data = cases[caseKey];
+
+      state.a = data.a;
+      state.b = data.b;
+
+      // Update active tab styles
+      ['smooth', 'cusp', 'node'].forEach(k => {
+        const tab = document.getElementById(`tab-${k}`);
+        if (k === caseKey) {
+          tab.className = "font-semibold pb-1 border-b-2 border-current ink-blue";
+        } else {
+          tab.className = "font-semibold pb-1 border-b-2 border-transparent ink-pencil-light";
+        }
+      });
+
+      // Update text details
+      document.getElementById('caseTitle').textContent = data.title;
+      document.getElementById('caseMeaning').textContent = data.meaning;
+      document.getElementById('equationDisplay').textContent = data.equation;
+      document.getElementById('discCalculation').textContent = data.calc;
+      document.getElementById('conditionResult').textContent = data.cond;
+
+      const badge = document.getElementById('statusBadge');
+      const dot = document.getElementById('statusDot');
+      const condition = document.getElementById('conditionResult');
+      badge.textContent = data.status;
+      if (data.status === "Valid") {
+        badge.className = "sk-hand font-semibold text-sm ink-green";
+        dot.className = "sk-dot bg-ink-green";
+        condition.className = "px-3 py-2 rounded border border-current font-semibold ink-green";
+      } else {
+        badge.className = "sk-hand font-semibold text-sm ink-red";
+        dot.className = "sk-dot bg-ink-red";
+        condition.className = "px-3 py-2 rounded border border-current font-semibold ink-red";
+      }
+
+      draw();
+    }
+
+    function draw() {
+      // Flat page + a math-aligned grid (same originX/originY/step as the
+      // axes below), matching ec_introduction.html's pattern.
+      sk.clear({ paper: false });
+      sk.grid({ originX: canvas.width / 2, originY: canvas.height / 2, step: state.zoom });
+      sk.axes({ originX: canvas.width / 2, originY: canvas.height / 2, step: state.zoom, ink: 'pencil' });
+
+      // Draw Curve
+      const roots = solveCubicRoots(state.a, state.b);
+      const curveInk = (activeCase === 'smooth') ? 'green' : 'red';
+
+      if (roots.length === 3) {
+        // Two separate components (closed loop + infinite branch)
+
+        // Trace Closed Loop component
+        const r1 = roots[0];
+        const r2 = roots[1];
+        const steps = 34;
+        const loopPts = [];
+        for (let i = 0; i <= steps; i++) {
+          const t = i / steps;
+          const x = r1 + (r2 - r1) * (0.5 - 0.5 * Math.cos(t * Math.PI));
+          const y = getECY(x);
+          if (y !== null) loopPts.push([toScreenX(x), toScreenY(y)]);
+        }
+        for (let i = steps; i >= 0; i--) {
+          const t = i / steps;
+          const x = r1 + (r2 - r1) * (0.5 - 0.5 * Math.cos(t * Math.PI));
+          const y = getECY(x);
+          if (y !== null) loopPts.push([toScreenX(x), toScreenY(-y)]);
+        }
+        sk.curve(loopPts, { ink: curveInk, ...CURVE_STYLE });
+
+        // Trace Right-side Infinite Branch
+        const r3 = roots[2];
+        const limitX = toMathX(canvas.width + 100);
+        const stepsB = 34;
+        const branchPts = [];
+        for (let i = 0; i <= stepsB; i++) {
+          const norm = i / stepsB;
+          const x = r3 + Math.pow(norm, 2) * (limitX - r3);
+          const y = getECY(x);
+          if (y !== null) branchPts.push([toScreenX(x), toScreenY(y)]);
+        }
+        for (let i = stepsB; i >= 0; i--) {
+          const norm = i / stepsB;
+          const x = r3 + Math.pow(norm, 2) * (limitX - r3);
+          const y = getECY(x);
+          if (y !== null) branchPts.push([toScreenX(x), toScreenY(-y)]);
+        }
+        sk.curve(branchPts, { ink: curveInk, ...CURVE_STYLE });
+
+      } else {
+        // Single component continuous branch
+        const startX = roots[0];
+        const limitX = toMathX(canvas.width + 100);
+        const stepsOne = 44;
+        const pts = [];
+        for (let i = 0; i <= stepsOne; i++) {
+          const norm = i / stepsOne;
+          const x = startX + Math.pow(norm, 2) * (limitX - startX);
+          const y = getECY(x);
+          if (y !== null) pts.push([toScreenX(x), toScreenY(y)]);
+        }
+        for (let i = stepsOne; i >= 0; i--) {
+          const norm = i / stepsOne;
+          const x = startX + Math.pow(norm, 2) * (limitX - startX);
+          const y = getECY(x);
+          if (y !== null) pts.push([toScreenX(x), toScreenY(-y)]);
+        }
+        sk.curve(pts, { ink: curveInk, ...CURVE_STYLE });
+      }
+    }
+
+    function initCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      state.zoom = Math.min(canvas.width, canvas.height) / 10;
+      draw();
+    }
+
+    window.addEventListener('resize', initCanvas);
+    window.onload = () => {
+      initCanvas();
+      selectCase('smooth');
+    };
+  </script>
+</body>
+</html>
