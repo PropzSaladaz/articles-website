@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="sim-paper" content="full">
+  <title>Modular Arithmetic Clock</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap');
+
+    body { font-family: 'Fira Code', monospace; }
+
+    input[type="range"] {
+      accent-color: #4a7c59;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body class="sk-page w-screen h-screen overflow-hidden m-0 p-0 relative select-none">
+  <canvas id="clockCanvas" class="absolute inset-0 w-full h-full block" style="touch-action: none;" aria-label="Animated modular arithmetic clock"></canvas>
+
+  <section class="absolute left-4 top-4 md:left-6 md:top-6 z-10 w-[218px] sm:w-[232px] sk-sticky pointer-events-auto" aria-label="Clock controls">
+    <div class="border-b border-black/10 pb-2.5">
+      <p class="sk-hand text-xl font-semibold ink-black leading-none">A clock is modulo 12</p>
+      <p id="equation" class="mt-2 text-[11px] font-bold ink-purple leading-relaxed">10 + 5 ≡ 3 (mod 12)</p>
+      <p id="calculation" class="mt-1 text-[9px] ink-pencil leading-relaxed">15 lands on the same place as 3</p>
+    </div>
+
+    <div class="pt-2.5 space-y-2.5 text-[10px] ink-pencil">
+      <label class="block" for="startRange">
+        <span class="flex justify-between mb-1"><span>Start at</span><strong id="startValue" class="ink-green">10</strong></span>
+        <input id="startRange" type="range" min="0" max="11" value="10" class="w-full h-1.5">
+      </label>
+      <label class="block" for="stepsRange">
+        <span class="flex justify-between mb-1"><span>Move forward</span><strong id="stepsValue" class="ink-purple">+5</strong></span>
+        <input id="stepsRange" type="range" min="1" max="24" value="5" class="w-full h-1.5">
+      </label>
+    </div>
+
+    <div class="mt-3 border-t border-black/10 pt-2.5">
+      <div class="sk-row text-[9px]">
+        <span id="motionLabel" class="ink-pencil">Waiting at 10</span>
+        <span id="stepCount" class="font-bold ink-black">0 / 5</span>
+      </div>
+      <button id="exampleButton" type="button" class="mt-2 w-full rounded-md border border-black/10 bg-black/5 px-2 py-1.5 text-[9px] font-semibold ink-pencil transition-colors hover:bg-black/10">
+        Replay 10 + 5
+      </button>
+    </div>
+  </section>
+
+  <script>
+    const canvas = document.getElementById('clockCanvas');
+    const sk = Sketch.attach(canvas);
+
+    const startRange = document.getElementById('startRange');
+    const stepsRange = document.getElementById('stepsRange');
+    const startValue = document.getElementById('startValue');
+    const stepsValue = document.getElementById('stepsValue');
+    const equation = document.getElementById('equation');
+    const calculation = document.getElementById('calculation');
+    const motionLabel = document.getElementById('motionLabel');
+    const stepCount = document.getElementById('stepCount');
+    const exampleButton = document.getElementById('exampleButton');
+
+    const MODULUS = 12;
+    const TAU = Math.PI * 2;
+    const INITIAL_PAUSE = 850;
+    const STEP_DURATION = 580;
+    const FINAL_PAUSE = 1450;
+
+    const state = {
+      start: 10,
+      steps: 5,
+      elapsed: 0,
+      lastFrame: null,
+      draggingStart: false,
+      hoveringStart: false
+    };
+
+    function mod(value, base = MODULUS) {
+      return ((value % base) + base) % base;
+    }
+
+    function easeInOut(value) {
+      return value < 0.5
+        ? 4 * value * value * value
+        : 1 - Math.pow(-2 * value + 2, 3) / 2;
+    }
+
+    function formatNumber(value) {
+      const rounded = Math.round((value + Number.EPSILON) * 100) / 100;
+      return Number.isInteger(rounded)
+        ? String(rounded)
+        : rounded.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
+    }
+
+    function currentMotion() {
+      const duration = INITIAL_PAUSE + state.steps * STEP_DURATION + FINAL_PAUSE;
+      const phase = state.elapsed % duration;
+
+      if (phase < INITIAL_PAUSE) {
+        return { offset: 0, completed: 0, moving: false, settled: false };
+      }
+
+      const movingTime = phase - INITIAL_PAUSE;
+      if (movingTime < state.steps * STEP_DURATION) {
+        const completed = Math.floor(movingTime / STEP_DURATION);
+        const progress = (movingTime % STEP_DURATION) / STEP_DURATION;
+        return {
+          offset: completed + easeInOut(progress),
+          completed,
+          moving: true,
+          settled: false
+        };
+      }
+
+      return { offset: state.steps, completed: state.steps, moving: false, settled: true };
+    }
+
+    function clockPoint(cx, cy, radius, value) {
+      const angle = value / MODULUS * TAU - Math.PI / 2;
+      return {
+        x: cx + Math.cos(angle) * radius,
+        y: cy + Math.sin(angle) * radius,
+        angle
+      };
+    }
+
+    function getClockLayout() {
+      const compact = canvas.width < 600;
+      return {
+        compact,
+        cx: compact ? canvas.width / 2 : canvas.width * 0.6,
+        cy: compact ? canvas.height * 0.69 : canvas.height * 0.53,
+        radius: compact
+          ? Math.min(canvas.width * 0.31, canvas.height * 0.23)
+          : Math.min(canvas.width * 0.25, canvas.height * 0.32)
+      };
+    }
+
+    function drawRing(cx, cy, radius, motion, compact) {
+      sk.circle(cx, cy, radius - 12, { ink: 'pencilLight', width: 1, roughness: 0.45, boil: false });
+
+      const startPoint = clockPoint(cx, cy, radius, state.start);
+      const resultPoint = clockPoint(cx, cy, radius, state.start + state.steps);
+      const wrapPoint = clockPoint(cx, cy, radius, 0);
+
+      // The 0 / 12 tick is the important equivalence: the next position after
+      // 11 is the same physical place labelled 0 in the finite set.
+      sk.circle(wrapPoint.x, wrapPoint.y, 18, { ink: 'orange', width: 1.5, roughness: 0.5, boil: false });
+
+      for (let value = 0; value < MODULUS; value += 1) {
+        const outer = clockPoint(cx, cy, radius + 1, value);
+        const inner = clockPoint(cx, cy, radius - (value % 3 === 0 ? 18 : 12), value);
+        sk.ruler(outer.x, outer.y, inner.x, inner.y, {
+          ink: value === 0 ? 'orange' : 'pencil',
+          width: value === 0 ? 2.2 : 1.3
+        });
+
+        const label = clockPoint(cx, cy, radius - 37, value);
+        const labelText = value === 0 ? '0 / 12' : String(value);
+        sk.text(labelText, label.x, label.y + 5, {
+          ink: value === 0 ? 'orange' : 'black',
+          size: value === 0 ? (compact ? 12 : 14) : (compact ? 13 : 16),
+          align: 'center',
+          baseline: 'middle',
+          boil: false
+        });
+      }
+
+      // A hand tells us the current residue. It moves around the same 12
+      // positions even when the ordinary total grows past 11.
+      const current = clockPoint(cx, cy, radius - 22, state.start + motion.offset);
+      sk.ruler(cx, cy, current.x, current.y, { ink: 'purple', width: 3.2 });
+      sk.circle(cx, cy, 6, { ink: 'purple', fill: 'purple', fillStyle: 'solid', roughness: 0.45 });
+
+      // The trail shows the individual +1 moves. Sampling the unwrapped value
+      // makes a second lap visibly travel around the ring rather than jumping.
+      if (motion.offset > 0.04) {
+        const samples = Math.max(3, Math.ceil(motion.offset * 5));
+        const trail = [];
+        for (let index = 0; index <= samples; index += 1) {
+          const value = state.start + motion.offset * index / samples;
+          const point = clockPoint(cx, cy, radius + 1, value);
+          trail.push([point.x, point.y]);
+        }
+        sk.curve(trail, { ink: 'pink', width: 3, roughness: 0.45 });
+      }
+
+      for (let step = 0; step <= Math.floor(motion.offset + 0.001); step += 1) {
+        const point = clockPoint(cx, cy, radius + 1, state.start + step);
+        sk.circle(point.x, point.y, 4.2, { ink: 'pink', fill: 'pink', fillStyle: 'solid', roughness: 0.4 });
+      }
+
+      const startRadius = state.hoveringStart || state.draggingStart ? 13 : 10;
+      sk.circle(startPoint.x, startPoint.y, startRadius, { ink: 'green', fill: 'green', fillStyle: 'hachure', roughness: 0.55 });
+      sk.text(state.hoveringStart || state.draggingStart ? 'drag start' : 'start', startPoint.x, startPoint.y - 22, {
+        ink: 'green', size: compact ? 13 : 15, align: 'center', boil: false
+      });
+
+      if (motion.settled) {
+        sk.circle(resultPoint.x, resultPoint.y, 12, { ink: 'orange', fill: 'orange', fillStyle: 'hachure', roughness: 0.55 });
+        sk.text('result', resultPoint.x, resultPoint.y - 23, {
+          ink: 'orange', size: compact ? 13 : 15, align: 'center', boil: false
+        });
+      }
+
+      sk.circle(current.x, current.y, 8.5, { ink: 'purple', fill: 'purple', fillStyle: 'solid', roughness: 0.4 });
+      sk.text('0 and 12 are here', cx, cy - radius - 27, {
+        ink: 'orange', size: compact ? 14 : 16, align: 'center', boil: false
+      });
+    }
+
+    function drawExplanation(cx, cy, radius, motion, compact) {
+      const wrapped = mod(state.start + motion.offset);
+      const fullWraps = Math.floor((state.start + motion.offset) / MODULUS);
+      const labelY = cy + radius + (compact ? 34 : 44);
+      const stepText = motion.moving
+        ? `moving to ${formatNumber(wrapped)}`
+        : motion.settled
+          ? `${state.start + state.steps} → ${mod(state.start + state.steps)}`
+          : `begin at ${state.start}`;
+
+      sk.text(stepText, cx, labelY, {
+        ink: 'purple', size: compact ? 17 : 20, align: 'center', boil: false
+      });
+
+      if (fullWraps > 0 && !compact) {
+        sk.text(fullWraps === 1 ? 'one full turn wrapped back to 0' : `${fullWraps} full turns wrapped back to 0`, cx, labelY + 25, {
+          ink: 'pencil', size: 14, align: 'center', boil: false
+        });
+      }
+    }
+
+    function updateHud(motion) {
+      const result = mod(state.start + state.steps);
+      const ordinaryTotal = state.start + state.steps;
+      const residue = mod(state.start + motion.offset);
+      const crossedBoundary = state.start + motion.offset >= MODULUS;
+
+      startValue.textContent = state.start;
+      stepsValue.textContent = `+${state.steps}`;
+      equation.textContent = `${state.start} + ${state.steps} ≡ ${result} (mod ${MODULUS})`;
+      calculation.textContent = `${state.start} + ${state.steps} = ${ordinaryTotal}; ${ordinaryTotal} mod ${MODULUS} = ${result}`;
+      stepCount.textContent = `${Math.min(state.steps, Math.floor(motion.offset + 0.001))} / ${state.steps}`;
+
+      if (motion.moving) {
+        motionLabel.textContent = crossedBoundary
+          ? `Wrapped to ${formatNumber(residue)}`
+          : `At ${formatNumber(residue)}`;
+      } else if (motion.settled) {
+        motionLabel.textContent = `Landed at ${result}`;
+      } else {
+        motionLabel.textContent = `Waiting at ${state.start}`;
+      }
+    }
+
+    function draw() {
+      const { compact, cx, cy, radius } = getClockLayout();
+      const motion = currentMotion();
+
+      sk.clear({ rules: 'lines', margin: false });
+      drawRing(cx, cy, radius, motion, compact);
+      drawExplanation(cx, cy, radius, motion, compact);
+      updateHud(motion);
+    }
+
+    function resetAnimation() {
+      state.elapsed = 0;
+      state.lastFrame = null;
+      draw();
+    }
+
+    function applyControls() {
+      state.start = Number(startRange.value);
+      state.steps = Number(stepsRange.value);
+      resetAnimation();
+    }
+
+    function animationLoop(timestamp) {
+      if (state.lastFrame !== null) {
+        // The article pauses iframe animation when it is off-screen. Clamping
+        // avoids treating that invisible pause as elapsed simulation time.
+        state.elapsed += Math.min(timestamp - state.lastFrame, 50);
+      }
+      state.lastFrame = timestamp;
+      draw();
+      requestAnimationFrame(animationLoop);
+    }
+
+    function fitCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      draw();
+    }
+
+    function canvasPosition(event) {
+      const bounds = canvas.getBoundingClientRect();
+      return {
+        x: (event.clientX - bounds.left) * canvas.width / bounds.width,
+        y: (event.clientY - bounds.top) * canvas.height / bounds.height
+      };
+    }
+
+    function isOverStartPoint(event) {
+      const { cx, cy, radius } = getClockLayout();
+      const pointer = canvasPosition(event);
+      const startPoint = clockPoint(cx, cy, radius, state.start);
+      return Math.hypot(pointer.x - startPoint.x, pointer.y - startPoint.y) <= 22;
+    }
+
+    function moveStartToPointer(event) {
+      const { cx, cy } = getClockLayout();
+      const pointer = canvasPosition(event);
+      const angle = Math.atan2(pointer.y - cy, pointer.x - cx);
+      const nearestClockValue = Math.round(mod((angle + Math.PI / 2) / TAU * MODULUS));
+      const nextStart = mod(nearestClockValue);
+
+      if (nextStart !== state.start) {
+        state.start = nextStart;
+        startRange.value = String(nextStart);
+        resetAnimation();
+      }
+    }
+
+    canvas.addEventListener('pointerdown', (event) => {
+      if (!isOverStartPoint(event)) return;
+      state.draggingStart = true;
+      state.hoveringStart = true;
+      canvas.setPointerCapture(event.pointerId);
+      moveStartToPointer(event);
+      draw();
+    });
+
+    canvas.addEventListener('pointermove', (event) => {
+      if (state.draggingStart) {
+        moveStartToPointer(event);
+        canvas.style.cursor = 'grabbing';
+      } else {
+        state.hoveringStart = isOverStartPoint(event);
+        canvas.style.cursor = state.hoveringStart ? 'grab' : 'default';
+        draw();
+      }
+    });
+
+    function stopDraggingStart(event) {
+      if (!state.draggingStart) return;
+      state.draggingStart = false;
+      state.hoveringStart = isOverStartPoint(event);
+      canvas.style.cursor = state.hoveringStart ? 'grab' : 'default';
+      if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+      draw();
+    }
+
+    canvas.addEventListener('pointerup', stopDraggingStart);
+    canvas.addEventListener('pointercancel', stopDraggingStart);
+    canvas.addEventListener('pointerleave', (event) => {
+      if (!state.draggingStart) {
+        state.hoveringStart = false;
+        canvas.style.cursor = 'default';
+        draw();
+      }
+    });
+
+    startRange.addEventListener('input', applyControls);
+    stepsRange.addEventListener('input', applyControls);
+    exampleButton.addEventListener('click', () => {
+      startRange.value = '10';
+      stepsRange.value = '5';
+      applyControls();
+    });
+    window.addEventListener('resize', fitCanvas);
+    window.addEventListener('load', () => {
+      fitCanvas();
+      requestAnimationFrame(animationLoop);
+    });
+  </script>
+</body>
+</html>

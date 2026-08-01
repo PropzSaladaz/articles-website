@@ -88,6 +88,8 @@ export type Collection = {
   status: ContentStatus;
   cover?: string | null;
   summary: ArticleSummary;
+  content: string;
+  html: string;
   articles: Article[];
   collections: Collection[];
   totalArticles: number;

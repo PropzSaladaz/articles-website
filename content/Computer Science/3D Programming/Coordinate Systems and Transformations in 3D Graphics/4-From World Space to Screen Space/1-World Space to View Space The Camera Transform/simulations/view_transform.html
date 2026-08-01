@@ -1,0 +1,536 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="sim-paper" content="full">
+  <title>World Space and Camera Space</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    body {
+      color: var(--sk-ink-black);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      user-select: none;
+    }
+
+    .scene-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      width: 100%;
+      height: 100%;
+    }
+
+    .viewport {
+      position: relative;
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
+      border-right: 1px solid rgba(45, 42, 38, 0.16);
+    }
+
+    .viewport:last-child { border-right: 0; }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    canvas.dragging { cursor: grabbing; }
+    .readout {
+      position: absolute;
+      bottom: 112px;
+      left: 15px;
+      z-index: 2;
+      width: min(270px, calc(100% - 30px));
+      padding: 8px 10px;
+      border: 1px solid rgba(45, 42, 38, 0.12);
+      border-radius: 5px;
+      background: rgba(251, 246, 234, 0.83);
+      font-size: 10px;
+      line-height: 1.55;
+      pointer-events: none;
+    }
+
+    .readout-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .readout-value { font-weight: 700; text-align: right; }
+
+    .controls {
+      position: absolute;
+      bottom: 16px;
+      left: 50%;
+      z-index: 6;
+      width: min(760px, calc(100vw - 32px));
+      padding: 10px 12px;
+      border: 1px solid rgba(45, 42, 38, 0.14);
+      border-radius: 7px;
+      background: rgba(253, 249, 184, 0.93);
+      box-shadow: 2px 3px 8px rgba(0, 0, 0, 0.16);
+      transform: translateX(-50%) rotate(0.25deg);
+    }
+
+    .stage-buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+
+    button {
+      border: 1px solid rgba(45, 42, 38, 0.18);
+      border-radius: 4px;
+      color: var(--sk-ink-black);
+      background: rgba(255, 255, 255, 0.34);
+      font: inherit;
+      font-size: 10px;
+      cursor: pointer;
+    }
+
+    button:hover { background: rgba(255, 255, 255, 0.63); }
+    button:active { transform: translateY(1px); }
+
+    .stage-button { min-height: 29px; padding: 4px 7px; text-align: left; }
+    .stage-button.active {
+      border-color: rgba(47, 79, 143, 0.48);
+      color: var(--sk-ink-blue);
+      background: rgba(47, 79, 143, 0.12);
+      font-weight: 700;
+    }
+
+    .playback { display: flex; align-items: center; gap: 8px; margin-top: 9px; }
+    .small-button { width: 58px; min-height: 27px; padding: 4px 6px; font-weight: 700; }
+    input[type="range"] { flex: 1; min-width: 0; accent-color: var(--sk-ink-blue); }
+    .progress { width: 35px; color: var(--sk-ink-pencil); font-size: 10px; text-align: right; }
+
+    @media (max-width: 760px) {
+      .scene-grid { grid-template-columns: 1fr; grid-template-rows: repeat(2, minmax(0, 1fr)); }
+      .viewport { border-right: 0; border-bottom: 1px solid rgba(45, 42, 38, 0.16); }
+      .viewport:last-child { border-bottom: 0; }
+      .controls { bottom: 8px; width: calc(100vw - 20px); }
+      .readout { bottom: 112px; left: 8px; width: min(240px, calc(100% - 16px)); font-size: 8px; }
+    }
+
+    @media (max-height: 580px) {
+      .controls { padding-top: 7px; padding-bottom: 7px; }
+    }
+  </style>
+</head>
+<body class="sk-page">
+  <main class="scene-grid">
+    <section class="viewport" aria-label="World-space scene">
+      <canvas id="worldCanvas"></canvas>
+      <div class="readout">
+        <div class="readout-row"><span class="ink-pencil">selected vertex</span><span id="worldPointReadout" class="readout-value ink-red"></span></div>
+        <div class="readout-row"><span class="ink-pencil">camera position</span><span id="eyeReadout" class="readout-value ink-black"></span></div>
+      </div>
+    </section>
+
+    <section class="viewport" aria-label="Camera-space reference frame">
+      <canvas id="cameraCanvas"></canvas>
+      <div class="readout">
+        <div class="readout-row"><span class="ink-pencil">same vertex</span><span id="currentPointReadout" class="readout-value ink-green"></span></div>
+        <div class="readout-row"><span class="ink-pencil">frame origin</span><span id="originReadout" class="readout-value ink-black"></span></div>
+        <div class="readout-row"><span class="ink-pencil">camera → vertex</span><span id="distanceReadout" class="readout-value ink-black"></span></div>
+      </div>
+    </section>
+  </main>
+
+  <section class="controls" aria-label="Animation controls">
+    <div class="stage-buttons">
+      <button class="stage-button active" type="button" data-stage="0">1. World frame</button>
+      <button class="stage-button" type="button" data-stage="1">2. Move origin to eye</button>
+      <button class="stage-button" type="button" data-stage="2">3. Rotate into camera basis</button>
+    </div>
+    <div class="playback">
+      <button id="playPauseButton" class="small-button" type="button">Pause</button>
+      <button id="replayButton" class="small-button" type="button">Replay</button>
+      <input id="progressSlider" type="range" min="0" max="1" step="0.001" value="0" aria-label="Animation progress">
+      <span id="progressReadout" class="progress">0%</span>
+    </div>
+  </section>
+
+  <script>
+    const worldCanvas = document.getElementById('worldCanvas');
+    const cameraCanvas = document.getElementById('cameraCanvas');
+    const worldSketch = Sketch.attach(worldCanvas);
+    const cameraSketch = Sketch.attach(cameraCanvas);
+
+    const ui = {
+      worldPoint: document.getElementById('worldPointReadout'),
+      eye: document.getElementById('eyeReadout'),
+      currentPoint: document.getElementById('currentPointReadout'),
+      origin: document.getElementById('originReadout'),
+      distance: document.getElementById('distanceReadout'),
+      playPause: document.getElementById('playPauseButton'),
+      replay: document.getElementById('replayButton'),
+      slider: document.getElementById('progressSlider'),
+      progress: document.getElementById('progressReadout'),
+      stageButtons: [...document.querySelectorAll('[data-stage]')]
+    };
+
+    // Tiny vector helpers are all that is needed for the view-transform math.
+    const add = (a, b) => a.map((value, index) => value + b[index]);
+    const sub = (a, b) => a.map((value, index) => value - b[index]);
+    const scale = (v, amount) => v.map(value => value * amount);
+    const lerp = (a, b, t) => add(scale(a, 1 - t), scale(b, t));
+    const dot = (a, b) => a.reduce((sum, value, index) => sum + value * b[index], 0);
+    const cross = (a, b) => [
+      a[1] * b[2] - a[2] * b[1],
+      a[2] * b[0] - a[0] * b[2],
+      a[0] * b[1] - a[1] * b[0]
+    ];
+    const length = v => Math.hypot(...v);
+    const normalize = v => scale(v, 1 / length(v));
+
+    const world = {
+      eye: [3, 2, 5],
+      target: [0, 0.4, 0],
+      up: [0, 1, 0],
+      cubeCenter: [-1.2, 0.9, -0.8],
+      cubeSize: [2, 1.6, 1.8],
+      point: [-0.2, 1.7, 0.1]
+    };
+
+    const forward = normalize(sub(world.target, world.eye));
+    const cameraAxes = {
+      x: normalize(cross(forward, world.up)),
+      y: null,
+      z: null
+    };
+    cameraAxes.y = normalize(cross(cameraAxes.x, forward));
+    cameraAxes.z = scale(forward, -1);
+    const cameraToPointDistance = length(sub(world.point, world.eye));
+
+    const state = {
+      progress: 0,
+      playing: true,
+      scrubbing: false,
+      lastTime: null,
+      cycleMs: 11000,
+      observerYaw: 0.70,
+      observerPitch: 0.42,
+      orbit: null
+    };
+    function formatNumber(value) {
+      const clean = Math.abs(value) < 0.005 ? 0 : value;
+      return clean.toFixed(2).replace('-', '−');
+    }
+
+    function formatVector(v) {
+      return `(${v.map(formatNumber).join(', ')})`;
+    }
+
+    function smootherStep(t) {
+      const clamped = Math.max(0, Math.min(1, t));
+      return clamped * clamped * clamped * (clamped * (clamped * 6 - 15) + 10);
+    }
+
+    function phase(progress, start, end) {
+      return smootherStep((progress - start) / (end - start));
+    }
+
+    function stageFor(progress) {
+      if (progress < 0.34) return 0;
+      if (progress < 0.68) return 1;
+      return 2;
+    }
+
+    function frameAt(progress) {
+      const translationT = phase(progress, 0.22, 0.57);
+      const rotationT = phase(progress, 0.57, 0.90);
+      const origin = scale(world.eye, translationT);
+
+      // Blend two rotation axes, then rebuild the third with cross products.
+      // The result remains an orthonormal frame throughout the explanation.
+      const x = normalize(lerp([1, 0, 0], cameraAxes.x, rotationT));
+      const tentativeZ = normalize(lerp([0, 0, 1], cameraAxes.z, rotationT));
+      const y = normalize(cross(tentativeZ, x));
+      const z = normalize(cross(x, y));
+      const displacement = sub(world.point, origin);
+      const coordinates = [dot(x, displacement), dot(y, displacement), dot(z, displacement)];
+
+      return { origin, axes: { x, y, z }, coordinates, rotationT };
+    }
+
+    // This observer only turns 3D positions into paper pixels; it is not the
+    // camera whose transform is being taught. It uses a complete look-at frame,
+    // so orbiting upward/downward rotates the view instead of shearing it.
+    function makeProjector(width, height) {
+      const centerX = width * 0.5;
+      const centerY = height * 0.56;
+      const target = [0.5, 0.8, 1.2];
+      const distance = 18;
+      const horizontalDistance = Math.cos(state.observerPitch) * distance;
+      const observer = add(target, [
+        Math.sin(state.observerYaw) * horizontalDistance,
+        Math.sin(state.observerPitch) * distance,
+        Math.cos(state.observerYaw) * horizontalDistance
+      ]);
+      const observerForward = normalize(sub(target, observer));
+      const observerRight = normalize(cross(observerForward, [0, 1, 0]));
+      const observerUp = cross(observerRight, observerForward);
+      const focalLength = Math.min(width, height) * 1.02;
+
+      return point => {
+        const relative = sub(point, observer);
+        const depth = Math.max(0.1, dot(relative, observerForward));
+        return [
+          centerX + (dot(relative, observerRight) / depth) * focalLength,
+          centerY - (dot(relative, observerUp) / depth) * focalLength
+        ];
+      };
+    }
+
+    function drawLabel(sketch, label, point, options = {}) {
+      sketch.text(label, point[0] + (options.dx ?? 5), point[1] + (options.dy ?? -5), {
+        ink: options.ink ?? 'pencil',
+        size: options.size ?? 15,
+        boil: false
+      });
+    }
+
+    function drawGrid(sketch, project, origin, axes, span = 2) {
+      for (let i = -span; i <= span; i += 1) {
+        const xStart = add(add(origin, scale(axes.x, -span)), scale(axes.z, i));
+        const xEnd = add(add(origin, scale(axes.x, span)), scale(axes.z, i));
+        const zStart = add(add(origin, scale(axes.z, -span)), scale(axes.x, i));
+        const zEnd = add(add(origin, scale(axes.z, span)), scale(axes.x, i));
+        const [ax, ay] = project(xStart);
+        const [bx, by] = project(xEnd);
+        const [cx, cy] = project(zStart);
+        const [dx, dy] = project(zEnd);
+        sketch.ruler(ax, ay, bx, by, { ink: 'pencilLight', width: 0.7 });
+        sketch.ruler(cx, cy, dx, dy, { ink: 'pencilLight', width: 0.7 });
+      }
+    }
+
+    function drawFrame(sketch, project, origin, axes, name, finalFrame) {
+      const drawAxis = (direction, ink, label, length = 1.75) => {
+        const start = project(origin);
+        const end = project(add(origin, scale(direction, length)));
+        sketch.arrow(start[0], start[1], end[0], end[1], {
+          ink, width: 2, headLength: 8, roughness: 0.65, boil: false
+        });
+        drawLabel(sketch, label, end, { ink, size: 13 });
+      };
+
+      drawAxis(axes.x, 'blue', finalFrame ? '+X right' : 'world +X');
+      drawAxis(axes.y, 'green', finalFrame ? '+Y up' : 'world +Y');
+      drawAxis(axes.z, 'pencil', finalFrame ? '+Z back' : 'world +Z', 1.45);
+      drawAxis(scale(axes.z, -1), 'orange', '−Z forward', 1.55);
+
+      const point = project(origin);
+      sketch.point(point[0], point[1], { ink: 'black', r: 3.5, roughness: 0.45, label: name, size: 14, boil: false });
+    }
+
+    function cubeCorners() {
+      const [cx, cy, cz] = world.cubeCenter;
+      const [sx, sy, sz] = scale(world.cubeSize, 0.5);
+      return [
+        [cx - sx, cy - sy, cz - sz], [cx + sx, cy - sy, cz - sz],
+        [cx + sx, cy + sy, cz - sz], [cx - sx, cy + sy, cz - sz],
+        [cx - sx, cy - sy, cz + sz], [cx + sx, cy - sy, cz + sz],
+        [cx + sx, cy + sy, cz + sz], [cx - sx, cy + sy, cz + sz]
+      ];
+    }
+
+    function drawCube(sketch, project) {
+      const points = cubeCorners().map(project);
+      [[3, 2, 6, 7], [1, 2, 6, 5], [0, 3, 7, 4]].forEach(face => {
+        sketch.polygon(face.map(index => points[index]), {
+          ink: 'pencil', fill: '#e5decd', fillStyle: 'solid', width: 1.4, roughness: 0.42, boil: false
+        });
+      });
+
+      [[0, 1], [1, 2], [2, 3], [3, 0], [4, 5], [5, 6], [6, 7], [7, 4], [0, 4], [1, 5], [2, 6], [3, 7]]
+        .forEach(([a, b]) => sketch.line(points[a][0], points[a][1], points[b][0], points[b][1], {
+          ink: 'pencil', width: 1.45, roughness: 0.48, boil: false
+        }));
+    }
+
+    function drawCamera(sketch, project) {
+      const halfRight = scale(cameraAxes.x, 0.31);
+      const halfUp = scale(cameraAxes.y, 0.22);
+      const corners = [
+        add(add(world.eye, scale(halfRight, -1)), scale(halfUp, -1)),
+        add(add(world.eye, halfRight), scale(halfUp, -1)),
+        add(add(world.eye, halfRight), halfUp),
+        add(add(world.eye, scale(halfRight, -1)), halfUp)
+      ].map(project);
+      sketch.polygon(corners, { ink: 'black', fill: 'black', fillStyle: 'solid', roughness: 0.45, boil: false });
+
+      const eye = project(world.eye);
+      const lens = project(add(world.eye, scale(forward, 0.85)));
+      sketch.arrow(eye[0], eye[1], lens[0], lens[1], {
+        ink: 'orange', width: 2.2, headLength: 9, roughness: 0.5, boil: false
+      });
+      drawLabel(sketch, 'camera E', eye, { ink: 'black', dx: 8, dy: 17, size: 14 });
+    }
+
+    function drawPhysicalScene(sketch, project) {
+      drawCube(sketch, project);
+      const eye = project(world.eye);
+      const target = project(world.target);
+      const selected = project(world.point);
+      sketch.ruler(eye[0], eye[1], target[0], target[1], { ink: 'orange', width: 1, dash: [5, 5] });
+      sketch.ruler(eye[0], eye[1], selected[0], selected[1], { ink: 'red', width: 1, dash: [5, 5] });
+      sketch.point(target[0], target[1], { ink: 'black', r: 3.5, roughness: 0.4, label: 'target', size: 13, boil: false });
+      sketch.point(selected[0], selected[1], { ink: 'red', r: 5.5, roughness: 0.42, label: 'P', size: 16, boil: false });
+      drawCamera(sketch, project);
+    }
+
+    function drawGuides(sketch, project, frame) {
+      const [x, y, z] = frame.coordinates;
+      const alongX = add(frame.origin, scale(frame.axes.x, x));
+      const alongXY = add(alongX, scale(frame.axes.y, y));
+      const pieces = [
+        [frame.origin, alongX, 'blue'],
+        [alongX, alongXY, 'green'],
+        [alongXY, world.point, 'orange']
+      ];
+      pieces.forEach(([from, to, ink]) => {
+        const start = project(from);
+        const end = project(to);
+        sketch.ruler(start[0], start[1], end[0], end[1], { ink, width: 1.35, dash: [6, 5] });
+      });
+    }
+
+    function drawViewport(sketch, canvas, side, frame, stage) {
+      const { width, height } = Sketch.fit(canvas);
+      sketch.clear({ rules: 'blank', margin: false });
+      const project = makeProjector(width, height);
+
+      if (side === 'world') {
+        sketch.text('WORLD SPACE', 16, 28, { ink: 'black', size: 22, weight: 700, boil: false });
+        sketch.text('drag to orbit the observer · measure from world origin', 17, 46, { ink: 'pencil', size: 13, boil: false });
+        drawGrid(sketch, project, [0, 0, 0], { x: [1, 0, 0], y: [0, 1, 0], z: [0, 0, 1] }, 2);
+        drawPhysicalScene(sketch, project);
+        drawFrame(sketch, project, [0, 0, 0], { x: [1, 0, 0], y: [0, 1, 0], z: [0, 0, 1] }, 'O', false);
+        return;
+      }
+
+      const subtitle = stage === 0 ? 'using the world frame' : stage === 1 ? 'moving the origin' : 'using the camera frame';
+      sketch.text('SAME PHYSICAL SCENE', 16, 28, { ink: 'black', size: 22, weight: 700, boil: false });
+      sketch.text(subtitle, 17, 46, { ink: stage === 2 ? 'blue' : 'pencil', size: 13, boil: false });
+      drawGrid(sketch, project, frame.origin, frame.axes, frame.rotationT > 0.75 ? 1.5 : 2);
+      drawPhysicalScene(sketch, project);
+      drawGuides(sketch, project, frame);
+      drawFrame(sketch, project, frame.origin, frame.axes, stage === 2 ? 'camera' : 'frame', stage === 2);
+    }
+
+    function updateHud(frame, stage) {
+      ui.currentPoint.textContent = formatVector(frame.coordinates);
+      ui.origin.textContent = formatVector(frame.origin);
+      ui.slider.value = String(state.progress);
+      ui.progress.textContent = `${Math.round(state.progress * 100)}%`;
+      ui.stageButtons.forEach((button, index) => button.classList.toggle('active', index === stage));
+    }
+
+    function draw() {
+      const frame = frameAt(state.progress);
+      const stage = stageFor(state.progress);
+      drawViewport(worldSketch, worldCanvas, 'world', frame, stage);
+      drawViewport(cameraSketch, cameraCanvas, 'camera', frame, stage);
+      updateHud(frame, stage);
+    }
+
+    function setProgress(progress) {
+      state.progress = Math.max(0, Math.min(1, progress));
+      draw();
+    }
+
+    function replay() {
+      state.playing = true;
+      state.lastTime = null;
+      ui.playPause.textContent = 'Pause';
+      setProgress(0);
+    }
+
+    function jumpToStage(stage) {
+      state.playing = false;
+      state.lastTime = null;
+      ui.playPause.textContent = 'Play';
+      setProgress([0.08, 0.48, 0.82][stage]);
+    }
+
+    ui.playPause.addEventListener('click', () => {
+      state.playing = !state.playing;
+      state.lastTime = null;
+      ui.playPause.textContent = state.playing ? 'Pause' : 'Play';
+    });
+    ui.replay.addEventListener('click', replay);
+    ui.slider.addEventListener('pointerdown', () => { state.scrubbing = true; });
+    window.addEventListener('pointerup', () => { state.scrubbing = false; });
+    ui.slider.addEventListener('input', () => {
+      state.playing = false;
+      ui.playPause.textContent = 'Play';
+      setProgress(Number(ui.slider.value));
+    });
+    ui.stageButtons.forEach(button => button.addEventListener('click', () => jumpToStage(Number(button.dataset.stage))));
+
+    function attachOrbitControls(canvas) {
+      canvas.addEventListener('pointerdown', event => {
+        if (event.button !== 0) return;
+        event.preventDefault();
+        state.orbit = { pointerId: event.pointerId, x: event.clientX, y: event.clientY };
+        canvas.setPointerCapture(event.pointerId);
+        canvas.classList.add('dragging');
+      });
+
+      canvas.addEventListener('pointermove', event => {
+        if (!state.orbit || state.orbit.pointerId !== event.pointerId) return;
+        state.observerYaw += (event.clientX - state.orbit.x) * 0.008;
+        state.observerPitch = Math.max(0.12, Math.min(1.22,
+          state.observerPitch - (event.clientY - state.orbit.y) * 0.006
+        ));
+        state.orbit.x = event.clientX;
+        state.orbit.y = event.clientY;
+        draw();
+      });
+
+      const endOrbit = event => {
+        if (!state.orbit || state.orbit.pointerId !== event.pointerId) return;
+        state.orbit = null;
+        canvas.classList.remove('dragging');
+        if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+      };
+      canvas.addEventListener('pointerup', endOrbit);
+      canvas.addEventListener('pointercancel', endOrbit);
+    }
+
+    attachOrbitControls(worldCanvas);
+    attachOrbitControls(cameraCanvas);
+    window.addEventListener('resize', draw);
+
+    ui.worldPoint.textContent = formatVector(world.point);
+    ui.eye.textContent = formatVector(world.eye);
+    ui.distance.textContent = cameraToPointDistance.toFixed(2);
+
+    function animate(time) {
+      if (state.lastTime === null) state.lastTime = time;
+      const delta = Math.min(time - state.lastTime, 50);
+      state.lastTime = time;
+      if (state.playing && !state.scrubbing) {
+        state.progress += delta / state.cycleMs;
+        if (state.progress > 1) state.progress = 0;
+      }
+      draw();
+      requestAnimationFrame(animate);
+    }
+
+    draw();
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>

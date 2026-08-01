@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="sim-paper" content="full">
+  <title>Perlin gradient cell</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    body { user-select: none; }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+<body class="sk-page">
+  <canvas id="perlinCanvas" aria-label="Animated Perlin noise gradient lattice"></canvas>
+
+  <script>
+    'use strict';
+
+    const canvas = document.getElementById('perlinCanvas');
+    const sketch = Sketch.attach(canvas, { seed: 29, boil: 1.4 });
+    const context = canvas.getContext('2d');
+    const directions = [
+      [1, 0], [Math.SQRT1_2, Math.SQRT1_2], [0, 1], [-Math.SQRT1_2, Math.SQRT1_2],
+      [-1, 0], [-Math.SQRT1_2, -Math.SQRT1_2], [0, -1], [Math.SQRT1_2, -Math.SQRT1_2]
+    ];
+    const corners = [
+      { x: 0, y: 0, id: '00', ink: 'red' },
+      { x: 1, y: 0, id: '10', ink: 'blue' },
+      { x: 0, y: 1, id: '01', ink: 'green' },
+      { x: 1, y: 1, id: '11', ink: 'purple' }
+    ];
+
+    let width = 0;
+    let height = 0;
+
+    function hash(x, y) {
+      let value = Math.imul(x | 0, 0x1f123bb5) ^ Math.imul(y | 0, 0x5f356495) ^ 29;
+      value = Math.imul(value ^ (value >>> 16), 0x45d9f3b);
+      value = Math.imul(value ^ (value >>> 16), 0x45d9f3b);
+      return (value ^ (value >>> 16)) >>> 0;
+    }
+
+    function gradientAt(x, y) {
+      return directions[hash(x, y) % directions.length];
+    }
+
+    function fade(value) {
+      return value * value * value * (value * (value * 6 - 15) + 10);
+    }
+
+    function lerp(a, b, amount) {
+      return a + (b - a) * amount;
+    }
+
+    function fixed(value) {
+      return `${value < 0 ? '−' : ''}${Math.abs(value).toFixed(3)}`;
+    }
+
+    function layout() {
+      const readoutHeight = Math.max(142, Math.min(166, height * 0.265));
+      const top = 20;
+      const gridHeight = Math.max(180, height - readoutHeight - top - 14);
+      const cell = Math.max(54, Math.min((width - 34) / 3.45, gridHeight / 3.32));
+      const centerY = top + gridHeight * 0.5;
+      return {
+        cell,
+        originX: width * 0.5 - cell * 0.5,
+        originY: centerY + cell * 0.5,
+        readoutY: height - readoutHeight + 12,
+        readoutHeight
+      };
+    }
+
+    function pointFor(x, y, scene) {
+      return [scene.originX + x * scene.cell, scene.originY - y * scene.cell];
+    }
+
+    function isActive(x, y) {
+      return x >= 0 && x <= 1 && y >= 0 && y <= 1;
+    }
+
+    function drawGradient(x, y, scene) {
+      const [screenX, screenY] = pointFor(x, y, scene);
+      const [gx, gy] = gradientAt(x, y);
+      const active = isActive(x, y);
+      const corner = corners.find((item) => item.x === x && item.y === y);
+      const length = scene.cell * (active ? 0.28 : 0.2);
+      const ink = active ? corner.ink : 'pencil';
+
+      sketch.point(screenX, screenY, { ink: active ? ink : 'pencilLight', r: active ? 2.6 : 1.7, boil: false });
+      sketch.arrow(screenX, screenY, screenX + gx * length, screenY - gy * length, {
+        ink,
+        width: active ? 2.1 : 1.25,
+        roughness: active ? 0.5 : 0.42,
+        headLength: active ? 8 : 6,
+        boil: false
+      });
+    }
+
+    function drawGrid(scene) {
+      const [left, top] = pointFor(-1, 2, scene);
+      const [right, bottom] = pointFor(2, -1, scene);
+
+      context.fillStyle = 'rgba(242, 217, 92, 0.17)';
+      context.fillRect(scene.originX, scene.originY - scene.cell, scene.cell, scene.cell);
+
+      for (let value = -1; value <= 2; value += 1) {
+        const [x] = pointFor(value, 0, scene);
+        const [, y] = pointFor(0, value, scene);
+        sketch.ruler(x, top, x, bottom, { ink: 'pencilLight', width: 1 });
+        sketch.ruler(left, y, right, y, { ink: 'pencilLight', width: 1 });
+      }
+
+      sketch.rect(scene.originX, scene.originY - scene.cell, scene.cell, scene.cell, {
+        ink: 'black',
+        width: 1.45,
+        roughness: 0.48,
+        boil: false
+      });
+
+      for (let y = -1; y <= 2; y += 1) {
+        for (let x = -1; x <= 2; x += 1) drawGradient(x, y, scene);
+      }
+
+      const labelSize = Math.max(10, Math.min(15, scene.cell * 0.115));
+      sketch.text('(0,0)', scene.originX + 7, scene.originY + labelSize + 6, { ink: 'red', size: labelSize, boil: false });
+      sketch.text('(1,0)', scene.originX + scene.cell - 8, scene.originY + labelSize + 6, { ink: 'blue', size: labelSize, align: 'right', boil: false });
+      sketch.text('(0,1)', scene.originX + 7, scene.originY - scene.cell - 7, { ink: 'green', size: labelSize, baseline: 'bottom', boil: false });
+      sketch.text('(1,1)', scene.originX + scene.cell - 8, scene.originY - scene.cell - 7, { ink: 'purple', size: labelSize, align: 'right', baseline: 'bottom', boil: false });
+    }
+
+    function drawSample(u, v, scene) {
+      const [sampleX, sampleY] = pointFor(u, v, scene);
+      const values = {};
+
+      for (const corner of corners) {
+        const [cornerX, cornerY] = pointFor(corner.x, corner.y, scene);
+        const [gx, gy] = gradientAt(corner.x, corner.y);
+        const dx = u - corner.x;
+        const dy = v - corner.y;
+        values[`d${corner.id}`] = gx * dx + gy * dy;
+        sketch.ruler(cornerX, cornerY, sampleX, sampleY, {
+          ink: corner.ink,
+          width: 1.05,
+          dash: [5, 6]
+        });
+      }
+
+      const fu = fade(u);
+      const fv = fade(v);
+      const a = lerp(values.d00, values.d10, fu);
+      const b = lerp(values.d01, values.d11, fu);
+      const noise = lerp(a, b, fv);
+
+      sketch.circle(sampleX, sampleY, 7, { ink: 'black', width: 1.45, roughness: 0.55, boil: false });
+      sketch.point(sampleX, sampleY, { ink: 'black', r: 3.2, boil: false });
+
+      const labelSize = Math.max(10, Math.min(14, scene.cell * 0.105));
+      const labelX = sampleX + (sampleX > width * 0.61 ? -9 : 9);
+      const align = sampleX > width * 0.61 ? 'right' : 'left';
+      sketch.text(`p=(${u.toFixed(2)},${v.toFixed(2)})`, labelX, sampleY - 10, {
+        ink: 'black',
+        size: labelSize,
+        align,
+        boil: false
+      });
+
+      return { ...values, fu, fv, a, b, noise };
+    }
+
+    function drawReadout(scene, values) {
+      const separatorY = scene.readoutY - 8;
+      const left = Math.max(18, width * 0.08);
+      const right = width * 0.53;
+      const row = Math.max(22, Math.min(31, scene.readoutHeight * 0.19));
+      const size = Math.max(12, Math.min(17, width * 0.031));
+
+      sketch.ruler(18, separatorY, width - 18, separatorY, { ink: 'pencilLight', width: 1 });
+
+      sketch.text(`d00=${fixed(values.d00)}`, left, scene.readoutY + row, { ink: 'red', size, boil: false });
+      sketch.text(`d10=${fixed(values.d10)}`, right, scene.readoutY + row, { ink: 'blue', size, boil: false });
+      sketch.text(`d01=${fixed(values.d01)}`, left, scene.readoutY + row * 2, { ink: 'green', size, boil: false });
+      sketch.text(`d11=${fixed(values.d11)}`, right, scene.readoutY + row * 2, { ink: 'purple', size, boil: false });
+      sketch.text(`f(u)=${fixed(values.fu)}`, left, scene.readoutY + row * 3, { ink: 'pencil', size, boil: false });
+      sketch.text(`f(v)=${fixed(values.fv)}`, right, scene.readoutY + row * 3, { ink: 'pencil', size, boil: false });
+      sketch.text(`a=${fixed(values.a)}`, left, scene.readoutY + row * 4, { ink: 'blue', size, boil: false });
+      sketch.text(`b=${fixed(values.b)}`, width * 0.39, scene.readoutY + row * 4, { ink: 'purple', size, boil: false });
+      sketch.text(`N=${fixed(values.noise)}`, width - left, scene.readoutY + row * 4, { ink: 'black', size, align: 'right', boil: false });
+    }
+
+    function draw(time) {
+      const fitted = Sketch.fit(canvas);
+      width = fitted.width;
+      height = fitted.height;
+      const scene = layout();
+      const phase = time * 0.00052;
+      const u = 0.5 + 0.31 * Math.sin(phase);
+      const v = 0.5 + 0.29 * Math.sin(phase * 1.41 + 1.05);
+
+      sketch.clear({ paper: false });
+      drawGrid(scene);
+      const values = drawSample(u, v, scene);
+      drawReadout(scene, values);
+    }
+
+    function animate(time) {
+      draw(time);
+      requestAnimationFrame(animate);
+    }
+
+    draw(0);
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>

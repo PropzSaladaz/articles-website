@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="sim-paper" content="full">
+  <title>Continuous Real Elliptic Curve</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap');
+    body { font-family: 'Fira Code', monospace; }
+  </style>
+</head>
+<body class="sk-page w-screen h-screen overflow-hidden m-0 p-0 relative select-none">
+  <canvas id="curveCanvas" class="absolute inset-0 w-full h-full block" aria-label="Animated continuous elliptic curve over the real numbers"></canvas>
+
+  <section class="absolute left-4 top-4 md:left-6 md:top-6 z-10 w-[218px] sm:w-[232px] sk-sticky pointer-events-auto" aria-label="Real elliptic curve information">
+    <div class="border-b border-black/10 pb-2.5">
+      <p class="sk-hand text-xl font-semibold ink-black leading-none">Over the real numbers</p>
+      <p class="mt-2 text-[11px] font-bold ink-green leading-relaxed">y² = x³ + x + 1</p>
+      <p class="mt-1 text-[9px] ink-pencil">x and y can vary continuously.</p>
+    </div>
+
+    <div class="mt-2.5 text-[10px] font-mono">
+      <div class="sk-row">
+        <span class="ink-pencil">curve begins</span>
+        <span class="font-bold ink-green">(−0.68, 0)</span>
+      </div>
+      <div class="sk-row mt-1">
+        <span id="traceLabel" class="ink-pencil">tracing branches</span>
+        <span id="traceProgress" class="font-bold ink-green">0%</span>
+      </div>
+    </div>
+
+    <button id="replayButton" type="button" class="mt-2.5 w-full rounded-md border border-black/10 bg-black/5 px-2 py-1.5 text-[9px] font-semibold ink-pencil transition-colors hover:bg-black/10">
+      Replay curve trace
+    </button>
+  </section>
+
+  <script>
+    const canvas = document.getElementById('curveCanvas');
+    const sk = Sketch.attach(canvas);
+    const traceLabel = document.getElementById('traceLabel');
+    const traceProgress = document.getElementById('traceProgress');
+    const replayButton = document.getElementById('replayButton');
+
+    const ROOT_X = -0.6823278038;
+    const INTRO_PAUSE = 400;
+    const TRACE_DURATION = 2700;
+    const HOLD_AFTER_TRACE = 1500;
+    const CURVE_STYLE = { ink: 'green', width: 2.7, roughness: 0.55 };
+
+    const state = {
+      elapsed: 0,
+      lastFrame: null
+    };
+
+    function curveValue(x) {
+      return x * x * x + x + 1;
+    }
+
+    function curveY(x) {
+      const value = curveValue(x);
+      return value >= -1e-8 ? Math.sqrt(Math.max(value, 0)) : null;
+    }
+
+    function easeInOut(value) {
+      return value < 0.5
+        ? 4 * value * value * value
+        : 1 - Math.pow(-2 * value + 2, 3) / 2;
+    }
+
+    function traceState() {
+      const period = INTRO_PAUSE + TRACE_DURATION + HOLD_AFTER_TRACE;
+      const phase = state.elapsed % period;
+      if (phase < INTRO_PAUSE) return { progress: 0, tracing: false, complete: false };
+      if (phase < INTRO_PAUSE + TRACE_DURATION) {
+        return {
+          progress: easeInOut((phase - INTRO_PAUSE) / TRACE_DURATION),
+          tracing: true,
+          complete: false
+        };
+      }
+      return { progress: 1, tracing: false, complete: true };
+    }
+
+    function getLayout() {
+      const compact = canvas.width < 620;
+      const scale = compact
+        ? Math.min(canvas.width / 8.2, canvas.height / 9.2)
+        : Math.min(canvas.width / 10.2, canvas.height / 8.2);
+      return {
+        compact,
+        originX: compact ? canvas.width * 0.52 : canvas.width * 0.59,
+        originY: compact ? canvas.height * 0.61 : canvas.height * 0.54,
+        scale
+      };
+    }
+
+    function toScreenX(x, layout) {
+      return layout.originX + x * layout.scale;
+    }
+
+    function toScreenY(y, layout) {
+      return layout.originY - y * layout.scale;
+    }
+
+    function maxVisibleX(layout) {
+      const yLimit = Math.min(
+        (layout.originY - 24) / layout.scale,
+        (canvas.height - layout.originY - 24) / layout.scale
+      );
+      const target = yLimit * yLimit;
+      let low = ROOT_X;
+      let high = 6;
+
+      // x³ + x + 1 is strictly increasing, so bisection finds the point
+      // where the branches reach the edge of the visible coordinate plane.
+      for (let i = 0; i < 40; i += 1) {
+        const mid = (low + high) / 2;
+        if (curveValue(mid) < target) low = mid;
+        else high = mid;
+      }
+      return low;
+    }
+
+    function branchPoints(sign, reveal, layout, endX) {
+      if (reveal <= 0) return [];
+      const lastX = ROOT_X + (endX - ROOT_X) * reveal;
+      const steps = Math.max(2, Math.ceil(34 * reveal));
+      const points = [];
+
+      for (let index = 0; index <= steps; index += 1) {
+        const x = ROOT_X + (lastX - ROOT_X) * index / steps;
+        const y = curveY(x);
+        if (y !== null) points.push([toScreenX(x, layout), toScreenY(sign * y, layout)]);
+      }
+      return points;
+    }
+
+    function drawBranches(layout, trace) {
+      const endX = maxVisibleX(layout);
+      const upper = branchPoints(1, trace.progress, layout, endX);
+      const lower = branchPoints(-1, trace.progress, layout, endX);
+
+      sk.curve(upper, CURVE_STYLE);
+      sk.curve(lower, CURVE_STYLE);
+
+      const root = { x: toScreenX(ROOT_X, layout), y: toScreenY(0, layout) };
+      sk.circle(root.x, root.y, 5.5, { ink: 'green', fill: 'green', fillStyle: 'solid', roughness: 0.4 });
+      sk.text(`(${ROOT_X.toFixed(2)}, 0)`, root.x + 11, root.y - 11, {
+        ink: 'green', size: layout.compact ? 13 : 15, boil: false
+      });
+
+      if (trace.progress > 0) {
+        const x = ROOT_X + (endX - ROOT_X) * trace.progress;
+        const y = curveY(x);
+        const upperTip = { x: toScreenX(x, layout), y: toScreenY(y, layout) };
+        const lowerTip = { x: toScreenX(x, layout), y: toScreenY(-y, layout) };
+        sk.circle(upperTip.x, upperTip.y, 4.5, { ink: 'blue', fill: 'blue', fillStyle: 'solid', roughness: 0.35 });
+        sk.circle(lowerTip.x, lowerTip.y, 4.5, { ink: 'blue', fill: 'blue', fillStyle: 'solid', roughness: 0.35 });
+      }
+    }
+
+    function updateHud(trace) {
+      traceProgress.textContent = `${Math.round(trace.progress * 100)}%`;
+      traceLabel.textContent = trace.complete
+        ? 'two continuous branches'
+        : trace.tracing
+          ? 'tracing branches'
+          : 'starting at the root';
+    }
+
+    function draw() {
+      const layout = getLayout();
+      const trace = traceState();
+
+      // The graph uses one math-aligned grid; decorative paper rules would
+      // compete with the coordinate reference system.
+      sk.clear({ paper: false });
+      sk.grid({ originX: layout.originX, originY: layout.originY, step: layout.scale });
+      sk.axes({ originX: layout.originX, originY: layout.originY, step: layout.scale, ink: 'pencil' });
+      drawBranches(layout, trace);
+      updateHud(trace);
+
+      sk.text('A smooth, continuous curve', layout.originX + layout.scale * 1.5, 34, {
+        ink: 'pencil', size: layout.compact ? 15 : 17, align: 'center', boil: false
+      });
+    }
+
+    function replay() {
+      state.elapsed = 0;
+      state.lastFrame = null;
+      draw();
+    }
+
+    function animationLoop(timestamp) {
+      if (state.lastFrame !== null) {
+        // The article pauses off-screen iframes, so invisible time should not
+        // advance the branch-tracing animation.
+        state.elapsed += Math.min(timestamp - state.lastFrame, 50);
+      }
+      state.lastFrame = timestamp;
+      draw();
+      requestAnimationFrame(animationLoop);
+    }
+
+    function fitCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      draw();
+    }
+
+    replayButton.addEventListener('click', replay);
+    window.addEventListener('resize', fitCanvas);
+    window.addEventListener('load', () => {
+      fitCanvas();
+      requestAnimationFrame(animationLoop);
+    });
+  </script>
+</body>
+</html>

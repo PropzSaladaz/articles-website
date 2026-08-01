@@ -5,6 +5,153 @@
   <link>https://example.com/</link>
   <description>Latest articles</description>
   <item>
+    <title><![CDATA[Noise As A Spatial Signal]]></title>
+    <link>https://example.com/articles/computer-science/3d-programming/procedural-terrain-generation/noise-primitives/noise-as-a-spatial-signal/</link>
+    <guid>https://example.com/articles/computer-science/3d-programming/procedural-terrain-generation/noise-primitives/noise-as-a-spatial-signal/</guid>
+    <pubDate>Fri, 31 Jul 2026 00:00:00 GMT</pubDate>
+    <description><![CDATA[Before implementing Perlin noise, it helps to define the problem precisely. A world generator wants a function that maps a coordinate and a seed to a value:]]></description>
+  </item>
+  <item>
+    <title><![CDATA[Perlin Noise]]></title>
+    <link>https://example.com/articles/computer-science/3d-programming/procedural-terrain-generation/noise-primitives/perlin-noise/</link>
+    <guid>https://example.com/articles/computer-science/3d-programming/procedural-terrain-generation/noise-primitives/perlin-noise/</guid>
+    <pubDate>Fri, 31 Jul 2026 00:00:00 GMT</pubDate>
+    <description><![CDATA[Perlin noise builds a smooth scalar field from a regular lattice. Each lattice point stores a small gradient vector. A sample is influenced by the gradients at the corners of the cell that contains...]]></description>
+  </item>
+  <item>
+    <title><![CDATA[Fractal Brownian Motion]]></title>
+    <link>https://example.com/articles/computer-science/3d-programming/procedural-terrain-generation/noise-compositions-and-transformations/fractal-brownian-motion/</link>
+    <guid>https://example.com/articles/computer-science/3d-programming/procedural-terrain-generation/noise-compositions-and-transformations/fractal-brownian-motion/</guid>
+    <pubDate>Fri, 31 Jul 2026 00:00:00 GMT</pubDate>
+    <description><![CDATA[A single octave of Perlin noise gives one characteristic feature size. It can describe broad hills or small bumps, but not both at once. Fractal Brownian motion—usually shortened to fBm—adds...]]></description>
+  </item>
+  <item>
+    <title><![CDATA[From Noise To Heightmaps]]></title>
+    <link>https://example.com/articles/computer-science/3d-programming/procedural-terrain-generation/terrain-synthesis/from-noise-to-heightmaps/</link>
+    <guid>https://example.com/articles/computer-science/3d-programming/procedural-terrain-generation/terrain-synthesis/from-noise-to-heightmaps/</guid>
+    <pubDate>Fri, 31 Jul 2026 00:00:00 GMT</pubDate>
+    <description><![CDATA[A heightmap is one of the simplest useful world representations: every horizontal coordinate $(x,z)$ maps to one elevation $h$.]]></description>
+  </item>
+  <item>
+    <title><![CDATA[Base Points, Generators, Orders And Cofactors]]></title>
+    <link>https://example.com/collections/computer-science/cryptography/elliptic-curves-and-finite-fields/base-points-generators-orders-and-cofactors/</link>
+    <guid>https://example.com/collections/computer-science/cryptography/elliptic-curves-and-finite-fields/base-points-generators-orders-and-cofactors/</guid>
+    <pubDate>Wed, 22 Jul 2026 00:00:00 GMT</pubDate>
+    <description><![CDATA[Elliptic Curves Over Finite Fields constructed the finite group...]]></description>
+  </item>
+  <item>
+    <title><![CDATA[World Space To View Space The Camera Transform]]></title>
+    <link>https://example.com/collections/computer-science/3d-programming/coordinate-systems-and-transformations-in-3d-graphics/from-world-space-to-screen-space/world-space-to-view-space-the-camera-transform/</link>
+    <guid>https://example.com/collections/computer-science/3d-programming/coordinate-systems-and-transformations-in-3d-graphics/from-world-space-to-screen-space/world-space-to-view-space-the-camera-transform/</guid>
+    <pubDate>Sun, 19 Jul 2026 00:00:00 GMT</pubDate>
+    <description><![CDATA[The renderer receives vertices, directions, lights, and other data that describe a 3D scene. To show the scene on a screen, it first needs a single answer to a simple question:]]></description>
+  </item>
+  <item>
+    <title><![CDATA[View Space To Clip Space Perspective Projection]]></title>
+    <link>https://example.com/collections/computer-science/3d-programming/coordinate-systems-and-transformations-in-3d-graphics/from-world-space-to-screen-space/view-space-to-clip-space-perspective-projection/</link>
+    <guid>https://example.com/collections/computer-science/3d-programming/coordinate-systems-and-transformations-in-3d-graphics/from-world-space-to-screen-space/view-space-to-clip-space-perspective-projection/</guid>
+    <pubDate>Sun, 19 Jul 2026 00:00:00 GMT</pubDate>
+    <description><![CDATA[View space tells us where geometry is relative to the camera. Projection answers a different question: how can that camera-relative 3D arrangement be represented so that a finite viewing frustum can...]]></description>
+  </item>
+  <item>
+    <title><![CDATA[Clip Space And Homogeneous Clipping]]></title>
+    <link>https://example.com/collections/computer-science/3d-programming/coordinate-systems-and-transformations-in-3d-graphics/from-world-space-to-screen-space/clip-space-and-homogeneous-clipping/</link>
+    <guid>https://example.com/collections/computer-science/3d-programming/coordinate-systems-and-transformations-in-3d-graphics/from-world-space-to-screen-space/clip-space-and-homogeneous-clipping/</guid>
+    <pubDate>Sun, 19 Jul 2026 00:00:00 GMT</pubDate>
+    <description><![CDATA[Clip space is the staging area between projection and NDC. The GPU tests primitives against a canonical homogeneous volume here, rejecting invisible geometry and splitting triangles that cross a...]]></description>
+  </item>
+  <item>
+    <title><![CDATA[Clip Space To NDC The Perspective Divide]]></title>
+    <link>https://example.com/collections/computer-science/3d-programming/coordinate-systems-and-transformations-in-3d-graphics/from-world-space-to-screen-space/clip-space-to-ndc-the-perspective-divide/</link>
+    <guid>https://example.com/collections/computer-science/3d-programming/coordinate-systems-and-transformations-in-3d-graphics/from-world-space-to-screen-space/clip-space-to-ndc-the-perspective-divide/</guid>
+    <pubDate>Sun, 19 Jul 2026 00:00:00 GMT</pubDate>
+    <description><![CDATA[Once clipping is complete, the GPU converts homogeneous clip coordinates into ordinary three-dimensional coordinates by dividing by $w$.]]></description>
+  </item>
+  <item>
+    <title><![CDATA[NDC To Window Space The Viewport Transform]]></title>
+    <link>https://example.com/collections/computer-science/3d-programming/coordinate-systems-and-transformations-in-3d-graphics/from-world-space-to-screen-space/ndc-to-window-space-the-viewport-transform/</link>
+    <guid>https://example.com/collections/computer-science/3d-programming/coordinate-systems-and-transformations-in-3d-graphics/from-world-space-to-screen-space/ndc-to-window-space-the-viewport-transform/</guid>
+    <pubDate>Sun, 19 Jul 2026 00:00:00 GMT</pubDate>
+    <description><![CDATA[NDC describes a canonical normalized volume. The viewport transform gives it a concrete destination: a rectangular region of a render target with a particular pixel width, height, origin, and depth...]]></description>
+  </item>
+  <item>
+    <title><![CDATA[Putting It Together The Complete Vertex Journey]]></title>
+    <link>https://example.com/collections/computer-science/3d-programming/coordinate-systems-and-transformations-in-3d-graphics/from-world-space-to-screen-space/putting-it-together-the-complete-vertex-journey/</link>
+    <guid>https://example.com/collections/computer-science/3d-programming/coordinate-systems-and-transformations-in-3d-graphics/from-world-space-to-screen-space/putting-it-together-the-complete-vertex-journey/</guid>
+    <pubDate>Sun, 19 Jul 2026 00:00:00 GMT</pubDate>
+    <description><![CDATA[This chapter reconnects the individual stages into one continuous calculation. Starting from a world-space point, we apply the view and projection transforms, clip the primitive, divide by $w$, and...]]></description>
+  </item>
+  <item>
+    <title><![CDATA[Rotation Representations: Euler Vs. Quaternions]]></title>
+    <link>https://example.com/collections/computer-science/3d-programming/coordinate-systems-and-transformations-in-3d-graphics/rotation-representations-euler-vs-quaternions/</link>
+    <guid>https://example.com/collections/computer-science/3d-programming/coordinate-systems-and-transformations-in-3d-graphics/rotation-representations-euler-vs-quaternions/</guid>
+    <pubDate>Thu, 11 Jun 2026 12:18:59 GMT</pubDate>
+    <description><![CDATA[Rotations in 3D can be represented in multiple ways. The two most common are Euler angles and quaternions. Both describe orientation, but they behave very differently and are suited for...]]></description>
+  </item>
+  <item>
+    <title><![CDATA[What ECC Is]]></title>
+    <link>https://example.com/collections/computer-science/cryptography/elliptic-curves-and-finite-fields/what-ecc-is/</link>
+    <guid>https://example.com/collections/computer-science/cryptography/elliptic-curves-and-finite-fields/what-ecc-is/</guid>
+    <pubDate>Thu, 11 Jun 2026 00:00:00 GMT</pubDate>
+    <description><![CDATA[Elliptic-curve cryptography (ECC) begins with something surprisingly simple: a curve drawn on a plane.]]></description>
+  </item>
+  <item>
+    <title><![CDATA[Elliptic Curves Over Real Numbers]]></title>
+    <link>https://example.com/collections/computer-science/cryptography/elliptic-curves-and-finite-fields/elliptic-curves-over-real-numbers/</link>
+    <guid>https://example.com/collections/computer-science/cryptography/elliptic-curves-and-finite-fields/elliptic-curves-over-real-numbers/</guid>
+    <pubDate>Thu, 11 Jun 2026 00:00:00 GMT</pubDate>
+    <description><![CDATA[This is the first real introductory article on elliptic curves - In this article, we focus only on a smooth curve over the real numbers: which coordinate pairs belong to it, why it is symmetric, and...]]></description>
+  </item>
+  <item>
+    <title><![CDATA[Point Addition And The Elliptic Curve Group]]></title>
+    <link>https://example.com/collections/computer-science/cryptography/elliptic-curves-and-finite-fields/point-addition-and-the-elliptic-curve-group/</link>
+    <guid>https://example.com/collections/computer-science/cryptography/elliptic-curves-and-finite-fields/point-addition-and-the-elliptic-curve-group/</guid>
+    <pubDate>Thu, 11 Jun 2026 00:00:00 GMT</pubDate>
+    <description><![CDATA[The most important idea in ECC is that we can define an operation that behaves like addition, but over points.]]></description>
+  </item>
+  <item>
+    <title><![CDATA[Scalar Multiplication]]></title>
+    <link>https://example.com/collections/computer-science/cryptography/elliptic-curves-and-finite-fields/scalar-multiplication/</link>
+    <guid>https://example.com/collections/computer-science/cryptography/elliptic-curves-and-finite-fields/scalar-multiplication/</guid>
+    <pubDate>Thu, 11 Jun 2026 00:00:00 GMT</pubDate>
+    <description><![CDATA[In Point Addition and the Elliptic Curve Group, we defined a reliable...]]></description>
+  </item>
+  <item>
+    <title><![CDATA[From Real Curves To Finite Fields]]></title>
+    <link>https://example.com/collections/computer-science/cryptography/elliptic-curves-and-finite-fields/from-real-curves-to-finite-fields/</link>
+    <guid>https://example.com/collections/computer-science/cryptography/elliptic-curves-and-finite-fields/from-real-curves-to-finite-fields/</guid>
+    <pubDate>Thu, 11 Jun 2026 00:00:00 GMT</pubDate>
+    <description><![CDATA[So far, we described elliptic curves over real numbers. That was useful because real-number curves can be drawn as smooth curves on a normal x-y plane. This makes the geometric ideas easier to...]]></description>
+  </item>
+  <item>
+    <title><![CDATA[Elliptic Curves Over Finite Fields]]></title>
+    <link>https://example.com/collections/computer-science/cryptography/elliptic-curves-and-finite-fields/elliptic-curves-over-finite-fields/</link>
+    <guid>https://example.com/collections/computer-science/cryptography/elliptic-curves-and-finite-fields/elliptic-curves-over-finite-fields/</guid>
+    <pubDate>Thu, 11 Jun 2026 00:00:00 GMT</pubDate>
+    <description><![CDATA[The previous article established arithmetic in $\mathbb{F}\_{11}$. We now use that arithmetic to construct the points of one elliptic curve over the field, then add those points directly.]]></description>
+  </item>
+  <item>
+    <title><![CDATA[ECC Keys And The Discrete Logarithm Problem]]></title>
+    <link>https://example.com/collections/computer-science/cryptography/elliptic-curve-protocols/ecc-keys-and-the-discrete-logarithm-problem/</link>
+    <guid>https://example.com/collections/computer-science/cryptography/elliptic-curve-protocols/ecc-keys-and-the-discrete-logarithm-problem/</guid>
+    <pubDate>Thu, 11 Jun 2026 00:00:00 GMT</pubDate>
+    <description><![CDATA[The preceding Elliptic Curves and Finite Fields collection built the mathematical machinery: finite-field curve...]]></description>
+  </item>
+  <item>
+    <title><![CDATA[Pairing Friendly Curves G1 G2 And GT]]></title>
+    <link>https://example.com/collections/computer-science/cryptography/pairing-based-cryptography/pairing-friendly-curves-g1-g2-and-gt/</link>
+    <guid>https://example.com/collections/computer-science/cryptography/pairing-based-cryptography/pairing-friendly-curves-g1-g2-and-gt/</guid>
+    <pubDate>Thu, 11 Jun 2026 00:00:00 GMT</pubDate>
+    <description><![CDATA[This chapter is a planned bridge from ordinary ECC groups to the groups used in pairing-based cryptography. It builds directly on the base-point, subgroup, order, and cofactor ideas from \[Elliptic...]]></description>
+  </item>
+  <item>
+    <title><![CDATA[Pairing Operations]]></title>
+    <link>https://example.com/collections/computer-science/cryptography/pairing-based-cryptography/pairing-operations/</link>
+    <guid>https://example.com/collections/computer-science/cryptography/pairing-based-cryptography/pairing-operations/</guid>
+    <pubDate>Thu, 11 Jun 2026 00:00:00 GMT</pubDate>
+    <description><![CDATA[This chapter is planned as the first dedicated article on bilinear pairings. It should explain what the pairing operation does before diving into specific algorithms.]]></description>
+  </item>
+  <item>
     <title><![CDATA[The Helmholtz Resonator]]></title>
     <link>https://example.com/articles/computer-science/dsp-acoustic-fundamentals/acoustic-physics/the-helmholtz-resonator/</link>
     <guid>https://example.com/articles/computer-science/dsp-acoustic-fundamentals/acoustic-physics/the-helmholtz-resonator/</guid>
@@ -24,13 +171,6 @@
     <guid>https://example.com/articles/computer-science/dsp-acoustic-fundamentals/noise-and-jitter/</guid>
     <pubDate>Sun, 22 Feb 2026 00:00:00 GMT</pubDate>
     <description><![CDATA[1\. Noise Noise is random fluctuation added to a signal. The main difference between noise “colors” is how their energy is distributed across frequencies. | Noise Type | Frequency Energy Distribution | Memory / Correlation | Perceived Sound | Intuition | |---|---|---|---|---| | White Noise | Equal power per Hz | No memory (samples are independent) | Bright, hissy, static-like | Flat spectrum across frequencies | | Pink Noise | Equal energy per octave | Some correlation (more low-frequency content than white) | Balanced, natural | Middle ground between white and brown | | Brown Noise | Strongly weighted toward low frequencies | Strong memory (random walk behavior) | Deep, smooth, waterfall / heavy-rain-like | Accumulated noise, low-end heavy |]]></description>
-  </item>
-  <item>
-    <title><![CDATA[Rotation Representations: Euler Vs. Quaternions]]></title>
-    <link>https://example.com/collections/computer-science/3d-programming/coordinate-systems-and-transformations-in-3d-graphics/rotation-representations-euler-vs-quaternions/</link>
-    <guid>https://example.com/collections/computer-science/3d-programming/coordinate-systems-and-transformations-in-3d-graphics/rotation-representations-euler-vs-quaternions/</guid>
-    <pubDate>Sat, 21 Feb 2026 14:20:46 GMT</pubDate>
-    <description><![CDATA[Rotations in 3D can be represented in multiple ways. The two most common are Euler angles and quaternions. Both describe orientation, but they behave very differently and are suited for...]]></description>
   </item>
   <item>
     <title><![CDATA[Audio And DSP Basics]]></title>

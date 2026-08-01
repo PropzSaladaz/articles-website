@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Noise Field Explorer</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --canvas: #0b1823;
+      --page: #101a24;
+      --panel: #172633;
+      --panel-strong: #1e3241;
+      --line: rgba(195, 225, 235, 0.17);
+      --text: #edf5f6;
+      --muted: #a4b8bf;
+      --accent: #6be1d1;
+      --accent-soft: rgba(107, 225, 209, 0.15);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(circle at 12% 0%, #1f3c4b 0, var(--page) 48%);
+      color: var(--text);
+      font: 14px/1.45 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .app { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 16px;
+    }
+
+    h1 { margin: 0; font-size: clamp(21px, 3vw, 30px); letter-spacing: -0.035em; }
+    header p { max-width: 650px; margin: 4px 0 0; color: var(--muted); }
+
+    .tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+
+    .tab, button {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--muted);
+      cursor: pointer;
+      font: inherit;
+    }
+
+    .tab { padding: 7px 9px; }
+    .tab[aria-pressed="true"] { border-color: rgba(107, 225, 209, 0.62); background: var(--accent-soft); color: var(--text); }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 282px;
+      gap: 16px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(23, 38, 51, 0.88);
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.19);
+    }
+
+    .visuals { padding: 12px; }
+
+    canvas {
+      display: block;
+      width: 100%;
+      border-radius: 9px;
+      background: var(--canvas);
+    }
+
+    #field { aspect-ratio: 360 / 220; image-rendering: auto; }
+    #profile { height: 94px; margin-top: 12px; }
+
+    .field-footer {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 11px 3px 1px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .legend { display: flex; align-items: center; gap: 7px; }
+    .ramp { width: 116px; height: 8px; border-radius: 999px; background: linear-gradient(90deg, #152d63, #2388a8, #6bdbb3, #f0eac2); }
+
+    .controls { padding: 16px; }
+    .controls h2 { margin: 0; font-size: 15px; }
+    .mode-copy { min-height: 58px; margin: 7px 0 16px; color: var(--muted); font-size: 13px; }
+
+    .control { margin: 0 0 15px; }
+    .control-top { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 5px; }
+    output { color: var(--accent); font-variant-numeric: tabular-nums; }
+    input[type="range"] { width: 100%; accent-color: var(--accent); }
+
+    input[type="number"] {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 7px 8px;
+      background: var(--panel-strong);
+      color: var(--text);
+      font: inherit;
+    }
+
+    button#randomize { width: 100%; padding: 9px 10px; color: var(--text); font-weight: 650; }
+    button#randomize:hover { border-color: rgba(107, 225, 209, 0.6); background: var(--accent-soft); }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+    }
+
+    .stat { padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.035); }
+    .stat small { display: block; color: var(--muted); }
+    .stat strong { font-variant-numeric: tabular-nums; }
+
+    .disabled { opacity: 0.42; }
+
+    @media (max-width: 760px) {
+      .app { padding: 12px; }
+      header { display: block; }
+      .tabs { margin-top: 14px; }
+      .layout { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div>
+        <h1>Noise field explorer</h1>
+        <p>One seeded Perlin primitive, viewed directly and after several common composition or shaping passes.</p>
+      </div>
+      <div class="tabs" aria-label="Noise mode">
+        <button class="tab" data-mode="perlin" type="button" aria-pressed="false">Perlin</button>
+        <button class="tab" data-mode="fbm" type="button" aria-pressed="false">fBm</button>
+        <button class="tab" data-mode="billow" type="button" aria-pressed="false">Billow</button>
+        <button class="tab" data-mode="ridged" type="button" aria-pressed="false">Ridged</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <section class="card visuals">
+        <canvas id="field" width="360" height="220" aria-label="Generated two-dimensional noise field"></canvas>
+        <canvas id="profile" width="360" height="94" aria-label="Horizontal profile through the generated noise field"></canvas>
+        <div class="field-footer">
+          <span id="field-status">—</span>
+          <span class="legend"><i class="ramp"></i>low → high</span>
+        </div>
+      </section>
+
+      <aside class="card controls">
+        <h2 id="mode-title">Perlin noise</h2>
+        <p class="mode-copy" id="mode-copy"></p>
+
+        <div class="control">
+          <div class="control-top"><label for="seed">Seed</label></div>
+          <input id="seed" type="number" min="0" max="999999" step="1" value="17">
+        </div>
+
+        <div class="control">
+          <div class="control-top"><label for="scale">Feature scale</label><output id="scale-value">76</output></div>
+          <input id="scale" type="range" min="26" max="150" step="1" value="76">
+        </div>
+
+        <div class="control composition-control">
+          <div class="control-top"><label for="octaves">Octaves</label><output id="octaves-value">5</output></div>
+          <input id="octaves" type="range" min="1" max="8" step="1" value="5">
+        </div>
+
+        <div class="control composition-control">
+          <div class="control-top"><label for="persistence">Persistence</label><output id="persistence-value">0.55</output></div>
+          <input id="persistence" type="range" min="0.25" max="0.85" step="0.05" value="0.55">
+        </div>
+
+        <div class="control composition-control">
+          <div class="control-top"><label for="lacunarity">Lacunarity</label><output id="lacunarity-value">2.00×</output></div>
+          <input id="lacunarity" type="range" min="1.5" max="3.2" step="0.1" value="2">
+        </div>
+
+        <div class="control ridge-control">
+          <div class="control-top"><label for="sharpness">Ridge sharpness</label><output id="sharpness-value">1.40</output></div>
+          <input id="sharpness" type="range" min="0.6" max="3" step="0.1" value="1.4">
+        </div>
+
+        <button id="randomize" type="button">Generate another seed</button>
+
+        <div class="stats">
+          <div class="stat"><small>sample minimum</small><strong id="minimum">—</strong></div>
+          <div class="stat"><small>sample maximum</small><strong id="maximum">—</strong></div>
+          <div class="stat"><small>sample average</small><strong id="average">—</strong></div>
+          <div class="stat"><small>amplitude sum</small><strong id="amplitude">—</strong></div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    'use strict';
+
+    const fieldCanvas = document.getElementById('field');
+    const fieldContext = fieldCanvas.getContext('2d');
+    const profileCanvas = document.getElementById('profile');
+    const profileContext = profileCanvas.getContext('2d');
+    const width = fieldCanvas.width;
+    const height = fieldCanvas.height;
+    const profileHeight = profileCanvas.height;
+    const gradients = [
+      [1, 0], [-1, 0], [0, 1], [0, -1],
+      [0.707, 0.707], [-0.707, 0.707], [0.707, -0.707], [-0.707, -0.707]
+    ];
+
+    const controls = {
+      seed: document.getElementById('seed'),
+      scale: document.getElementById('scale'),
+      octaves: document.getElementById('octaves'),
+      persistence: document.getElementById('persistence'),
+      lacunarity: document.getElementById('lacunarity'),
+      sharpness: document.getElementById('sharpness')
+    };
+
+    const modes = {
+      perlin: {
+        title: 'Perlin noise',
+        copy: 'One smooth, seeded gradient-noise octave. Feature scale is the only composition control that affects this view.'
+      },
+      fbm: {
+        title: 'Fractal Brownian motion',
+        copy: 'Several Perlin octaves at increasing frequencies and decreasing amplitudes. Broad shapes gain smaller detail.'
+      },
+      billow: {
+        title: 'Billow noise',
+        copy: 'Each octave is folded with an absolute value before it is added. The same primitive becomes rounded and puffy.'
+      },
+      ridged: {
+        title: 'Ridged noise',
+        copy: 'The folded distance from zero is inverted, so base-noise transition lines become crests. Sharpness narrows those crests.'
+      }
+    };
+
+    const requestedMode = new URLSearchParams(window.location.search).get('mode');
+    let mode = Object.prototype.hasOwnProperty.call(modes, requestedMode) ? requestedMode : 'perlin';
+    let permutation = [];
+
+    function seededPermutation(seed) {
+      const values = Array.from({ length: 256 }, (_, index) => index);
+      let state = Number(seed) >>> 0;
+      if (state === 0) state = 0x9e3779b9;
+      const random = () => {
+        state ^= state << 13;
+        state ^= state >>> 17;
+        state ^= state << 5;
+        return (state >>> 0) / 4294967296;
+      };
+
+      for (let index = values.length - 1; index > 0; index -= 1) {
+        const other = Math.floor(random() * (index + 1));
+        [values[index], values[other]] = [values[other], values[index]];
+      }
+      return values.concat(values);
+    }
+
+    function fade(value) {
+      return value * value * value * (value * (value * 6 - 15) + 10);
+    }
+
+    function lerp(a, b, amount) {
+      return a + amount * (b - a);
+    }
+
+    function clamp(value, minimum, maximum) {
+      return Math.max(minimum, Math.min(maximum, value));
+    }
+
+    function gradientAt(x, y) {
+      const hash = permutation[(permutation[x & 255] + (y & 255)) & 255] & 7;
+      return gradients[hash];
+    }
+
+    function dotGradient(x, y, dx, dy) {
+      const gradient = gradientAt(x, y);
+      return gradient[0] * dx + gradient[1] * dy;
+    }
+
+    function perlin2D(x, y) {
+      const x0 = Math.floor(x);
+      const y0 = Math.floor(y);
+      const dx = x - x0;
+      const dy = y - y0;
+      const u = fade(dx);
+      const v = fade(dy);
+      const n00 = dotGradient(x0, y0, dx, dy);
+      const n10 = dotGradient(x0 + 1, y0, dx - 1, dy);
+      const n01 = dotGradient(x0, y0 + 1, dx, dy - 1);
+      const n11 = dotGradient(x0 + 1, y0 + 1, dx - 1, dy - 1);
+      return lerp(lerp(n00, n10, u), lerp(n01, n11, u), v);
+    }
+
+    function transformOctave(value, activeMode, sharpness) {
+      if (activeMode === 'billow') return 2 * Math.abs(value) - 1;
+      if (activeMode === 'ridged') {
+        const ridge = Math.pow(1 - clamp(Math.abs(value), 0, 1), sharpness);
+        return 2 * ridge - 1;
+      }
+      return value;
+    }
+
+    function sampleField(x, y, options) {
+      if (mode === 'perlin') {
+        return { normalized: clamp(0.5 + perlin2D(x, y) * 0.9, 0, 1), amplitudeSum: 1 };
+      }
+
+      let frequency = 1;
+      let amplitude = 1;
+      let sum = 0;
+      let amplitudeSum = 0;
+
+      for (let octave = 0; octave < options.octaves; octave += 1) {
+        const base = perlin2D(x * frequency, y * frequency);
+        sum += amplitude * transformOctave(base, mode, options.sharpness);
+        amplitudeSum += amplitude;
+        frequency *= options.lacunarity;
+        amplitude *= options.persistence;
+      }
+
+      return {
+        normalized: clamp(0.5 + (sum / amplitudeSum) * 0.9, 0, 1),
+        amplitudeSum
+      };
+    }
+
+    function mix(a, b, amount) {
+      return [
+        Math.round(lerp(a[0], b[0], amount)),
+        Math.round(lerp(a[1], b[1], amount)),
+        Math.round(lerp(a[2], b[2], amount))
+      ];
+    }
+
+    function colorFor(value) {
+      const stops = [
+        [0, [21, 45, 99]],
+        [0.32, [31, 121, 163]],
+        [0.58, [89, 202, 177]],
+        [0.8, [189, 224, 176]],
+        [1, [240, 234, 194]]
+      ];
+
+      for (let index = 1; index < stops.length; index += 1) {
+        if (value <= stops[index][0]) {
+          const previous = stops[index - 1];
+          const current = stops[index];
+          return mix(previous[1], current[1], (value - previous[0]) / (current[0] - previous[0]));
+        }
+      }
+      return stops[stops.length - 1][1];
+    }
+
+    function updateControls() {
+      document.getElementById('scale-value').textContent = controls.scale.value;
+      document.getElementById('octaves-value').textContent = controls.octaves.value;
+      document.getElementById('persistence-value').textContent = Number(controls.persistence.value).toFixed(2);
+      document.getElementById('lacunarity-value').textContent = Number(controls.lacunarity.value).toFixed(2) + '×';
+      document.getElementById('sharpness-value').textContent = Number(controls.sharpness.value).toFixed(2);
+      document.getElementById('mode-title').textContent = modes[mode].title;
+      document.getElementById('mode-copy').textContent = modes[mode].copy;
+
+      const compositionEnabled = mode !== 'perlin';
+      document.querySelectorAll('.composition-control').forEach((element) => {
+        element.classList.toggle('disabled', !compositionEnabled);
+        element.querySelector('input').disabled = !compositionEnabled;
+      });
+      const ridgeEnabled = mode === 'ridged';
+      document.querySelector('.ridge-control').classList.toggle('disabled', !ridgeEnabled);
+      controls.sharpness.disabled = !ridgeEnabled;
+
+      document.querySelectorAll('.tab').forEach((button) => {
+        button.setAttribute('aria-pressed', String(button.dataset.mode === mode));
+      });
+    }
+
+    function drawProfile(values) {
+      profileContext.clearRect(0, 0, width, profileHeight);
+      profileContext.fillStyle = '#0b1823';
+      profileContext.fillRect(0, 0, width, profileHeight);
+      profileContext.strokeStyle = 'rgba(195, 225, 235, 0.16)';
+      profileContext.lineWidth = 1;
+      profileContext.beginPath();
+      profileContext.moveTo(0, profileHeight / 2);
+      profileContext.lineTo(width, profileHeight / 2);
+      profileContext.stroke();
+
+      const middleRow = Math.floor(height / 2);
+      profileContext.beginPath();
+      for (let x = 0; x < width; x += 1) {
+        const value = values[middleRow * width + x];
+        const y = profileHeight - 8 - value * (profileHeight - 16);
+        if (x === 0) profileContext.moveTo(x, y);
+        else profileContext.lineTo(x, y);
+      }
+      profileContext.lineWidth = 2;
+      profileContext.strokeStyle = '#72e4d4';
+      profileContext.stroke();
+    }
+
+    function render() {
+      updateControls();
+      permutation = seededPermutation(controls.seed.value);
+      const options = {
+        octaves: Number(controls.octaves.value),
+        persistence: Number(controls.persistence.value),
+        lacunarity: Number(controls.lacunarity.value),
+        sharpness: Number(controls.sharpness.value)
+      };
+      const scale = Number(controls.scale.value);
+      const pixels = fieldContext.createImageData(width, height);
+      const values = new Float32Array(width * height);
+      let minimum = Infinity;
+      let maximum = -Infinity;
+      let total = 0;
+      let amplitudeSum = 1;
+
+      for (let y = 0; y < height; y += 1) {
+        for (let x = 0; x < width; x += 1) {
+          const sampleX = (x - width / 2) / scale;
+          const sampleY = (y - height / 2) / scale;
+          const sample = sampleField(sampleX, sampleY, options);
+          const value = sample.normalized;
+          const color = colorFor(value);
+          const pixelOffset = (y * width + x) * 4;
+          pixels.data[pixelOffset] = color[0];
+          pixels.data[pixelOffset + 1] = color[1];
+          pixels.data[pixelOffset + 2] = color[2];
+          pixels.data[pixelOffset + 3] = 255;
+          values[y * width + x] = value;
+          minimum = Math.min(minimum, value);
+          maximum = Math.max(maximum, value);
+          total += value;
+          amplitudeSum = sample.amplitudeSum;
+        }
+      }
+
+      fieldContext.putImageData(pixels, 0, 0);
+      drawProfile(values);
+      document.getElementById('minimum').textContent = minimum.toFixed(3);
+      document.getElementById('maximum').textContent = maximum.toFixed(3);
+      document.getElementById('average').textContent = (total / values.length).toFixed(3);
+      document.getElementById('amplitude').textContent = amplitudeSum.toFixed(3);
+      document.getElementById('field-status').textContent = mode + ' · seed ' + controls.seed.value + ' · ' + width + ' × ' + height + ' samples';
+    }
+
+    Object.values(controls).forEach((control) => control.addEventListener('input', render));
+    document.querySelectorAll('.tab').forEach((button) => {
+      button.addEventListener('click', () => {
+        mode = button.dataset.mode;
+        const next = new URL(window.location.href);
+        next.searchParams.set('mode', mode);
+        window.history.replaceState({}, '', next);
+        render();
+      });
+    });
+    document.getElementById('randomize').addEventListener('click', () => {
+      controls.seed.value = String(Math.floor(Math.random() * 1000000));
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>

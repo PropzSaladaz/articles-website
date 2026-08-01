@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="sim-paper" content="full">
+  <title>Finite Coordinate Window</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap');
+    body { font-family: 'Fira Code', monospace; }
+  </style>
+</head>
+<body class="sk-page w-screen h-screen overflow-hidden m-0 p-0 relative select-none">
+  <canvas id="windowCanvas" class="absolute inset-0 w-full h-full block" aria-label="Finite coordinate window over a faint real elliptic curve"></canvas>
+
+  <section class="absolute left-4 top-4 md:left-6 md:top-6 z-10 w-[218px] sm:w-[232px] sk-sticky pointer-events-auto" aria-label="Finite coordinate window information">
+    <div class="border-b border-black/10 pb-2.5">
+      <p class="sk-hand text-xl font-semibold ink-black leading-none">A finite coordinate set</p>
+      <p class="mt-2 text-[11px] font-bold ink-blue leading-relaxed">x, y ∈ {0, 1, …, 10}</p>
+      <p class="mt-1 text-[9px] ink-pencil">The square is a coordinate window, not a crop of the real curve.</p>
+    </div>
+
+    <div class="mt-2.5 text-[10px] font-mono">
+      <div class="sk-row">
+        <span class="ink-pencil">field</span>
+        <span class="font-bold ink-green">F₁₁</span>
+      </div>
+      <div class="sk-row mt-1">
+        <span id="windowLabel" class="ink-pencil">real plane</span>
+        <span id="windowProgress" class="font-bold ink-blue">0%</span>
+      </div>
+    </div>
+
+    <button id="replayButton" type="button" class="mt-2.5 w-full rounded-md border border-black/10 bg-black/5 px-2 py-1.5 text-[9px] font-semibold ink-pencil transition-colors hover:bg-black/10">
+      Replay transition
+    </button>
+  </section>
+
+  <script>
+    const canvas = document.getElementById('windowCanvas');
+    const sk = Sketch.attach(canvas);
+    const windowLabel = document.getElementById('windowLabel');
+    const windowProgress = document.getElementById('windowProgress');
+    const replayButton = document.getElementById('replayButton');
+
+    const ROOT_X = -0.6823278038;
+    const INTRO_PAUSE = 750;
+    const WINDOW_DURATION = 1800;
+    const HOLD_AFTER_WINDOW = 1800;
+    const CURVE_STYLE = { ink: 'pencilLight', width: 2.2, roughness: 0.5 };
+
+    const state = {
+      elapsed: 0,
+      lastFrame: null
+    };
+
+    function curveValue(x) {
+      return x * x * x + x + 1;
+    }
+
+    function curveY(x) {
+      const value = curveValue(x);
+      return value >= -1e-8 ? Math.sqrt(Math.max(value, 0)) : null;
+    }
+
+    function easeInOut(value) {
+      return value < 0.5
+        ? 4 * value * value * value
+        : 1 - Math.pow(-2 * value + 2, 3) / 2;
+    }
+
+    function transitionState() {
+      const period = INTRO_PAUSE + WINDOW_DURATION + HOLD_AFTER_WINDOW;
+      const phase = state.elapsed % period;
+      if (phase < INTRO_PAUSE) return { progress: 0, building: false, complete: false };
+      if (phase < INTRO_PAUSE + WINDOW_DURATION) {
+        return {
+          progress: easeInOut((phase - INTRO_PAUSE) / WINDOW_DURATION),
+          building: true,
+          complete: false
+        };
+      }
+      return { progress: 1, building: false, complete: true };
+    }
+
+    function getLayout() {
+      const compact = canvas.width < 620;
+      const size = compact
+        ? Math.min(canvas.width * 0.76, canvas.height * 0.48)
+        : Math.min(canvas.width * 0.5, canvas.height * 0.68);
+      const bottom = compact ? canvas.height * 0.78 : canvas.height * 0.73;
+      const left = compact ? (canvas.width - size) / 2 : canvas.width * 0.39;
+      const step = size / 10;
+
+      return {
+        compact,
+        left,
+        top: bottom - size,
+        bottom,
+        size,
+        step,
+        originX: left,
+        originY: bottom
+      };
+    }
+
+    function toScreenX(x, layout) {
+      return layout.originX + x * layout.step;
+    }
+
+    function toScreenY(y, layout) {
+      return layout.originY - y * layout.step;
+    }
+
+    function endXForYLimit(yLimit) {
+      const target = yLimit * yLimit;
+      let low = ROOT_X;
+      let high = 8;
+      for (let index = 0; index < 40; index += 1) {
+        const middle = (low + high) / 2;
+        if (curveValue(middle) < target) low = middle;
+        else high = middle;
+      }
+      return low;
+    }
+
+    function branchPoints(sign, layout) {
+      const yLimit = sign > 0
+        ? (layout.originY - 22) / layout.step
+        : (canvas.height - layout.originY - 22) / layout.step;
+      const endX = Math.min(endXForYLimit(yLimit), (canvas.width + 40 - layout.originX) / layout.step);
+      const steps = 34;
+      const points = [];
+
+      for (let index = 0; index <= steps; index += 1) {
+        const x = ROOT_X + (endX - ROOT_X) * index / steps;
+        const y = curveY(x);
+        if (y !== null) points.push([toScreenX(x, layout), toScreenY(sign * y, layout)]);
+      }
+      return points;
+    }
+
+    function drawRealCurve(layout) {
+      sk.curve(branchPoints(1, layout), CURVE_STYLE);
+      sk.curve(branchPoints(-1, layout), CURVE_STYLE);
+      const rootX = toScreenX(ROOT_X, layout);
+      const rootY = toScreenY(0, layout);
+      sk.circle(rootX, rootY, 3.5, { ink: 'pencilLight', fill: 'pencilLight', fillStyle: 'solid', roughness: 0.35 });
+    }
+
+    function dimOutsideWindow(layout, opacity) {
+      if (opacity <= 0) return;
+      const ctx = sk.ctx;
+      ctx.save();
+      ctx.fillStyle = `rgba(251, 246, 234, ${opacity})`;
+      ctx.fillRect(0, 0, canvas.width, layout.top);
+      ctx.fillRect(0, layout.bottom, canvas.width, canvas.height - layout.bottom);
+      ctx.fillRect(0, layout.top, layout.left, layout.size);
+      ctx.fillRect(layout.left + layout.size, layout.top, canvas.width - layout.left - layout.size, layout.size);
+      ctx.restore();
+    }
+
+    function drawFiniteWindow(layout, transition) {
+      const { left, top, bottom, size, step, compact } = layout;
+      const visibleLines = Math.floor(transition.progress * 10);
+      const gridInk = `rgba(47, 79, 143, ${0.28 + transition.progress * 0.5})`;
+
+      for (let value = 1; value < 10; value += 1) {
+        if (value > visibleLines) continue;
+        const x = left + value * step;
+        const y = bottom - value * step;
+        sk.ruler(x, top, x, bottom, { ink: gridInk, width: 1 });
+        sk.ruler(left, y, left + size, y, { ink: gridInk, width: 1 });
+      }
+
+      sk.rect(left, top, size, size, {
+        ink: 'blue', width: 2.2, roughness: 0.45, boil: false
+      });
+
+      if (transition.progress < 0.25) return;
+      const labelInk = `rgba(45, 42, 38, ${Math.min(1, (transition.progress - 0.25) / 0.55)})`;
+      for (let value = 0; value <= 10; value += 1) {
+        const x = left + value * step;
+        const y = bottom - value * step;
+        const size = compact ? 11 : 13;
+        sk.text(String(value), x, bottom + (compact ? 17 : 19), {
+          ink: labelInk, size, align: 'center', boil: false
+        });
+        sk.text(String(value), left - (compact ? 15 : 18), y + 3, {
+          ink: labelInk, size, align: 'center', boil: false
+        });
+      }
+      sk.text('x', left + size + 12, bottom + (compact ? 18 : 20), {
+        ink: 'blue', size: compact ? 15 : 17, boil: false
+      });
+      sk.text('y', left - (compact ? 15 : 18), top - 12, {
+        ink: 'blue', size: compact ? 15 : 17, align: 'center', boil: false
+      });
+    }
+
+    function updateHud(transition) {
+      windowProgress.textContent = `${Math.round(transition.progress * 100)}%`;
+      windowLabel.textContent = transition.complete
+        ? '11 × 11 grid'
+        : transition.building
+          ? 'restricting coordinates'
+          : 'real plane';
+    }
+
+    function draw() {
+      const layout = getLayout();
+      const transition = transitionState();
+
+      sk.clear({ paper: false });
+      sk.grid({ originX: layout.originX, originY: layout.originY, step: layout.step });
+      sk.axes({ originX: layout.originX, originY: layout.originY, step: layout.step, ink: 'pencil', labels: false });
+      drawRealCurve(layout);
+      dimOutsideWindow(layout, transition.progress * 0.78);
+      drawFiniteWindow(layout, transition);
+      updateHud(transition);
+    }
+
+    function replay() {
+      state.elapsed = 0;
+      state.lastFrame = null;
+      draw();
+    }
+
+    function animationLoop(timestamp) {
+      if (state.lastFrame !== null) {
+        // Do not count off-screen iframe pauses as animation time.
+        state.elapsed += Math.min(timestamp - state.lastFrame, 50);
+      }
+      state.lastFrame = timestamp;
+      draw();
+      requestAnimationFrame(animationLoop);
+    }
+
+    function fitCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      draw();
+    }
+
+    replayButton.addEventListener('click', replay);
+    window.addEventListener('resize', fitCanvas);
+    window.addEventListener('load', () => {
+      fitCanvas();
+      requestAnimationFrame(animationLoop);
+    });
+  </script>
+</body>
+</html>

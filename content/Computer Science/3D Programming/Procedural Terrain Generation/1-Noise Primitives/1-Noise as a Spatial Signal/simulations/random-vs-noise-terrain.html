@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="sim-paper" content="full">
+  <title>Random Samples versus a Coherent Noise Field</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    body {
+      color: var(--sk-ink-black);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      user-select: none;
+    }
+
+    .scene {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .note {
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      z-index: 3;
+      width: min(520px, calc(100% - 190px));
+      padding: 8px 11px;
+      border: 1px solid rgba(45, 42, 38, 0.14);
+      border-radius: 5px;
+      background: rgba(253, 249, 184, 0.92);
+      box-shadow: 2px 3px 8px rgba(0, 0, 0, 0.14);
+      color: var(--sk-ink-black);
+      font-size: 11px;
+      line-height: 1.4;
+      text-align: center;
+      transform: translateX(-50%) rotate(-0.35deg);
+      pointer-events: none;
+    }
+
+    .readout {
+      position: absolute;
+      top: 58px;
+      left: 14px;
+      z-index: 3;
+      width: min(255px, calc(100% - 28px));
+      padding: 8px 10px;
+      border: 1px solid rgba(45, 42, 38, 0.14);
+      border-radius: 5px;
+      background: rgba(251, 246, 234, 0.86);
+      font-size: 10px;
+      line-height: 1.55;
+      pointer-events: none;
+    }
+
+    .readout-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .readout-value { font-weight: 700; text-align: right; }
+
+    .controls {
+      position: absolute;
+      bottom: 14px;
+      left: 50%;
+      z-index: 4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 9px 14px;
+      width: min(720px, calc(100% - 28px));
+      padding: 9px 12px;
+      border: 1px solid rgba(45, 42, 38, 0.16);
+      border-radius: 7px;
+      background: rgba(253, 249, 184, 0.93);
+      box-shadow: 2px 3px 8px rgba(0, 0, 0, 0.16);
+      font-size: 10px;
+      transform: translateX(-50%) rotate(0.25deg);
+    }
+
+    .control { display: flex; align-items: center; gap: 6px; }
+    label { font-weight: 700; }
+
+    input[type="number"] {
+      width: 66px;
+      border: 1px solid rgba(45, 42, 38, 0.2);
+      border-radius: 4px;
+      padding: 4px 5px;
+      color: var(--sk-ink-black);
+      background: rgba(255, 255, 255, 0.5);
+      font: inherit;
+    }
+
+    input[type="range"] { width: min(145px, 24vw); accent-color: var(--sk-ink-blue); }
+
+    button {
+      border: 1px solid rgba(45, 42, 38, 0.2);
+      border-radius: 4px;
+      padding: 5px 8px;
+      color: var(--sk-ink-black);
+      background: rgba(255, 255, 255, 0.38);
+      font: inherit;
+      font-size: 10px;
+      cursor: pointer;
+    }
+
+    button:hover { background: rgba(255, 255, 255, 0.68); }
+    output { min-width: 26px; color: var(--sk-ink-blue); font-weight: 700; }
+
+    @media (max-width: 640px) {
+      .note { top: 8px; width: calc(100% - 24px); font-size: 9px; }
+      .readout { top: 48px; left: 8px; width: 200px; font-size: 8px; }
+      .controls { bottom: 7px; gap: 6px 10px; padding: 7px 8px; }
+      input[type="range"] { width: 100px; }
+    }
+  </style>
+</head>
+<body class="sk-page">
+  <main class="scene">
+    <canvas id="terrainCanvas" aria-label="Side-by-side terrain slices made from random samples and coherent noise"></canvas>
+
+    <div class="note sk-hand">
+      Same seeded lattice values. Left: direct independent samples. Right: values blended smoothly between neighboring coordinates.
+    </div>
+
+    <div class="readout">
+      <div class="readout-row"><span class="ink-pencil">probe step</span><span id="stepReadout" class="readout-value ink-black">0.55 m</span></div>
+      <div class="readout-row"><span class="ink-red">random height change</span><span id="randomDelta" class="readout-value ink-red">—</span></div>
+      <div class="readout-row"><span class="ink-green">coherent height change</span><span id="noiseDelta" class="readout-value ink-green">—</span></div>
+    </div>
+
+    <section class="controls" aria-label="Terrain comparison controls">
+      <div class="control"><label for="seed">seed</label><input id="seed" type="number" min="0" max="999999" step="1" value="17"></div>
+      <div class="control"><label for="featureWidth">feature width</label><input id="featureWidth" type="range" min="1.6" max="5.4" step="0.1" value="3.2"><output id="featureValue">3.2 m</output></div>
+      <button id="reset" type="button">reset probe</button>
+    </section>
+  </main>
+
+  <script>
+    'use strict';
+
+    const canvas = document.getElementById('terrainCanvas');
+    const sketch = Sketch.attach(canvas);
+    const context = canvas.getContext('2d');
+    const ui = {
+      seed: document.getElementById('seed'),
+      featureWidth: document.getElementById('featureWidth'),
+      featureValue: document.getElementById('featureValue'),
+      reset: document.getElementById('reset'),
+      randomDelta: document.getElementById('randomDelta'),
+      noiseDelta: document.getElementById('noiseDelta')
+    };
+
+    const domainWidth = 18;
+    const probeStep = 0.55;
+    let width = 0;
+    let height = 0;
+    let phase = 0;
+    let lastTime = 0;
+
+    function hash(index, seed) {
+      let value = (index | 0) + Math.imul(seed | 0, 0x9e3779b1);
+      value = Math.imul(value ^ (value >>> 16), 0x85ebca6b);
+      value = Math.imul(value ^ (value >>> 13), 0xc2b2ae35);
+      return ((value ^ (value >>> 16)) >>> 0) / 4294967295;
+    }
+
+    function lerp(a, b, amount) {
+      return a + (b - a) * amount;
+    }
+
+    function fade(value) {
+      return value * value * value * (value * (value * 6 - 15) + 10);
+    }
+
+    function latticeValue(index) {
+      return hash(index, Number(ui.seed.value)) * 2 - 1;
+    }
+
+    function latticeCoordinate(x) {
+      return x / Number(ui.featureWidth.value);
+    }
+
+    function randomTerrain(x) {
+      return latticeValue(Math.floor(latticeCoordinate(x)));
+    }
+
+    function coherentNoise(x) {
+      const coordinate = latticeCoordinate(x);
+      const cell = Math.floor(coordinate);
+      const local = coordinate - cell;
+      return lerp(latticeValue(cell), latticeValue(cell + 1), fade(local));
+    }
+
+    function panelLayout(side) {
+      const outer = Math.max(16, width * 0.025);
+      const gutter = Math.max(18, width * 0.035);
+      const panelWidth = (width - outer * 2 - gutter) / 2;
+      const left = side === 'left' ? outer : outer + panelWidth + gutter;
+      const top = Math.max(86, height * 0.15);
+      const bottom = Math.max(85, height * 0.18);
+      return { left, top, width: panelWidth, height: height - top - bottom, bottom: height - bottom };
+    }
+
+    function toScreenX(x, layout) {
+      return layout.left + (x / domainWidth) * layout.width;
+    }
+
+    function toScreenY(value, layout) {
+      return layout.top + (1 - (value + 1) / 2) * layout.height;
+    }
+
+    function fillTerrain(points, layout, color) {
+      context.beginPath();
+      context.moveTo(points[0][0], layout.bottom);
+      for (const [x, y] of points) context.lineTo(x, y);
+      context.lineTo(points[points.length - 1][0], layout.bottom);
+      context.closePath();
+      context.fillStyle = color;
+      context.fill();
+    }
+
+    function drawPanel(layout, title, subtitle, ink, sample, isRandom, probeX) {
+      sketch.rect(layout.left, layout.top, layout.width, layout.height, {
+        ink: 'pencil',
+        width: 1,
+        roughness: 0.45
+      });
+      sketch.ruler(layout.left, layout.bottom, layout.left + layout.width, layout.bottom, { ink: 'pencilLight', width: 1 });
+      sketch.text(title, layout.left + 9, layout.top + 22, { ink, size: 20, boil: false });
+      sketch.text(subtitle, layout.left + 9, layout.top + 40, { ink: 'pencil', size: 12, boil: false });
+
+      const points = [];
+      if (isRandom) {
+        const cellWidth = Number(ui.featureWidth.value);
+        for (let x = 0; x < domainWidth; x += cellWidth) {
+          const x0 = toScreenX(x, layout);
+          const x1 = toScreenX(Math.min(x + cellWidth, domainWidth), layout);
+          const y = toScreenY(sample(x), layout);
+          points.push([x0, y], [x1, y]);
+          if (x + cellWidth < domainWidth) points.push([x1, toScreenY(sample(x + cellWidth), layout)]);
+        }
+      } else {
+        const count = 38;
+        for (let index = 0; index <= count; index += 1) {
+          const x = (index / count) * domainWidth;
+          points.push([toScreenX(x, layout), toScreenY(sample(x), layout)]);
+        }
+      }
+
+      fillTerrain(points, layout, isRandom ? 'rgba(177, 61, 61, 0.09)' : 'rgba(51, 118, 77, 0.10)');
+      if (isRandom) {
+        sketch.polyline(points, { ink, width: 2.2, roughness: 0.5 });
+      } else {
+        sketch.curve(points, { ink, width: 2.4, roughness: 0.55 });
+      }
+
+      const markerX = toScreenX(probeX, layout);
+      const markerY = toScreenY(sample(probeX), layout);
+      sketch.ruler(markerX, layout.bottom, markerX, markerY, { ink: 'blue', width: 1.2, dash: [4, 4] });
+      sketch.point(markerX, markerY, { ink: 'blue', size: 15, label: 'p' });
+    }
+
+    function draw() {
+      sketch.clear({ rules: 'lines', margin: false });
+
+      const left = panelLayout('left');
+      const right = panelLayout('right');
+      const probeX = (phase % 1) * (domainWidth - probeStep);
+
+      drawPanel(left, 'independent random samples', 'sample-hold terrain: discontinuous', 'red', randomTerrain, true, probeX);
+      drawPanel(right, 'coherent noise field', 'smoothly blended: locally related', 'green', coherentNoise, false, probeX);
+
+      sketch.ruler(width / 2, left.top - 2, width / 2, left.bottom + 2, { ink: 'pencilLight', width: 1, dash: [5, 6] });
+
+      const randomChange = Math.abs(randomTerrain(probeX + probeStep) - randomTerrain(probeX));
+      const noiseChange = Math.abs(coherentNoise(probeX + probeStep) - coherentNoise(probeX));
+      ui.randomDelta.textContent = randomChange.toFixed(2) + ' height units';
+      ui.noiseDelta.textContent = noiseChange.toFixed(2) + ' height units';
+      ui.featureValue.textContent = Number(ui.featureWidth.value).toFixed(1) + ' m';
+    }
+
+    function animationFrame(time) {
+      if (lastTime === 0) lastTime = time;
+      const elapsed = Math.min((time - lastTime) / 1000, 0.05);
+      lastTime = time;
+      phase += elapsed / 9;
+      draw();
+      requestAnimationFrame(animationFrame);
+    }
+
+    function resize() {
+      const dimensions = Sketch.fit(canvas);
+      width = dimensions.width;
+      height = dimensions.height;
+      draw();
+    }
+
+    ui.seed.addEventListener('input', draw);
+    ui.featureWidth.addEventListener('input', () => {
+      // The feature width changes the coordinate scale only on the coherent side.
+      draw();
+    });
+    ui.reset.addEventListener('click', () => {
+      phase = 0;
+      draw();
+    });
+    window.addEventListener('resize', resize);
+
+    resize();
+    requestAnimationFrame(animationFrame);
+  </script>
+</body>
+</html>

@@ -151,6 +151,7 @@ export async function buildCollectionFromFolder({
   const summaryRaw = descriptionSource(front, content);
   const summaryHtml = await markdownToHtml(summaryRaw, { slug, isCollection: true });
   const summaryText = await markdownToPlainText(summaryRaw);
+  const html = await markdownToHtml(content, { slug, isCollection: true });
 
   return {
     slug,
@@ -158,6 +159,8 @@ export async function buildCollectionFromFolder({
     status,
     cover,
     summary: { text: summaryText, html: summaryHtml },
+    content,
+    html,
     articles: childArticles,
     collections: childCollections,
     totalArticles: childArticles.length,

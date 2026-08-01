@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="sim-paper" content="full">
+  <title>Quadratic Residues Modulo 11</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap');
+    body { font-family: 'Fira Code', monospace; }
+  </style>
+</head>
+<body class="sk-page w-screen h-screen overflow-hidden m-0 p-0 relative select-none">
+  <canvas id="residueCanvas" class="absolute inset-0 w-full h-full block" aria-label="Animation mapping each finite-field y value to its square modulo eleven"></canvas>
+
+  <section class="absolute left-4 top-4 md:left-6 md:top-6 z-10 w-[218px] sm:w-[232px] sk-sticky pointer-events-auto" aria-label="Quadratic residue information">
+    <div class="border-b border-black/10 pb-2.5">
+      <p class="sk-hand text-xl font-semibold ink-black leading-none">Which heights are squares?</p>
+      <p class="mt-2 text-[11px] font-bold ink-purple leading-relaxed">lhs(y) = y² mod 11</p>
+      <p class="mt-1 text-[9px] ink-pencil">Yellow dots are the values attainable as y².</p>
+    </div>
+
+    <div class="mt-2.5 text-[10px] font-mono">
+      <div class="sk-row">
+        <span class="ink-pencil">current input</span>
+        <span id="inputValue" class="font-bold ink-green">y = 0</span>
+      </div>
+      <div class="sk-row mt-1">
+        <span class="ink-pencil">mapping</span>
+        <span id="mappingValue" class="font-bold text-[#a56d18]">0² mod 11 = 0</span>
+      </div>
+      <div class="sk-row mt-1">
+        <span id="residueLabel" class="ink-pencil">residue heights</span>
+        <span id="residueCount" class="font-bold text-[#a56d18]">0 / 6</span>
+      </div>
+    </div>
+
+    <button id="replayButton" type="button" class="mt-2.5 w-full rounded-md border border-black/10 bg-black/5 px-2 py-1.5 text-[9px] font-semibold ink-pencil transition-colors hover:bg-black/10">
+      Replay mappings
+    </button>
+  </section>
+
+  <script>
+    const canvas = document.getElementById('residueCanvas');
+    const sk = Sketch.attach(canvas);
+    const inputValue = document.getElementById('inputValue');
+    const mappingValue = document.getElementById('mappingValue');
+    const residueLabel = document.getElementById('residueLabel');
+    const residueCount = document.getElementById('residueCount');
+    const replayButton = document.getElementById('replayButton');
+
+    const MODULUS = 11;
+    const VALUES = Array.from({ length: MODULUS }, (_, y) => ({ y, residue: (y * y) % MODULUS }));
+    const RESIDUES = [...new Set(VALUES.map((value) => value.residue))];
+    const INTRO_PAUSE = 300;
+    const STEP_DURATION = 660;
+    const HOLD_AFTER_LAST = 1800;
+
+    const state = {
+      elapsed: 0,
+      lastFrame: null
+    };
+
+    function easeOut(value) {
+      return 1 - Math.pow(1 - value, 3);
+    }
+
+    function animationState() {
+      const period = INTRO_PAUSE + VALUES.length * STEP_DURATION + HOLD_AFTER_LAST;
+      const phase = state.elapsed % period;
+      if (phase < INTRO_PAUSE) return { current: 0, rise: 0, visible: 0, complete: false };
+
+      const elapsed = phase - INTRO_PAUSE;
+      if (elapsed < VALUES.length * STEP_DURATION) {
+        const current = Math.floor(elapsed / STEP_DURATION);
+        return {
+          current,
+          rise: easeOut((elapsed % STEP_DURATION) / STEP_DURATION),
+          visible: current,
+          complete: false
+        };
+      }
+
+      return { current: VALUES.length - 1, rise: 1, visible: VALUES.length, complete: true };
+    }
+
+    function getLayout() {
+      const compact = canvas.width < 620;
+      const size = compact
+        ? Math.min(canvas.width * 0.78, canvas.height * 0.42)
+        : Math.min(canvas.width * 0.49, canvas.height * 0.58);
+      const centerX = compact ? canvas.width * 0.54 : canvas.width * 0.67;
+      const centerY = compact ? canvas.height * 0.68 : canvas.height * 0.58;
+      const left = centerX - size / 2;
+      const top = centerY - size / 2;
+
+      return {
+        compact,
+        size,
+        left,
+        top,
+        right: left + size,
+        bottom: top + size,
+        step: size / (MODULUS - 1)
+      };
+    }
+
+    function pointPosition(value, layout) {
+      return {
+        x: layout.left + value.y * layout.step,
+        y: layout.bottom - value.residue * layout.step
+      };
+    }
+
+    function drawGrid(layout) {
+      const { left, top, right, bottom, step, compact } = layout;
+
+      for (let value = 1; value < MODULUS - 1; value += 1) {
+        const x = left + value * step;
+        const y = bottom - value * step;
+        sk.ruler(x, top, x, bottom, { ink: 'pencilLight', width: 0.8 });
+        sk.ruler(left, y, right, y, { ink: 'pencilLight', width: 0.8 });
+      }
+
+      sk.rect(left, top, layout.size, layout.size, { ink: 'pencil', width: 2, roughness: 0.45, boil: false });
+
+      for (let value = 0; value < MODULUS; value += 1) {
+        const x = left + value * step;
+        const y = bottom - value * step;
+        const labelSize = compact ? 10 : 12;
+        sk.text(String(value), x, bottom + (compact ? 16 : 19), {
+          ink: 'pencil', size: labelSize, align: 'center', boil: false
+        });
+        sk.text(String(value), left - (compact ? 15 : 18), y + 3, {
+          ink: 'pencil', size: labelSize, align: 'center', boil: false
+        });
+      }
+
+      sk.text('input y', right, bottom + (compact ? 36 : 40), {
+        ink: 'pencil', size: compact ? 13 : 15, align: 'right', boil: false
+      });
+      sk.text('y² mod 11', left, top - 12, {
+        ink: 'pencil', size: compact ? 13 : 15, boil: false
+      });
+    }
+
+    function drawResidueMarker(position, layout, current = false) {
+      sk.circle(position.x, position.y, current ? 7 : 5.6, {
+        ink: 'orange',
+        fill: 'highlight',
+        fillStyle: current ? 'hachure' : 'solid',
+        roughness: current ? 0.48 : 0.4
+      });
+    }
+
+    function drawMarkers(layout, animation) {
+      VALUES.forEach((value, index) => {
+        if (index >= animation.visible) return;
+        drawResidueMarker(pointPosition(value, layout), layout);
+      });
+
+      if (animation.complete) return;
+
+      const current = VALUES[animation.current];
+      const destination = pointPosition(current, layout);
+      const y = layout.bottom + (destination.y - layout.bottom) * animation.rise;
+      const landed = animation.rise > 0.9;
+
+      sk.ruler(destination.x, layout.bottom, destination.x, destination.y, {
+        ink: 'orange', width: 1.4, dash: [2, 5]
+      });
+
+      drawResidueMarker({ x: destination.x, y: landed ? destination.y : y }, layout, true);
+
+      if (animation.rise > 0.52 || current.residue === 0) {
+        sk.text(`${current.y}² ≡ ${current.residue}`, destination.x + 12, (landed ? destination.y : y) - 10, {
+          ink: 'orange', size: layout.compact ? 12 : 14, boil: false
+        });
+      }
+    }
+
+    function discoveredResidues(animation) {
+      const count = animation.complete ? VALUES.length : animation.visible;
+      return new Set(VALUES.slice(0, count).map((value) => value.residue)).size;
+    }
+
+    function updateHud(animation) {
+      const value = VALUES[animation.current];
+      const count = discoveredResidues(animation);
+      inputValue.textContent = `y = ${value.y}`;
+      mappingValue.textContent = `${value.y}² mod 11 = ${value.residue}`;
+      residueLabel.textContent = count === RESIDUES.length ? 'all residue heights' : 'residue heights found';
+      residueCount.textContent = `${count} / ${RESIDUES.length}`;
+    }
+
+    function draw() {
+      const layout = getLayout();
+      const animation = animationState();
+
+      // The finite-field grid needs to remain the only visual coordinate system.
+      sk.clear({ paper: false });
+      drawGrid(layout);
+      drawMarkers(layout, animation);
+      updateHud(animation);
+    }
+
+    function replay() {
+      state.elapsed = 0;
+      state.lastFrame = null;
+      draw();
+    }
+
+    function animationLoop(timestamp) {
+      if (state.lastFrame !== null) {
+        // Do not count off-screen iframe pauses as animation time.
+        state.elapsed += Math.min(timestamp - state.lastFrame, 50);
+      }
+      state.lastFrame = timestamp;
+      draw();
+      requestAnimationFrame(animationLoop);
+    }
+
+    function fitCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      draw();
+    }
+
+    replayButton.addEventListener('click', replay);
+    window.addEventListener('resize', fitCanvas);
+    window.addEventListener('load', () => {
+      fitCanvas();
+      requestAnimationFrame(animationLoop);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="sim-paper" content="full">
+  <title>Finite-Field Elliptic Curve Point Cloud</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap');
+    body { font-family: 'Fira Code', monospace; }
+  </style>
+</head>
+<body class="sk-page w-screen h-screen overflow-hidden m-0 p-0 relative select-none">
+  <canvas id="fieldCanvas" class="absolute inset-0 w-full h-full block" style="touch-action: none;" aria-label="Point cloud for an elliptic curve over the finite field F11"></canvas>
+
+  <section class="absolute left-4 top-4 md:left-6 md:top-6 z-10 w-[218px] sm:w-[232px] sk-sticky pointer-events-auto" aria-label="Finite-field curve information">
+    <div class="border-b border-black/10 pb-2.5">
+      <p class="sk-hand text-xl font-semibold ink-black leading-none">A finite-field curve</p>
+      <p class="mt-2 text-[11px] font-bold ink-blue leading-relaxed">y² ≡ x³ + x + 1 (mod 11)</p>
+      <p class="mt-1 text-[9px] ink-pencil">Every dot is one valid coordinate pair.</p>
+    </div>
+
+    <div class="mt-2.5 text-[10px] font-mono">
+      <div class="sk-row">
+        <span class="ink-pencil">field</span>
+        <span class="font-bold ink-green">F₁₁</span>
+      </div>
+      <div class="sk-row mt-1">
+        <span id="pointCount" class="ink-pencil">plotting pairs</span>
+        <span id="pointReadout" class="font-bold ink-blue">0 / 13</span>
+      </div>
+    </div>
+
+    <button id="replayButton" type="button" class="mt-2.5 w-full rounded-md border border-black/10 bg-black/5 px-2 py-1.5 text-[9px] font-semibold ink-pencil transition-colors hover:bg-black/10">
+      Replay point cloud
+    </button>
+  </section>
+
+  <script>
+    const canvas = document.getElementById('fieldCanvas');
+    const sk = Sketch.attach(canvas);
+    const pointCount = document.getElementById('pointCount');
+    const pointReadout = document.getElementById('pointReadout');
+    const replayButton = document.getElementById('replayButton');
+
+    // A small, illustrative curve. Its discriminant is non-zero modulo 11,
+    // so the plotted set is a valid finite-field elliptic curve.
+    const curve = { p: 11, a: 1, b: 1 };
+    const INTRO_PAUSE = 250;
+    const POINT_DELAY = 150;
+    const HOLD_AFTER_PLOT = 1800;
+
+    const state = {
+      elapsed: 0,
+      lastFrame: null,
+      hovered: null
+    };
+
+    function mod(value, base = curve.p) {
+      return ((value % base) + base) % base;
+    }
+
+    function curvePoints() {
+      const points = [];
+      for (let x = 0; x < curve.p; x += 1) {
+        for (let y = 0; y < curve.p; y += 1) {
+          const left = mod(y * y);
+          const right = mod(x * x * x + curve.a * x + curve.b);
+          if (left === right) points.push({ x, y });
+        }
+      }
+      return points;
+    }
+
+    const points = curvePoints();
+
+    function getLayout() {
+      const compact = canvas.width < 620;
+      const size = compact
+        ? Math.min(canvas.width * 0.72, canvas.height * 0.46)
+        : Math.min(canvas.width * 0.48, canvas.height * 0.72);
+      const centerX = compact ? canvas.width / 2 : canvas.width * 0.62;
+      const centerY = compact ? canvas.height * 0.69 : canvas.height * 0.53;
+
+      return {
+        compact,
+        size,
+        left: centerX - size / 2,
+        top: centerY - size / 2,
+        step: size / (curve.p - 1)
+      };
+    }
+
+    function pointPosition(point, layout) {
+      return {
+        x: layout.left + point.x * layout.step,
+        y: layout.top + (curve.p - 1 - point.y) * layout.step
+      };
+    }
+
+    function visiblePointCount() {
+      const period = INTRO_PAUSE + points.length * POINT_DELAY + HOLD_AFTER_PLOT;
+      const phase = state.elapsed % period;
+      if (phase < INTRO_PAUSE) return 0;
+      return Math.min(points.length, Math.floor((phase - INTRO_PAUSE) / POINT_DELAY) + 1);
+    }
+
+    function drawGrid(layout) {
+      const { left, top, size, step, compact } = layout;
+      const bottom = top + size;
+      const right = left + size;
+
+      for (let value = 1; value < curve.p - 1; value += 1) {
+        const x = left + value * step;
+        const y = top + value * step;
+        sk.ruler(x, top, x, bottom, { ink: 'pencilLight', width: 0.8 });
+        sk.ruler(left, y, right, y, { ink: 'pencilLight', width: 0.8 });
+      }
+
+      sk.rect(left, top, size, size, { ink: 'pencil', width: 2, roughness: 0.45, boil: false });
+
+      for (let value = 0; value < curve.p; value += 1) {
+        const x = left + value * step;
+        const y = bottom - value * step;
+        const labelSize = compact ? 11 : 13;
+
+        sk.text(String(value), x, bottom + (compact ? 16 : 19), {
+          ink: 'pencil', size: labelSize, align: 'center', boil: false
+        });
+        sk.text(String(value), left - (compact ? 15 : 18), y + 3, {
+          ink: 'pencil', size: labelSize, align: 'center', boil: false
+        });
+      }
+
+      sk.text('x', right + 12, bottom + (compact ? 17 : 20), {
+        ink: 'pencil', size: compact ? 15 : 17, boil: false
+      });
+      sk.text('y', left - (compact ? 15 : 18), top - 12, {
+        ink: 'pencil', size: compact ? 15 : 17, align: 'center', boil: false
+      });
+    }
+
+    function drawPoints(layout, visible) {
+      points.forEach((point, index) => {
+        if (index >= visible) return;
+        const position = pointPosition(point, layout);
+        const hovered = state.hovered === point;
+
+        if (hovered) {
+          sk.circle(position.x, position.y, 12, {
+            ink: 'orange', fill: 'orange', fillStyle: 'hachure', roughness: 0.5
+          });
+        }
+
+        sk.circle(position.x, position.y, hovered ? 6.5 : 5.2, {
+          ink: 'blue', fill: 'blue', fillStyle: 'solid', roughness: 0.42
+        });
+
+        if (hovered) {
+          sk.text(`(${point.x}, ${point.y})`, position.x + 13, position.y - 10, {
+            ink: 'orange', size: layout.compact ? 14 : 16, boil: false
+          });
+        }
+      });
+    }
+
+    function updateHud(visible) {
+      pointCount.textContent = visible === points.length ? 'valid pairs' : 'plotting pairs';
+      pointReadout.textContent = state.hovered
+        ? `(${state.hovered.x}, ${state.hovered.y})`
+        : `${visible} / ${points.length}`;
+    }
+
+    function draw() {
+      const layout = getLayout();
+      const visible = visiblePointCount();
+      if (state.hovered && points.indexOf(state.hovered) >= visible) state.hovered = null;
+
+      // The coordinate grid is the lesson's reference system. A second set
+      // of decorative paper rules competes with it, so keep this canvas plain.
+      sk.clear({ paper: false });
+      drawGrid(layout);
+      drawPoints(layout, visible);
+      updateHud(visible);
+
+      sk.text('Only these discrete coordinate pairs satisfy the equation', layout.left + layout.size / 2, layout.top - 24, {
+        ink: 'pencil', size: layout.compact ? 13 : 15, align: 'center', boil: false
+      });
+    }
+
+    function pointerPosition(event) {
+      const bounds = canvas.getBoundingClientRect();
+      return {
+        x: (event.clientX - bounds.left) * canvas.width / bounds.width,
+        y: (event.clientY - bounds.top) * canvas.height / bounds.height
+      };
+    }
+
+    function findHoveredPoint(event) {
+      const layout = getLayout();
+      const visible = visiblePointCount();
+      const pointer = pointerPosition(event);
+
+      return points.slice(0, visible).find((point) => {
+        const position = pointPosition(point, layout);
+        return Math.hypot(pointer.x - position.x, pointer.y - position.y) < 14;
+      }) || null;
+    }
+
+    function replay() {
+      state.elapsed = 0;
+      state.lastFrame = null;
+      state.hovered = null;
+      draw();
+    }
+
+    function animationLoop(timestamp) {
+      if (state.lastFrame !== null) {
+        // The article pauses off-screen iframe animation. Do not count that
+        // invisible time as part of the reveal cycle.
+        state.elapsed += Math.min(timestamp - state.lastFrame, 50);
+      }
+      state.lastFrame = timestamp;
+      draw();
+      requestAnimationFrame(animationLoop);
+    }
+
+    function fitCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      draw();
+    }
+
+    canvas.addEventListener('pointermove', (event) => {
+      state.hovered = findHoveredPoint(event);
+      canvas.style.cursor = state.hovered ? 'pointer' : 'default';
+      draw();
+    });
+    canvas.addEventListener('pointerleave', () => {
+      state.hovered = null;
+      canvas.style.cursor = 'default';
+      draw();
+    });
+    replayButton.addEventListener('click', replay);
+    window.addEventListener('resize', fitCanvas);
+    window.addEventListener('load', () => {
+      fitCanvas();
+      requestAnimationFrame(animationLoop);
+    });
+  </script>
+</body>
+</html>

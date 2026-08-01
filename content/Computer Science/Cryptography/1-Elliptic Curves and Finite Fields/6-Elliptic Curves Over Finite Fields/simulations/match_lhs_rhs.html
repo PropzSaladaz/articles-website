@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="sim-paper" content="full">
+  <title>Matching the Left and Right Sides</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap');
+    body { font-family: 'Fira Code', monospace; }
+  </style>
+</head>
+<body class="sk-page w-screen h-screen overflow-hidden m-0 p-0 relative select-none">
+  <canvas id="matchingCanvas" class="absolute inset-0 w-full h-full block" aria-label="Animation matching a right-hand-side value with square residues to create finite-field elliptic curve points"></canvas>
+
+  <section class="absolute left-4 top-4 md:left-6 md:top-6 z-10 w-[218px] sm:w-[232px] sk-sticky pointer-events-auto" aria-label="Left-hand and right-hand side match information">
+    <div class="border-b border-black/10 pb-2.5">
+      <p class="sk-hand text-xl font-semibold ink-black leading-none">Match one x-column</p>
+      <p class="mt-2 text-[11px] font-bold ink-purple leading-relaxed">lhs(y) = rhs(3) = 9</p>
+      <p class="mt-1 text-[9px] ink-pencil">Yellow lookup markers become blue curve points.</p>
+    </div>
+
+    <div class="mt-2.5 text-[10px] font-mono">
+      <div class="sk-row">
+        <span class="ink-pencil">selected column</span>
+        <span class="font-bold ink-green">x = 3</span>
+      </div>
+      <div class="sk-row mt-1">
+        <span class="ink-pencil">green RHS cross</span>
+        <span class="font-bold ink-green">(3, 9)</span>
+      </div>
+      <div class="sk-row mt-1">
+        <span id="matchLabel" class="ink-pencil">matching y-values</span>
+        <span id="matchValue" class="font-bold text-[#a56d18]">looking up squares</span>
+      </div>
+    </div>
+
+    <button id="replayButton" type="button" class="mt-2.5 w-full rounded-md border border-black/10 bg-black/5 px-2 py-1.5 text-[9px] font-semibold ink-pencil transition-colors hover:bg-black/10">
+      Replay matching
+    </button>
+  </section>
+
+  <script>
+    const canvas = document.getElementById('matchingCanvas');
+    const sk = Sketch.attach(canvas);
+    const matchLabel = document.getElementById('matchLabel');
+    const matchValue = document.getElementById('matchValue');
+    const replayButton = document.getElementById('replayButton');
+
+    const MODULUS = 11;
+    const TARGET_X = 3;
+    const rhs = (TARGET_X ** 3 + TARGET_X + 1) % MODULUS;
+    const LOOKUP = Array.from({ length: MODULUS }, (_, y) => ({ y, residue: (y * y) % MODULUS }));
+    const MATCHES = LOOKUP.filter((value) => value.residue === rhs);
+
+    const LOOKUP_DURATION = 500;
+    const FOCUS_DURATION = 1050;
+    const MATCH_DURATION = 1250;
+    const TRANSFORM_DURATION = 1500;
+    const HOLD_DURATION = 1900;
+
+    const state = {
+      elapsed: 0,
+      lastFrame: null
+    };
+
+    function easeInOut(value) {
+      return value < 0.5
+        ? 4 * value * value * value
+        : 1 - Math.pow(-2 * value + 2, 3) / 2;
+    }
+
+    function timeline() {
+      const stages = [
+        { name: 'lookup', duration: LOOKUP_DURATION },
+        { name: 'focus', duration: FOCUS_DURATION },
+        { name: 'match', duration: MATCH_DURATION },
+        { name: 'transform', duration: TRANSFORM_DURATION },
+        { name: 'complete', duration: HOLD_DURATION }
+      ];
+      const period = stages.reduce((total, stage) => total + stage.duration, 0);
+      let remaining = state.elapsed % period;
+
+      for (const stage of stages) {
+        if (remaining < stage.duration) {
+          return { name: stage.name, progress: remaining / stage.duration };
+        }
+        remaining -= stage.duration;
+      }
+
+      return { name: 'complete', progress: 1 };
+    }
+
+    function getLayout() {
+      const compact = canvas.width < 620;
+      const size = compact
+        ? Math.min(canvas.width * 0.78, canvas.height * 0.42)
+        : Math.min(canvas.width * 0.49, canvas.height * 0.58);
+      const centerX = compact ? canvas.width * 0.54 : canvas.width * 0.67;
+      const centerY = compact ? canvas.height * 0.68 : canvas.height * 0.58;
+      const left = centerX - size / 2;
+      const top = centerY - size / 2;
+
+      return {
+        compact,
+        size,
+        left,
+        top,
+        right: left + size,
+        bottom: top + size,
+        step: size / (MODULUS - 1)
+      };
+    }
+
+    function position(x, y, layout) {
+      return {
+        x: layout.left + x * layout.step,
+        y: layout.bottom - y * layout.step
+      };
+    }
+
+    function drawGrid(layout) {
+      const { left, top, right, bottom, step, compact } = layout;
+
+      for (let value = 1; value < MODULUS - 1; value += 1) {
+        const x = left + value * step;
+        const y = bottom - value * step;
+        sk.ruler(x, top, x, bottom, { ink: 'pencilLight', width: 0.8 });
+        sk.ruler(left, y, right, y, { ink: 'pencilLight', width: 0.8 });
+      }
+
+      sk.rect(left, top, layout.size, layout.size, { ink: 'pencil', width: 2, roughness: 0.45, boil: false });
+
+      for (let value = 0; value < MODULUS; value += 1) {
+        const x = left + value * step;
+        const y = bottom - value * step;
+        const labelSize = compact ? 10 : 12;
+        sk.text(String(value), x, bottom + (compact ? 16 : 19), {
+          ink: 'pencil', size: labelSize, align: 'center', boil: false
+        });
+        sk.text(String(value), left - (compact ? 15 : 18), y + 3, {
+          ink: 'pencil', size: labelSize, align: 'center', boil: false
+        });
+      }
+
+      sk.text('x  /  candidate y', right, bottom + (compact ? 36 : 40), {
+        ink: 'pencil', size: compact ? 12 : 14, align: 'right', boil: false
+      });
+      sk.text('field value', left, top - 12, {
+        ink: 'pencil', size: compact ? 13 : 15, boil: false
+      });
+    }
+
+    function drawLookupMarker(point, layout, emphasized = false, faded = false) {
+      const source = position(point.y, point.residue, layout);
+      sk.circle(source.x, source.y, emphasized ? 7 : 5.4, {
+        ink: faded ? 'rgba(201, 118, 43, 0.38)' : 'orange',
+        fill: faded ? 'rgba(242, 217, 92, 0.4)' : 'highlight',
+        fillStyle: emphasized ? 'hachure' : 'solid',
+        roughness: emphasized ? 0.48 : 0.4
+      });
+    }
+
+    function drawRhsTarget(layout, stage) {
+      if (stage.name === 'lookup') return;
+
+      const target = position(TARGET_X, rhs, layout);
+      const columnBottom = position(TARGET_X, 0, layout);
+      const columnTop = position(TARGET_X, MODULUS - 1, layout);
+      sk.ruler(columnBottom.x, columnBottom.y, columnTop.x, columnTop.y, {
+        ink: 'green', width: 1.2, dash: [2, 5]
+      });
+
+      const emphasized = stage.name === 'focus' || stage.name === 'match';
+      if (emphasized) {
+        sk.circle(target.x, target.y, layout.compact ? 11 : 13, {
+          ink: 'green', fill: 'rgba(74, 124, 89, 0.14)', fillStyle: 'hachure', roughness: 0.5
+        });
+      }
+
+      const radius = layout.compact ? 6.5 : 7.5;
+      sk.ruler(target.x - radius, target.y - radius, target.x + radius, target.y + radius, {
+        ink: 'green', width: 2.4
+      });
+      sk.ruler(target.x - radius, target.y + radius, target.x + radius, target.y - radius, {
+        ink: 'green', width: 2.4
+      });
+
+      if (stage.name === 'focus' || stage.name === 'match') {
+        sk.text('rhs(3) = 9', target.x + 12, target.y - 11, {
+          ink: 'green', size: layout.compact ? 12 : 14, boil: false
+        });
+      }
+    }
+
+    function drawLookupStage(layout, stage) {
+      const transforming = stage.name === 'transform' || stage.name === 'complete';
+      const matching = stage.name === 'match';
+
+      LOOKUP.forEach((point) => {
+        const isMatch = MATCHES.includes(point);
+        if (isMatch && transforming) return;
+        drawLookupMarker(point, layout, isMatch && matching, !isMatch && stage.name !== 'lookup');
+      });
+
+      if (stage.name === 'match' || transforming) {
+        const start = position(0, rhs, layout);
+        const end = position(MODULUS - 1, rhs, layout);
+        sk.ruler(start.x, start.y, end.x, end.y, {
+          ink: 'green', width: 1.3, dash: [3, 5]
+        });
+      }
+    }
+
+    function drawTransform(layout, stage) {
+      if (stage.name !== 'transform' && stage.name !== 'complete') return;
+
+      const movement = stage.name === 'complete' ? 1 : easeInOut(stage.progress);
+      MATCHES.forEach((match) => {
+        const source = position(match.y, match.residue, layout);
+        const destination = position(TARGET_X, match.y, layout);
+        const x = source.x + (destination.x - source.x) * movement;
+        const y = source.y + (destination.y - source.y) * movement;
+        const blue = movement > 0.55;
+
+        if (stage.name === 'transform') {
+          sk.ruler(source.x, source.y, destination.x, destination.y, {
+            ink: 'pencilLight', width: 0.9, dash: [2, 5]
+          });
+        }
+
+        sk.circle(x, y, blue ? 6.4 : 6.8, {
+          ink: blue ? 'blue' : 'orange',
+          fill: blue ? 'blue' : 'highlight',
+          fillStyle: blue ? 'solid' : 'hachure',
+          roughness: 0.42
+        });
+
+        if (stage.name === 'complete') {
+          sk.text(`(${TARGET_X}, ${match.y})`, destination.x + 11, destination.y - 10, {
+            ink: 'blue', size: layout.compact ? 12 : 14, boil: false
+          });
+        }
+      });
+    }
+
+    function updateHud(stage) {
+      if (stage.name === 'lookup') {
+        matchLabel.textContent = 'matching y-values';
+        matchValue.textContent = 'looking up squares';
+      } else if (stage.name === 'focus') {
+        matchLabel.textContent = 'required residue';
+        matchValue.textContent = 'y² mod 11 = 9';
+      } else if (stage.name === 'match') {
+        matchLabel.textContent = 'yellow matches';
+        matchValue.textContent = 'y = 3, 8';
+      } else if (stage.name === 'transform') {
+        matchLabel.textContent = 'moving to column x = 3';
+        matchValue.textContent = '(3, 3) and (3, 8)';
+      } else {
+        matchLabel.textContent = 'blue curve points';
+        matchValue.textContent = '(3, 3) and (3, 8)';
+      }
+    }
+
+    function draw() {
+      const layout = getLayout();
+      const stage = timeline();
+
+      // The coordinate grid is the reference system for both the lookup and
+      // the resulting points, so no decorative paper rules are drawn here.
+      sk.clear({ paper: false });
+      drawGrid(layout);
+      drawLookupStage(layout, stage);
+      drawRhsTarget(layout, stage);
+      drawTransform(layout, stage);
+      updateHud(stage);
+    }
+
+    function replay() {
+      state.elapsed = 0;
+      state.lastFrame = null;
+      draw();
+    }
+
+    function animationLoop(timestamp) {
+      if (state.lastFrame !== null) {
+        // Do not count off-screen iframe pauses as animation time.
+        state.elapsed += Math.min(timestamp - state.lastFrame, 50);
+      }
+      state.lastFrame = timestamp;
+      draw();
+      requestAnimationFrame(animationLoop);
+    }
+
+    function fitCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      draw();
+    }
+
+    replayButton.addEventListener('click', replay);
+    window.addEventListener('resize', fitCanvas);
+    window.addEventListener('load', () => {
+      fitCanvas();
+      requestAnimationFrame(animationLoop);
+    });
+  </script>
+</body>
+</html>

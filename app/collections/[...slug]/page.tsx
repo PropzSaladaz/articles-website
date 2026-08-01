@@ -163,7 +163,7 @@ function CollectionView({ collection }: { collection: LoadedCollection }) {
       </header>
 
       <section className="prose prose-lg max-w-none text-muted-foreground dark:prose-invert">
-        <MarkdownRenderer html={collection.summary.html} />
+        <MarkdownRenderer html={collection.html} />
       </section>
 
       {collection.collections.length > 0 && (

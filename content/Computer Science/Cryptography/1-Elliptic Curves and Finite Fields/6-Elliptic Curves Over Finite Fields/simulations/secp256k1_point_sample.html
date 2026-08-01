@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="sim-paper" content="full">
+  <title>Sampled secp256k1 Point Cloud</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap');
+    body { font-family: 'Fira Code', monospace; }
+  </style>
+</head>
+<body class="sk-page w-screen h-screen overflow-hidden m-0 p-0 relative select-none">
+  <canvas id="sampleCanvas" class="absolute inset-0 w-full h-full block" aria-label="A scaled sample of genuine points on the secp256k1 elliptic curve"></canvas>
+
+  <section class="absolute left-4 top-4 md:left-6 md:top-6 z-10 w-[222px] sm:w-[238px] sk-sticky pointer-events-auto" aria-label="secp256k1 point sample information">
+    <div class="border-b border-black/10 pb-2.5">
+      <p class="sk-hand text-xl font-semibold ink-black leading-none">A production-scale cloud</p>
+      <p class="mt-2 text-[11px] font-bold ink-purple leading-relaxed">y² ≡ x³ + 7 (mod p)</p>
+      <p class="mt-1 text-[9px] ink-pencil">Each blue dot is a genuine secp256k1 point, scaled to fit the square.</p>
+    </div>
+
+    <div class="mt-2.5 text-[10px] font-mono">
+      <div class="sk-row">
+        <span class="ink-pencil">field size</span>
+        <span class="font-bold ink-green">256 bits</span>
+      </div>
+      <div class="sk-row mt-1">
+        <span class="ink-pencil">visible sample</span>
+        <span id="pointCount" class="font-bold ink-blue">0 / 96</span>
+      </div>
+      <div class="sk-row mt-1">
+        <span class="ink-pencil">full cloud</span>
+        <span class="font-bold ink-purple">about 2²⁵⁶ points</span>
+      </div>
+    </div>
+
+    <button id="replayButton" type="button" class="mt-2.5 w-full rounded-md border border-black/10 bg-black/5 px-2 py-1.5 text-[9px] font-semibold ink-pencil transition-colors hover:bg-black/10">
+      Replay sample
+    </button>
+  </section>
+
+  <script>
+    const canvas = document.getElementById('sampleCanvas');
+    const sk = Sketch.attach(canvas);
+    const pointCount = document.getElementById('pointCount');
+    const replayButton = document.getElementById('replayButton');
+
+    // secp256k1: y² = x³ + 7 over Fp, where p = 2²⁵⁶ − 2³² − 977.
+    const P = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2Fn;
+    const SAMPLE_SIZE = 96;
+    const SCALE_SHIFT = 208n;
+    const PROJECTED_FIELD_SIZE = Number(P >> SCALE_SHIFT);
+    const INTRO_PAUSE = 360;
+    const POINT_DELAY = 38;
+    const HOLD_AFTER_REVEAL = 2200;
+
+    const state = {
+      elapsed: 0,
+      lastFrame: null,
+      points: []
+    };
+
+    function modPow(base, exponent, modulus) {
+      let result = 1n;
+      let value = base % modulus;
+      let power = exponent;
+      while (power > 0n) {
+        if (power & 1n) result = result * value % modulus;
+        value = value * value % modulus;
+        power >>= 1n;
+      }
+      return result;
+    }
+
+    function makePointSample() {
+      // This is only a deterministic source of candidate x-values for a
+      // visual sample; it is not used for cryptographic randomness.
+      let seed = 0x243F6A8885A308D313198A2E03707344n;
+      const multiplier = 0x5851F42D4C957F2D14057B7EF767814Fn;
+      const increment = 0x14057B7EF767814F6A09E667F3BCC909n;
+      const sample = [];
+      let attempts = 0;
+
+      while (sample.length < SAMPLE_SIZE && attempts < 420) {
+        seed = (seed * multiplier + increment) % P;
+        const x = seed;
+        const rhs = (x * x % P * x + 7n) % P;
+        attempts += 1;
+
+        if (rhs === 0n) {
+          sample.push({ x, y: 0n });
+          continue;
+        }
+
+        // p ≡ 3 (mod 4), so a square root is rhs^((p + 1) / 4).
+        if (modPow(rhs, (P - 1n) / 2n, P) !== 1n) continue;
+        const y = modPow(rhs, (P + 1n) / 4n, P);
+        sample.push({ x, y });
+        if (sample.length < SAMPLE_SIZE) sample.push({ x, y: P - y });
+      }
+
+      if (sample.length !== SAMPLE_SIZE) throw new Error('Could not generate the full point sample.');
+      return sample;
+    }
+
+    function normalized(value) {
+      // Project the leading 48 bits so a 256-bit field element can be drawn
+      // with ordinary screen coordinates without changing which point it is.
+      return Number(value >> SCALE_SHIFT) / PROJECTED_FIELD_SIZE;
+    }
+
+    function getLayout() {
+      const compact = canvas.width < 620;
+      const size = compact
+        ? Math.min(canvas.width * 0.78, canvas.height * 0.42)
+        : Math.min(canvas.width * 0.49, canvas.height * 0.58);
+      const centerX = compact ? canvas.width * 0.54 : canvas.width * 0.67;
+      const centerY = compact ? canvas.height * 0.68 : canvas.height * 0.58;
+      const left = centerX - size / 2;
+      const top = centerY - size / 2;
+
+      return { compact, size, left, top, right: left + size, bottom: top + size };
+    }
+
+    function pointPosition(point, layout) {
+      return {
+        x: layout.left + normalized(point.x) * layout.size,
+        y: layout.bottom - normalized(point.y) * layout.size
+      };
+    }
+
+    function visiblePointCount() {
+      const period = INTRO_PAUSE + state.points.length * POINT_DELAY + HOLD_AFTER_REVEAL;
+      const phase = state.elapsed % period;
+      if (phase < INTRO_PAUSE) return 0;
+      return Math.min(state.points.length, Math.floor((phase - INTRO_PAUSE) / POINT_DELAY) + 1);
+    }
+
+    function drawGrid(layout) {
+      const { left, top, right, bottom, size, compact } = layout;
+      const middleX = left + size / 2;
+      const middleY = top + size / 2;
+
+      sk.ruler(middleX, top, middleX, bottom, { ink: 'pencilLight', width: 0.9, dash: [2, 5] });
+      sk.ruler(left, middleY, right, middleY, { ink: 'pencilLight', width: 0.9, dash: [2, 5] });
+      sk.rect(left, top, size, size, { ink: 'pencil', width: 2, roughness: 0.45, boil: false });
+
+      const labelSize = compact ? 10 : 12;
+      sk.text('0', left, bottom + (compact ? 16 : 19), { ink: 'pencil', size: labelSize, align: 'center', boil: false });
+      sk.text('p / 2', middleX, bottom + (compact ? 16 : 19), { ink: 'pencil', size: labelSize, align: 'center', boil: false });
+      sk.text('p − 1', right, bottom + (compact ? 16 : 19), { ink: 'pencil', size: labelSize, align: 'center', boil: false });
+      sk.text('0', left - (compact ? 15 : 18), bottom + 3, { ink: 'pencil', size: labelSize, align: 'center', boil: false });
+      sk.text('p / 2', left - (compact ? 18 : 22), middleY + 3, { ink: 'pencil', size: labelSize, align: 'center', boil: false });
+      sk.text('p − 1', left - (compact ? 18 : 22), top + 3, { ink: 'pencil', size: labelSize, align: 'center', boil: false });
+
+      sk.text('scaled x-coordinate', right, bottom + (compact ? 36 : 40), {
+        ink: 'pencil', size: compact ? 12 : 14, align: 'right', boil: false
+      });
+      sk.text('scaled y', left, top - 12, {
+        ink: 'pencil', size: compact ? 12 : 14, boil: false
+      });
+    }
+
+    function drawPoints(layout, visible) {
+      state.points.slice(0, visible).forEach((point, index) => {
+        const position = pointPosition(point, layout);
+        const recent = index === visible - 1 && visible < state.points.length;
+        sk.circle(position.x, position.y, recent ? 5.6 : 4.2, {
+          ink: 'blue', fill: 'blue', fillStyle: recent ? 'hachure' : 'solid', roughness: 0.4
+        });
+      });
+    }
+
+    function draw() {
+      const layout = getLayout();
+      const visible = visiblePointCount();
+
+      // The graph itself is the coordinate reference; decorative paper rules
+      // would make a dense production-scale sample harder to read.
+      sk.clear({ paper: false });
+      drawGrid(layout);
+      drawPoints(layout, visible);
+      pointCount.textContent = `${visible} / ${state.points.length}`;
+    }
+
+    function replay() {
+      state.elapsed = 0;
+      state.lastFrame = null;
+      draw();
+    }
+
+    function animationLoop(timestamp) {
+      if (state.lastFrame !== null) {
+        // Do not count off-screen iframe pauses as animation time.
+        state.elapsed += Math.min(timestamp - state.lastFrame, 50);
+      }
+      state.lastFrame = timestamp;
+      draw();
+      requestAnimationFrame(animationLoop);
+    }
+
+    function fitCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      draw();
+    }
+
+    replayButton.addEventListener('click', replay);
+    window.addEventListener('resize', fitCanvas);
+    window.addEventListener('load', () => {
+      state.points = makePointSample();
+      fitCanvas();
+      requestAnimationFrame(animationLoop);
+    });
+  </script>
+</body>
+</html>

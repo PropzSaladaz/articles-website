@@ -15,7 +15,6 @@ In mathematics and computer graphics, a **coordinate space** defines a frame of 
 Any vector only has meaning given the **space** which it belongs to.
 The same vector may refer to different physical locations depending on the space, as we will see next.
 
----
 
 ## 1.1 Local/Object Space
 
@@ -43,7 +42,6 @@ Because they are stored in local space, rotating the hand means rotating its loc
 
 ![](./images/img2.svg)
 
----
 
 ## 1.2 World Space
 

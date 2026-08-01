@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="sim-paper" content="full">
+  <title>Building the Finite-Field Point Cloud</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap');
+    body { font-family: 'Fira Code', monospace; }
+  </style>
+</head>
+<body class="sk-page w-screen h-screen overflow-hidden m-0 p-0 relative select-none">
+  <canvas id="constructionCanvas" class="absolute inset-0 w-full h-full block" aria-label="Animation constructing every point on the elliptic curve over the finite field F11"></canvas>
+
+  <section class="absolute left-4 top-4 md:left-6 md:top-6 z-10 w-[218px] sm:w-[232px] sk-sticky pointer-events-auto" aria-label="Finite-field point construction information">
+    <div class="border-b border-black/10 pb-2.5">
+      <p class="sk-hand text-xl font-semibold ink-black leading-none">Build every curve point</p>
+      <p class="mt-2 text-[11px] font-bold ink-purple leading-relaxed">y² ≡ x³ + x + 1 (mod 11)</p>
+      <p class="mt-1 text-[9px] ink-pencil">A blue point appears whenever lhs(y) = rhs(x).</p>
+    </div>
+
+    <div class="mt-2.5 text-[10px] font-mono">
+      <div class="sk-row">
+        <span class="ink-pencil">current column</span>
+        <span id="columnValue" class="font-bold ink-green">x = 0</span>
+      </div>
+      <div class="sk-row mt-1">
+        <span class="ink-pencil">green RHS value</span>
+        <span id="rhsValue" class="font-bold ink-green">rhs(0) = 1</span>
+      </div>
+      <div class="sk-row mt-1">
+        <span id="pointLabel" class="ink-pencil">blue points</span>
+        <span id="pointValue" class="font-bold ink-blue">0 / 13</span>
+      </div>
+    </div>
+
+    <button id="replayButton" type="button" class="mt-2.5 w-full rounded-md border border-black/10 bg-black/5 px-2 py-1.5 text-[9px] font-semibold ink-pencil transition-colors hover:bg-black/10">
+      Replay construction
+    </button>
+  </section>
+
+  <script>
+    const canvas = document.getElementById('constructionCanvas');
+    const sk = Sketch.attach(canvas);
+    const columnValue = document.getElementById('columnValue');
+    const rhsValue = document.getElementById('rhsValue');
+    const pointLabel = document.getElementById('pointLabel');
+    const pointValue = document.getElementById('pointValue');
+    const replayButton = document.getElementById('replayButton');
+
+    const MODULUS = 11;
+    const LOOKUP = Array.from({ length: MODULUS }, (_, y) => ({ y, residue: (y * y) % MODULUS }));
+    const COLUMNS = Array.from({ length: MODULUS }, (_, x) => {
+      const rhs = (x * x * x + x + 1) % MODULUS;
+      return { x, rhs, matches: LOOKUP.filter((entry) => entry.residue === rhs) };
+    });
+    const POINTS = COLUMNS.flatMap((column) => column.matches.map((match) => ({ x: column.x, y: match.y })));
+
+    const INTRO_PAUSE = 840;
+    const COLUMN_DURATION = 1960;
+    const FADE_DURATION = 2600;
+    const HOLD_DURATION = 3800;
+
+    const state = {
+      elapsed: 0,
+      lastFrame: null
+    };
+
+    function clamp(value, min = 0, max = 1) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function easeInOut(value) {
+      return value < 0.5
+        ? 4 * value * value * value
+        : 1 - Math.pow(-2 * value + 2, 3) / 2;
+    }
+
+    function animationState() {
+      const buildDuration = COLUMNS.length * COLUMN_DURATION;
+      const period = INTRO_PAUSE + buildDuration + FADE_DURATION + HOLD_DURATION;
+      const phase = state.elapsed % period;
+
+      if (phase < INTRO_PAUSE) {
+        return { mode: 'intro', current: 0, progress: 0, completedColumns: 0, fade: 0 };
+      }
+
+      const afterIntro = phase - INTRO_PAUSE;
+      if (afterIntro < buildDuration) {
+        const current = Math.floor(afterIntro / COLUMN_DURATION);
+        return {
+          mode: 'build',
+          current,
+          progress: (afterIntro % COLUMN_DURATION) / COLUMN_DURATION,
+          completedColumns: current,
+          fade: 0
+        };
+      }
+
+      const afterBuild = afterIntro - buildDuration;
+      if (afterBuild < FADE_DURATION) {
+        return {
+          mode: 'fade',
+          current: COLUMNS.length - 1,
+          progress: 1,
+          completedColumns: COLUMNS.length,
+          fade: easeInOut(afterBuild / FADE_DURATION)
+        };
+      }
+
+      return {
+        mode: 'complete',
+        current: COLUMNS.length - 1,
+        progress: 1,
+        completedColumns: COLUMNS.length,
+        fade: 1
+      };
+    }
+
+    function getLayout() {
+      const compact = canvas.width < 620;
+      const size = compact
+        ? Math.min(canvas.width * 0.78, canvas.height * 0.42)
+        : Math.min(canvas.width * 0.49, canvas.height * 0.58);
+      const centerX = compact ? canvas.width * 0.54 : canvas.width * 0.67;
+      const centerY = compact ? canvas.height * 0.68 : canvas.height * 0.58;
+      const left = centerX - size / 2;
+      const top = centerY - size / 2;
+
+      return {
+        compact,
+        size,
+        left,
+        top,
+        right: left + size,
+        bottom: top + size,
+        step: size / (MODULUS - 1)
+      };
+    }
+
+    function position(x, y, layout) {
+      return {
+        x: layout.left + x * layout.step,
+        y: layout.bottom - y * layout.step
+      };
+    }
+
+    function drawGrid(layout) {
+      const { left, top, right, bottom, step, compact } = layout;
+
+      for (let value = 1; value < MODULUS - 1; value += 1) {
+        const x = left + value * step;
+        const y = bottom - value * step;
+        sk.ruler(x, top, x, bottom, { ink: 'pencilLight', width: 0.8 });
+        sk.ruler(left, y, right, y, { ink: 'pencilLight', width: 0.8 });
+      }
+
+      sk.rect(left, top, layout.size, layout.size, { ink: 'pencil', width: 2, roughness: 0.45, boil: false });
+
+      for (let value = 0; value < MODULUS; value += 1) {
+        const x = left + value * step;
+        const y = bottom - value * step;
+        const labelSize = compact ? 10 : 12;
+        sk.text(String(value), x, bottom + (compact ? 16 : 19), {
+          ink: 'pencil', size: labelSize, align: 'center', boil: false
+        });
+        sk.text(String(value), left - (compact ? 15 : 18), y + 3, {
+          ink: 'pencil', size: labelSize, align: 'center', boil: false
+        });
+      }
+
+      sk.text('x', right + 11, bottom + (compact ? 17 : 20), {
+        ink: 'pencil', size: compact ? 14 : 16, boil: false
+      });
+      sk.text('y', left - (compact ? 15 : 18), top - 12, {
+        ink: 'pencil', size: compact ? 14 : 16, align: 'center', boil: false
+      });
+    }
+
+    function drawRealCurve(layout, opacity) {
+      if (opacity <= 0.01) return;
+      const points = [];
+      for (let x = 0; x <= 4.55; x += 0.06) {
+        const y = Math.sqrt(x * x * x + x + 1);
+        points.push(position(x, y, layout));
+      }
+      sk.curve(points, {
+        ink: `rgba(107, 77, 158, ${0.38 * opacity})`,
+        width: 1.8,
+        roughness: 0.6
+      });
+    }
+
+    function drawLookupMarkers(layout, opacity) {
+      if (opacity <= 0.01) return;
+      LOOKUP.forEach((entry) => {
+        const marker = position(entry.y, entry.residue, layout);
+        sk.circle(marker.x, marker.y, 4.9, {
+          ink: `rgba(201, 118, 43, ${0.62 * opacity})`,
+          fill: `rgba(242, 217, 92, ${0.6 * opacity})`,
+          fillStyle: 'solid',
+          roughness: 0.38
+        });
+      });
+    }
+
+    function drawCross(x, y, layout, opacity, emphasis = false) {
+      if (opacity <= 0.01) return;
+      const marker = position(x, y, layout);
+      const radius = emphasis ? (layout.compact ? 7 : 8) : (layout.compact ? 5.3 : 6.2);
+      const ink = `rgba(74, 124, 89, ${0.9 * opacity})`;
+      sk.ruler(marker.x - radius, marker.y - radius, marker.x + radius, marker.y + radius, {
+        ink, width: emphasis ? 2.5 : 1.9
+      });
+      sk.ruler(marker.x - radius, marker.y + radius, marker.x + radius, marker.y - radius, {
+        ink, width: emphasis ? 2.5 : 1.9
+      });
+    }
+
+    function drawRhsCrosses(layout, animation, opacity) {
+      const visibleCount = animation.mode === 'intro' ? 0 : animation.completedColumns;
+      for (let index = 0; index < visibleCount; index += 1) {
+        const column = COLUMNS[index];
+        drawCross(column.x, column.rhs, layout, opacity);
+      }
+
+      if (animation.mode !== 'build') return;
+
+      const column = COLUMNS[animation.current];
+      const columnBottom = position(column.x, 0, layout);
+      const columnTop = position(column.x, MODULUS - 1, layout);
+      sk.ruler(columnBottom.x, columnBottom.y, columnTop.x, columnTop.y, {
+        ink: 'green', width: 1.1, dash: [2, 5]
+      });
+      drawCross(column.x, column.rhs, layout, 1, true);
+    }
+
+    function completedPointCount(animation) {
+      const complete = COLUMNS.slice(0, animation.completedColumns);
+      let count = complete.reduce((total, column) => total + column.matches.length, 0);
+      if (animation.mode === 'build' && animation.progress > 0.9) count += COLUMNS[animation.current].matches.length;
+      return count;
+    }
+
+    function drawFinishedPoints(layout, animation) {
+      const complete = COLUMNS.slice(0, animation.completedColumns);
+      complete.forEach((column) => {
+        column.matches.forEach((match) => {
+          const point = position(column.x, match.y, layout);
+          sk.circle(point.x, point.y, 5.4, {
+            ink: 'blue', fill: 'blue', fillStyle: 'solid', roughness: 0.4
+          });
+        });
+      });
+
+    }
+
+    function drawCurrentMatches(layout, animation) {
+      if (animation.mode !== 'build') return;
+
+      const column = COLUMNS[animation.current];
+      const highlightStart = position(0, column.rhs, layout);
+      const highlightEnd = position(MODULUS - 1, column.rhs, layout);
+      const flight = easeInOut(clamp((animation.progress - 0.28) / 0.58));
+
+      if (animation.progress > 0.12) {
+        sk.ruler(highlightStart.x, highlightStart.y, highlightEnd.x, highlightEnd.y, {
+          ink: 'green', width: 1.2, dash: [3, 5]
+        });
+      }
+
+      if (column.matches.length === 0) {
+        if (animation.progress > 0.42) {
+          const target = position(column.x, column.rhs, layout);
+          sk.text('no matching y', target.x + 11, target.y - 10, {
+            ink: 'pencil', size: layout.compact ? 11 : 13, boil: false
+          });
+        }
+        return;
+      }
+
+      column.matches.forEach((match) => {
+        const source = position(match.y, match.residue, layout);
+        const destination = position(column.x, match.y, layout);
+        const x = source.x + (destination.x - source.x) * flight;
+        const y = source.y + (destination.y - source.y) * flight;
+        const blue = flight > 0.54;
+
+        if (animation.progress > 0.28) {
+          sk.ruler(source.x, source.y, destination.x, destination.y, {
+            ink: 'pencilLight', width: 0.8, dash: [2, 5]
+          });
+        }
+
+        sk.circle(x, y, blue ? 6.2 : 6.5, {
+          ink: blue ? 'blue' : 'orange',
+          fill: blue ? 'blue' : 'highlight',
+          fillStyle: blue ? 'solid' : 'hachure',
+          roughness: 0.42
+        });
+      });
+
+      if (animation.progress > 0.9) {
+        const target = position(column.x, column.rhs, layout);
+        const values = column.matches.map((match) => match.y).join(', ');
+        sk.text(`y = ${values}`, target.x + 11, target.y - 10, {
+          ink: 'blue', size: layout.compact ? 11 : 13, boil: false
+        });
+      }
+    }
+
+    function updateHud(animation) {
+      const column = COLUMNS[animation.current];
+      const count = completedPointCount(animation);
+
+      if (animation.mode === 'fade') {
+        columnValue.textContent = 'all columns matched';
+        rhsValue.textContent = 'clearing construction marks';
+        pointLabel.textContent = 'final blue points';
+        pointValue.textContent = `${POINTS.length} / ${POINTS.length}`;
+        return;
+      }
+
+      if (animation.mode === 'complete') {
+        columnValue.textContent = 'complete over F₁₁';
+        rhsValue.textContent = 'only the point cloud remains';
+        pointLabel.textContent = 'final blue points';
+        pointValue.textContent = `${POINTS.length} / ${POINTS.length}`;
+        return;
+      }
+
+      columnValue.textContent = `x = ${column.x}`;
+      rhsValue.textContent = `rhs(${column.x}) = ${column.rhs}`;
+      pointLabel.textContent = column.matches.length ? 'blue points' : 'blue points (none here)';
+      pointValue.textContent = `${count} / ${POINTS.length}`;
+    }
+
+    function draw() {
+      const layout = getLayout();
+      const animation = animationState();
+      const constructionOpacity = 1 - animation.fade;
+
+      // The finite grid is the lesson's coordinate reference, so it remains
+      // after construction while temporary markers and the real curve fade.
+      sk.clear({ paper: false });
+      drawGrid(layout);
+      drawRealCurve(layout, constructionOpacity);
+      drawLookupMarkers(layout, constructionOpacity);
+      drawRhsCrosses(layout, animation, constructionOpacity);
+      drawFinishedPoints(layout, animation);
+      drawCurrentMatches(layout, animation);
+      updateHud(animation);
+    }
+
+    function replay() {
+      state.elapsed = 0;
+      state.lastFrame = null;
+      draw();
+    }
+
+    function animationLoop(timestamp) {
+      if (state.lastFrame !== null) {
+        // Do not count off-screen iframe pauses as animation time.
+        state.elapsed += Math.min(timestamp - state.lastFrame, 50);
+      }
+      state.lastFrame = timestamp;
+      draw();
+      requestAnimationFrame(animationLoop);
+    }
+
+    function fitCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      draw();
+    }
+
+    replayButton.addEventListener('click', replay);
+    window.addEventListener('resize', fitCanvas);
+    window.addEventListener('load', () => {
+      fitCanvas();
+      requestAnimationFrame(animationLoop);
+    });
+  </script>
+</body>
+</html>

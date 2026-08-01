@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="sim-paper" content="full">
+  <title>Discrete Inputs and Ordinary Polynomial Outputs</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap');
+    body { font-family: 'Fira Code', monospace; }
+  </style>
+</head>
+<body class="sk-page w-screen h-screen overflow-hidden m-0 p-0 relative select-none">
+  <canvas id="outputsCanvas" class="absolute inset-0 w-full h-full block" aria-label="Animation of ordinary polynomial outputs for discrete x values from zero to ten"></canvas>
+
+  <section class="absolute left-4 top-4 md:left-6 md:top-6 z-10 w-[218px] sm:w-[232px] sk-sticky pointer-events-auto" aria-label="Polynomial output information">
+    <div class="border-b border-black/10 pb-2.5">
+      <p class="sk-hand text-xl font-semibold ink-black leading-none">Choose discrete x values</p>
+      <p class="mt-2 text-[11px] font-bold ink-purple leading-relaxed">f(x) = x³ + x + 1</p>
+      <p class="mt-1 text-[9px] ink-pencil">The vertical values are ordinary integers—not reduced yet.</p>
+    </div>
+
+    <div class="mt-2.5 text-[10px] font-mono">
+      <div class="sk-row">
+        <span class="ink-pencil">current input</span>
+        <span id="inputValue" class="font-bold ink-green">x = 0</span>
+      </div>
+      <div class="sk-row mt-1">
+        <span class="ink-pencil">ordinary output</span>
+        <span id="outputValue" class="font-bold ink-orange">f(x) = 1</span>
+      </div>
+    </div>
+
+    <button id="replayButton" type="button" class="mt-2.5 w-full rounded-md border border-black/10 bg-black/5 px-2 py-1.5 text-[9px] font-semibold ink-pencil transition-colors hover:bg-black/10">
+      Replay inputs
+    </button>
+  </section>
+
+  <script>
+    const canvas = document.getElementById('outputsCanvas');
+    const sk = Sketch.attach(canvas);
+    const inputValue = document.getElementById('inputValue');
+    const outputValue = document.getElementById('outputValue');
+    const replayButton = document.getElementById('replayButton');
+
+    const INPUTS = Array.from({ length: 11 }, (_, x) => ({ x, y: x * x * x + x + 1 }));
+    const MAX_OUTPUT = 1050;
+    const INTRO_PAUSE = 400;
+    const STEP_DURATION = 640;
+    const HOLD_AFTER_LAST = 1500;
+
+    const state = {
+      elapsed: 0,
+      lastFrame: null
+    };
+
+    function easeOut(value) {
+      return 1 - Math.pow(1 - value, 3);
+    }
+
+    function animationState() {
+      const period = INTRO_PAUSE + INPUTS.length * STEP_DURATION + HOLD_AFTER_LAST;
+      const phase = state.elapsed % period;
+      if (phase < INTRO_PAUSE) return { current: 0, rise: 0, complete: false };
+
+      const progress = phase - INTRO_PAUSE;
+      if (progress < INPUTS.length * STEP_DURATION) {
+        const current = Math.floor(progress / STEP_DURATION);
+        const stepProgress = (progress % STEP_DURATION) / STEP_DURATION;
+        return { current, rise: easeOut(stepProgress), complete: false };
+      }
+      return { current: INPUTS.length - 1, rise: 1, complete: true };
+    }
+
+    function getLayout() {
+      const compact = canvas.width < 620;
+      const left = compact ? canvas.width * 0.13 : canvas.width * 0.39;
+      const right = compact ? canvas.width * 0.94 : canvas.width * 0.94;
+      const top = compact ? canvas.height * 0.49 : canvas.height * 0.13;
+      const bottom = compact ? canvas.height * 0.83 : canvas.height * 0.8;
+      return { compact, left, right, top, bottom, width: right - left, height: bottom - top };
+    }
+
+    function toScreenX(value, layout) {
+      return layout.left + value / 10 * layout.width;
+    }
+
+    function toScreenY(value, layout) {
+      return layout.bottom - value / MAX_OUTPUT * layout.height;
+    }
+
+    function drawGraph(layout) {
+      const { left, right, top, bottom, compact } = layout;
+      const yTicks = [0, 250, 500, 750, 1000];
+
+      yTicks.forEach((value) => {
+        const y = toScreenY(value, layout);
+        sk.ruler(left, y, right, y, { ink: 'pencilLight', width: 0.9 });
+        sk.text(String(value), left - (compact ? 26 : 31), y + 4, {
+          ink: 'pencil', size: compact ? 10 : 12, align: 'right', boil: false
+        });
+      });
+
+      for (let value = 0; value <= 10; value += 1) {
+        const x = toScreenX(value, layout);
+        sk.ruler(x, top, x, bottom, { ink: 'pencilLight', width: 0.8, dash: [2, 5] });
+        sk.text(String(value), x, bottom + (compact ? 18 : 20), {
+          ink: 'pencil', size: compact ? 11 : 13, align: 'center', boil: false
+        });
+      }
+
+      sk.ruler(left, top, left, bottom, { ink: 'pencil', width: 2 });
+      sk.ruler(left, bottom, right, bottom, { ink: 'pencil', width: 2 });
+      sk.text('x ∈ F₁₁', right, bottom + (compact ? 36 : 40), {
+        ink: 'pencil', size: compact ? 13 : 15, align: 'right', boil: false
+      });
+      sk.text('ordinary f(x)', left, top - 12, {
+        ink: 'pencil', size: compact ? 13 : 15, boil: false
+      });
+    }
+
+    function drawOutputs(layout, animation) {
+      INPUTS.forEach((point, index) => {
+        if (index > animation.current) return;
+        const x = toScreenX(point.x, layout);
+        const finalY = toScreenY(point.y, layout);
+        const isCurrent = index === animation.current;
+        const y = isCurrent
+          ? layout.bottom + (finalY - layout.bottom) * animation.rise
+          : finalY;
+
+        if (isCurrent) {
+          sk.ruler(x, layout.bottom, x, y, { ink: 'orange', width: 2.1 });
+          sk.circle(x, y, 7, { ink: 'orange', fill: 'orange', fillStyle: 'hachure', roughness: 0.45 });
+          if (animation.rise > 0.55) {
+            sk.text(`f(${point.x}) = ${point.y}`, x + 13, y - 9, {
+              ink: 'orange', size: layout.compact ? 13 : 15, boil: false
+            });
+          }
+        } else {
+          sk.circle(x, y, 4.8, { ink: 'blue', fill: 'blue', fillStyle: 'solid', roughness: 0.38 });
+        }
+      });
+    }
+
+    function updateHud(animation) {
+      const point = INPUTS[animation.current];
+      inputValue.textContent = `x = ${point.x}`;
+      outputValue.textContent = `f(x) = ${point.y}`;
+    }
+
+    function draw() {
+      const layout = getLayout();
+      const animation = animationState();
+
+      sk.clear({ paper: false });
+      drawGraph(layout);
+      drawOutputs(layout, animation);
+      updateHud(animation);
+    }
+
+    function replay() {
+      state.elapsed = 0;
+      state.lastFrame = null;
+      draw();
+    }
+
+    function animationLoop(timestamp) {
+      if (state.lastFrame !== null) {
+        // Do not count off-screen iframe pauses as animation time.
+        state.elapsed += Math.min(timestamp - state.lastFrame, 50);
+      }
+      state.lastFrame = timestamp;
+      draw();
+      requestAnimationFrame(animationLoop);
+    }
+
+    function fitCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      draw();
+    }
+
+    replayButton.addEventListener('click', replay);
+    window.addEventListener('resize', fitCanvas);
+    window.addEventListener('load', () => {
+      fitCanvas();
+      requestAnimationFrame(animationLoop);
+    });
+  </script>
+</body>
+</html>

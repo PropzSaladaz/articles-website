@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="sim-paper" content="full">
+  <title>Reducing Polynomial Outputs Modulo 11</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap');
+    body { font-family: 'Fira Code', monospace; }
+  </style>
+</head>
+<body class="sk-page w-screen h-screen overflow-hidden m-0 p-0 relative select-none">
+  <canvas id="reductionCanvas" class="absolute inset-0 w-full h-full block" aria-label="Animation reducing each polynomial output modulo eleven into the finite field output grid"></canvas>
+
+  <section class="absolute left-4 top-4 md:left-6 md:top-6 z-10 w-[218px] sm:w-[232px] sk-sticky pointer-events-auto" aria-label="Modulo reduction information">
+    <div class="border-b border-black/10 pb-2.5">
+      <p class="sk-hand text-xl font-semibold ink-black leading-none">Reduce each output</p>
+      <p class="mt-2 text-[11px] font-bold ink-purple leading-relaxed">rhs(x) = (x³ + x + 1) mod 11</p>
+      <p class="mt-1 text-[9px] ink-pencil">Subtract 11 until the value lands in F₁₁.</p>
+    </div>
+
+    <div class="mt-2.5 text-[10px] font-mono">
+      <div class="sk-row">
+        <span class="ink-pencil">current input</span>
+        <span id="inputValue" class="font-bold ink-green">x = 0</span>
+      </div>
+      <div class="sk-row mt-1">
+        <span class="ink-pencil">current value</span>
+        <span id="reductionValue" class="font-bold ink-orange">1</span>
+      </div>
+      <div class="sk-row mt-1">
+        <span class="ink-pencil">finite result</span>
+        <span id="resultValue" class="font-bold ink-green">rhs(0) = 1</span>
+      </div>
+    </div>
+
+    <button id="replayButton" type="button" class="mt-2.5 w-full rounded-md border border-black/10 bg-black/5 px-2 py-1.5 text-[9px] font-semibold ink-pencil transition-colors hover:bg-black/10">
+      Replay reductions
+    </button>
+  </section>
+
+  <script>
+    const canvas = document.getElementById('reductionCanvas');
+    const sk = Sketch.attach(canvas);
+    const inputValue = document.getElementById('inputValue');
+    const reductionValue = document.getElementById('reductionValue');
+    const resultValue = document.getElementById('resultValue');
+    const replayButton = document.getElementById('replayButton');
+
+    const MODULUS = 11;
+    const OUTPUTS = Array.from({ length: MODULUS }, (_, x) => {
+      const ordinary = x * x * x + x + 1;
+      return { x, ordinary, rhs: ordinary % MODULUS, quotient: Math.floor(ordinary / MODULUS) };
+    });
+    const INTRO_PAUSE = 320;
+    const STEP_DURATION = 1050;
+    const HOLD_AFTER_LAST = 1700;
+
+    const state = {
+      elapsed: 0,
+      lastFrame: null
+    };
+
+    function easeInOut(value) {
+      return value < 0.5
+        ? 4 * value * value * value
+        : 1 - Math.pow(-2 * value + 2, 3) / 2;
+    }
+
+    function animationState() {
+      const period = INTRO_PAUSE + OUTPUTS.length * STEP_DURATION + HOLD_AFTER_LAST;
+      const phase = state.elapsed % period;
+      if (phase < INTRO_PAUSE) return { current: 0, progress: 0, settled: 0, complete: false };
+
+      const elapsed = phase - INTRO_PAUSE;
+      if (elapsed < OUTPUTS.length * STEP_DURATION) {
+        const current = Math.floor(elapsed / STEP_DURATION);
+        return {
+          current,
+          progress: (elapsed % STEP_DURATION) / STEP_DURATION,
+          settled: current,
+          complete: false
+        };
+      }
+
+      return { current: OUTPUTS.length - 1, progress: 1, settled: OUTPUTS.length, complete: true };
+    }
+
+    function getLayout() {
+      const compact = canvas.width < 620;
+      const size = compact
+        ? Math.min(canvas.width * 0.78, canvas.height * 0.42)
+        : Math.min(canvas.width * 0.49, canvas.height * 0.56);
+      const centerX = compact ? canvas.width * 0.54 : canvas.width * 0.67;
+      const centerY = compact ? canvas.height * 0.68 : canvas.height * 0.62;
+      const left = centerX - size / 2;
+      const top = centerY - size / 2;
+
+      return {
+        compact,
+        size,
+        left,
+        top,
+        right: left + size,
+        bottom: top + size,
+        step: size / (MODULUS - 1),
+        railTop: top - (compact ? 68 : 100)
+      };
+    }
+
+    function pointPosition(point, layout) {
+      return {
+        x: layout.left + point.x * layout.step,
+        y: layout.bottom - point.rhs * layout.step
+      };
+    }
+
+    function drawGrid(layout) {
+      const { left, top, right, bottom, step, compact } = layout;
+
+      for (let value = 1; value < MODULUS - 1; value += 1) {
+        const x = left + value * step;
+        const y = bottom - value * step;
+        sk.ruler(x, top, x, bottom, { ink: 'pencilLight', width: 0.8 });
+        sk.ruler(left, y, right, y, { ink: 'pencilLight', width: 0.8 });
+      }
+
+      sk.rect(left, top, layout.size, layout.size, { ink: 'pencil', width: 2, roughness: 0.45, boil: false });
+
+      for (let value = 0; value < MODULUS; value += 1) {
+        const x = left + value * step;
+        const y = bottom - value * step;
+        const labelSize = compact ? 10 : 12;
+        sk.text(String(value), x, bottom + (compact ? 16 : 19), {
+          ink: 'pencil', size: labelSize, align: 'center', boil: false
+        });
+        sk.text(String(value), left - (compact ? 15 : 18), y + 3, {
+          ink: 'pencil', size: labelSize, align: 'center', boil: false
+        });
+      }
+
+      sk.text('x', right + 11, bottom + (compact ? 17 : 20), {
+        ink: 'pencil', size: compact ? 14 : 16, boil: false
+      });
+      sk.text('rhs(x) ∈ F₁₁', left, top - 12, {
+        ink: 'green', size: compact ? 13 : 15, boil: false
+      });
+    }
+
+    function drawCross(position, layout, emphasis = false) {
+      const radius = emphasis ? (layout.compact ? 7 : 8) : (layout.compact ? 5.5 : 6.5);
+      sk.ruler(position.x - radius, position.y - radius, position.x + radius, position.y + radius, {
+        ink: 'green', width: emphasis ? 2.5 : 2
+      });
+      sk.ruler(position.x - radius, position.y + radius, position.x + radius, position.y - radius, {
+        ink: 'green', width: emphasis ? 2.5 : 2
+      });
+    }
+
+    function drawSettledPoints(layout, animation) {
+      OUTPUTS.forEach((point, index) => {
+        if (index >= animation.settled) return;
+        drawCross(pointPosition(point, layout), layout);
+      });
+    }
+
+    function drawCurrentReduction(layout, animation) {
+      if (animation.complete) return;
+
+      const point = OUTPUTS[animation.current];
+      const destination = pointPosition(point, layout);
+      const eased = easeInOut(animation.progress);
+      const reductions = point.quotient === 0
+        ? 0
+        : Math.min(point.quotient, Math.floor(eased * point.quotient));
+      const currentValue = point.ordinary - reductions * MODULUS;
+      const visibleProgress = point.quotient === 0 ? animation.progress : reductions / point.quotient;
+      const y = layout.railTop + (destination.y - layout.railTop) * visibleProgress;
+      const landed = point.quotient === 0 || animation.progress > 0.92;
+
+      sk.ruler(destination.x, layout.railTop, destination.x, destination.y, {
+        ink: 'pencilLight', width: 1.1, dash: [2, 5]
+      });
+      sk.circle(destination.x, layout.railTop, 4.4, {
+        ink: 'orange', fill: 'orange', fillStyle: 'hachure', roughness: 0.4
+      });
+
+      if (landed) {
+        drawCross(destination, layout, true);
+      } else {
+        sk.circle(destination.x, y, 6.4, {
+          ink: 'orange', fill: 'orange', fillStyle: 'hachure', roughness: 0.45
+        });
+      }
+
+      const sourceLabelY = layout.railTop - (layout.compact ? 13 : 16);
+      sk.text(`f(${point.x}) = ${point.ordinary}`, destination.x, sourceLabelY, {
+        ink: 'orange', size: layout.compact ? 11 : 13, align: 'center', boil: false
+      });
+
+      if (point.quotient > 0 && !landed) {
+        const labelY = Math.max(layout.railTop + 19, Math.min(y - 12, destination.y - 13));
+        sk.text(`− 11 × ${reductions}`, destination.x + 12, labelY, {
+          ink: 'orange', size: layout.compact ? 11 : 13, boil: false
+        });
+      }
+
+      if (landed) {
+        sk.text(`rhs(${point.x}) = ${point.rhs}`, destination.x + 11, destination.y - 10, {
+          ink: 'green', size: layout.compact ? 12 : 14, boil: false
+        });
+      }
+
+      return { point, currentValue, reductions, landed };
+    }
+
+    function updateHud(animation, current) {
+      const point = OUTPUTS[animation.current];
+      inputValue.textContent = `x = ${point.x}`;
+
+      if (animation.complete || current.landed) {
+        reductionValue.textContent = `${point.ordinary} − 11 × ${point.quotient}`;
+      } else if (point.quotient === 0) {
+        reductionValue.textContent = `${point.ordinary} (already in F₁₁)`;
+      } else {
+        reductionValue.textContent = `${point.ordinary} − 11 × ${current.reductions} = ${current.currentValue}`;
+      }
+
+      resultValue.textContent = `rhs(${point.x}) = ${point.rhs}`;
+    }
+
+    function draw() {
+      const layout = getLayout();
+      const animation = animationState();
+
+      // This grid is the coordinate system being explained, so extra paper
+      // rules would compete with the finite-field rows and columns.
+      sk.clear({ paper: false });
+      drawGrid(layout);
+      drawSettledPoints(layout, animation);
+      const current = drawCurrentReduction(layout, animation) || {
+        point: OUTPUTS[animation.current],
+        currentValue: OUTPUTS[animation.current].rhs,
+        reductions: OUTPUTS[animation.current].quotient,
+        landed: true
+      };
+      updateHud(animation, current);
+    }
+
+    function replay() {
+      state.elapsed = 0;
+      state.lastFrame = null;
+      draw();
+    }
+
+    function animationLoop(timestamp) {
+      if (state.lastFrame !== null) {
+        // Do not count off-screen iframe pauses as animation time.
+        state.elapsed += Math.min(timestamp - state.lastFrame, 50);
+      }
+      state.lastFrame = timestamp;
+      draw();
+      requestAnimationFrame(animationLoop);
+    }
+
+    function fitCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      draw();
+    }
+
+    replayButton.addEventListener('click', replay);
+    window.addEventListener('resize', fitCanvas);
+    window.addEventListener('load', () => {
+      fitCanvas();
+      requestAnimationFrame(animationLoop);
+    });
+  </script>
+</body>
+</html>
