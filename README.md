@@ -259,9 +259,10 @@ SITE_URL=https://yourdomain.com npm run build
 Create a `.env` (or `.env.local`) file at the project root:
 
 ```env
-# Repository name — used to set basePath for GitHub Pages hosting
-# Leave empty if deploying to a root domain
-NEXT_REPO_NAME=articles-website
+# Repository name — used to set basePath/assetPrefix for GitHub Pages project-site
+# hosting (drives both routing and image path rewriting). Leave unset for a root
+# domain deploy; the GitHub Actions workflow sets this automatically from the repo name.
+REPO_NAME=articles-website
 
 # Giscus comments (optional) — get values from https://giscus.app/
 NEXT_PUBLIC_GISCUS_REPO=owner/repo

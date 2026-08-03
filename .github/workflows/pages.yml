@@ -19,6 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       REPO_NAME: ${{ github.event.repository.name }}
+      SITE_URL: https://propzsaladaz.github.io/articles-website
       NEXT_TELEMETRY_DISABLED: '1'
     steps:
       - name: Checkout

@@ -34,6 +34,18 @@ and infinitely many more. Cryptography needs exact arithmetic over a finite set 
 
 So instead of using real numbers, cryptographic elliptic curves are usually defined over **finite fields**.
 
+::: definition[**Finite Field**]
+A finite field is a finite set of values in which addition, subtraction, multiplication, and division by every non-zero value are defined, and every result remains in the set.
+
+In ECC, a common example is the prime field:
+
+$$
+\mathbb{F}_p
+$$
+
+Read this as **“the finite field with $p$ elements.”** When $p$ is prime, its values are $0, 1, 2, \ldots, p - 1$, and arithmetic is performed modulo $p$.
+:::
+
 A finite field gives us:
 
 * a **limited** set of values
@@ -104,12 +116,10 @@ A useful mental model is a clock.
 On a 12-hour clock:
 
 $$
-10 + 5 \equiv 3 \pmod{12}
+15 \equiv 3 \pmod{12}
 $$
 
-because after 12, the values wrap around again.
-
-Modulo arithmetic works in the same general way.
+because after 12, the values wrap around again. We actually use this everyday. Instead of saying its 15h in the 24h format, we say its 3pm. We are basically performing modular arithmetic every day without even realising!
 
 With modulo `p`, values always stay inside:
 
@@ -326,54 +336,6 @@ $$
 
 Modular inverses let ECC perform its point arithmetic exactly inside a finite field.
 
-
-## What a Finite Field Is
-
-A **finite field** is a finite set of values where addition, subtraction, multiplication, and division behave consistently.
-
-For ECC, the most common example is the prime field:
-
-$$
-\mathbb{F}_p
-$$
-
-This means the field of integers modulo `p`, where `p` is a prime number.
-
-The values are:
-
-$$
-0, 1, 2, \ldots, p - 1
-$$
-
-and all arithmetic is performed modulo `p`.
-
-The reason `p` is usually prime is important - **When `p` is prime, every non-zero value has a modular inverse**. This means division works for every non-zero element.
-
-For example, in:
-
-$$
-\mathbb{F}_{11}
-$$
-
-the values are:
-
-$$
-0, 1, 2, \ldots, 10
-$$
-
-Every value except `0` has a multiplicative inverse modulo `11`.
-
-This gives us a complete arithmetic system.
-
-So, in a prime finite field:
-
-* addition is defined
-* subtraction is defined
-* multiplication is defined
-* division by non-zero values is defined
-* every result stays inside the field
-
-That is why finite fields are so useful for cryptography -they give us exact arithmetic over a limited set of values.
 
 Now we can reinterpret the elliptic curve equation inside this finite field:
 

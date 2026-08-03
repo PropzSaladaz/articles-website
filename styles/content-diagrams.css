@@ -1,0 +1,209 @@
+/* Reusable article-diagram primitives rendered by lib/remark-diagram.ts */
+.md .content-diagram {
+  --diagram-line: rgba(14, 116, 144, 0.3);
+  margin: 2rem 0;
+  padding: 0.5rem 0;
+  text-align: center;
+}
+
+.md .content-diagram__block {
+  box-sizing: border-box;
+  padding: 0.65rem 1.15rem;
+  border: 1px solid rgba(14, 116, 144, 0.2);
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, rgba(14, 165, 164, 0.08), rgba(99, 102, 241, 0.06));
+  box-shadow: 0 5px 14px rgba(15, 23, 42, 0.06);
+  color: rgb(15, 23, 42);
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.md .content-diagram__block .md-p {
+  margin: 0;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.md .content-diagram__block .md-p + .md-p {
+  margin-top: 0.4rem;
+}
+
+.md .content-diagram__block--start {
+  border-color: rgba(79, 70, 229, 0.26);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.13), rgba(139, 92, 246, 0.08));
+}
+
+.md .content-diagram__block--end,
+.md .content-diagram__block--positive {
+  border-color: rgba(13, 148, 136, 0.3);
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.15), rgba(45, 212, 191, 0.08));
+}
+
+.md .content-diagram__block--source {
+  border-color: rgba(14, 116, 144, 0.26);
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(14, 165, 164, 0.11), rgba(99, 102, 241, 0.08));
+}
+
+.md .content-diagram__block--neutral {
+  border-color: rgba(79, 70, 229, 0.25);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.11), rgba(129, 140, 248, 0.06));
+}
+
+.md .content-diagram__block--warning {
+  border-color: rgba(217, 119, 6, 0.27);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.13), rgba(251, 191, 36, 0.06));
+}
+
+.md .content-diagram--flow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.md .content-diagram--flow > .content-diagram__block {
+  position: relative;
+  width: min(100%, 22rem);
+}
+
+.md .content-diagram--flow > .content-diagram__block + .content-diagram__block {
+  margin-top: 1.9rem;
+}
+
+.md .content-diagram--flow > .content-diagram__block + .content-diagram__block::before {
+  position: absolute;
+  bottom: calc(100% + 0.3rem);
+  left: 50%;
+  color: rgb(14, 116, 144);
+  content: '↓';
+  font-size: 1.15rem;
+  font-weight: 500;
+  line-height: 1;
+  transform: translateX(-50%);
+}
+
+.md .content-diagram--branch > .content-diagram__block:first-child {
+  position: relative;
+  display: inline-block;
+}
+
+.md .content-diagram--branch > .content-diagram__block:first-child::after {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 1px;
+  height: 1.8rem;
+  background: var(--diagram-line);
+  content: '';
+}
+
+.md .content-diagram__branch {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1.8rem;
+}
+
+.md .content-diagram__branch::before {
+  position: absolute;
+  top: 0;
+  left: 16.667%;
+  width: 66.666%;
+  height: 1px;
+  background: var(--diagram-line);
+  content: '';
+}
+
+.md .content-diagram__branch > .content-diagram__block {
+  position: relative;
+  margin-top: 1rem;
+  padding: 0.8rem 0.75rem;
+}
+
+.md .content-diagram__branch > .content-diagram__block::before {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  width: 1px;
+  height: 1rem;
+  background: var(--diagram-line);
+  content: '';
+}
+
+.md .content-diagram__branch > .content-diagram__block .md-p:first-child {
+  color: rgb(51, 65, 85);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.025em;
+}
+
+.dark .md .content-diagram {
+  --diagram-line: rgba(94, 234, 212, 0.28);
+}
+
+.dark .md .content-diagram__block {
+  border-color: rgba(94, 234, 212, 0.2);
+  background: linear-gradient(135deg, rgba(45, 212, 191, 0.1), rgba(129, 140, 248, 0.09));
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.16);
+  color: rgb(226, 232, 240);
+}
+
+.dark .md .content-diagram__block--start {
+  border-color: rgba(165, 180, 252, 0.32);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.22), rgba(139, 92, 246, 0.13));
+}
+
+.dark .md .content-diagram__block--end,
+.dark .md .content-diagram__block--positive {
+  border-color: rgba(94, 234, 212, 0.34);
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.2), rgba(45, 212, 191, 0.1));
+}
+
+.dark .md .content-diagram__block--source {
+  border-color: rgba(94, 234, 212, 0.25);
+  background: linear-gradient(135deg, rgba(45, 212, 191, 0.13), rgba(129, 140, 248, 0.1));
+}
+
+.dark .md .content-diagram__block--neutral {
+  border-color: rgba(165, 180, 252, 0.3);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.18), rgba(129, 140, 248, 0.09));
+}
+
+.dark .md .content-diagram__block--warning {
+  border-color: rgba(252, 211, 77, 0.3);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.17), rgba(251, 191, 36, 0.07));
+}
+
+.dark .md .content-diagram__branch > .content-diagram__block .md-p:first-child {
+  color: rgb(203, 213, 225);
+}
+
+.dark .md .content-diagram--flow > .content-diagram__block + .content-diagram__block::before {
+  color: rgb(94, 234, 212);
+}
+
+@media (max-width: 640px) {
+  .md .content-diagram--branch > .content-diagram__block:first-child::after {
+    height: 1.35rem;
+  }
+
+  .md .content-diagram__branch {
+    grid-template-columns: 1fr;
+    gap: 0.7rem;
+    margin-top: 1.35rem;
+  }
+
+  .md .content-diagram__branch::before {
+    display: none;
+  }
+
+  .md .content-diagram__branch > .content-diagram__block {
+    margin-top: 0.7rem;
+  }
+
+  .md .content-diagram__branch > .content-diagram__block::before {
+    height: 0.7rem;
+  }
+}

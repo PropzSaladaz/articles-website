@@ -1,12 +1,13 @@
-const repoName = process.env.REPO_NAME || '';
 const siteUrlEnv = process.env.SITE_URL || '';
 
 export function getSiteUrl(): string {
   if (siteUrlEnv) {
     return siteUrlEnv.replace(/\/$/, '');
   }
-  const defaultHost = 'https://example.com';
-  return repoName ? `${defaultHost}/${repoName}` : defaultHost;
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('SITE_URL must be configured for production builds');
+  }
+  return 'http://localhost:3000';
 }
 
 export function getCanonicalUrl(pathname: string): string {

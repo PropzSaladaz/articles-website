@@ -1,5 +1,6 @@
 import '../styles/globals.css';
 import '../styles/markdown.css';
+import '../styles/content-diagrams.css';
 import { AppProviders } from '../components/AppProviders';
 import { SiteShell } from '../components/SiteShell';
 import { getCollections, getSubjectTree } from '../lib/content/content';

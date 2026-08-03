@@ -12,37 +12,22 @@ $$
 y^2 \equiv x^3 + x + 1 \pmod{11}.
 $$
 
-Before building it step by step, inspect its finite point cloud:
+Before building it step by step, take a look at what the so called point cloud looks like:
 
 <iframe src="simulations/finite_field_point_cloud.html" width="100%" height="500px" title="Finite-field elliptic curve shown as a cloud of points over F11"></iframe>
 
-The axes list the field representatives $0$ through $10$. Some $x$ values have no corresponding $y$ value, most valid $x$ values have two $y$ values related by $y \mapsto -y \bmod 11$, and the point $(2,0)$ is its own partner because zero is its own **additive** inverse:
+You don't need to understand it right now. This is the final result that we are aiming to achieve throughout this article. This animation is merely to build some intuition of what the final result should be - a point cloud.
 
-$$
--0 \equiv 0 \pmod{11}.
-$$
-
-The final point cloud is **not** obtained by rounding points from the real curve or by folding a continuous curve into a square. It is constructed by evaluating both sides of the equation with modular arithmetic and retaining precisely the coordinate pairs for which they match.
-
-To see that transition, we move from
-
-$$
-y^2 = x^3 + ax + b
-$$
-
-over the real numbers to
-
-$$
-y^2 \equiv x^3 + ax + b \pmod{p}
-$$
-
-over a finite field.
+Some preliminary things you may have already noticed:
+- The axes list the field representatives $0$ through $10$. 
+- Some $x$ values have no corresponding $y$ value, most valid $x$ values have two $y$ values related by $y \mapsto -y \bmod 11$, and the point $(2,0)$ has only one corresponding $y$.
 
 The choice $p = 11$ keeps the field small enough to visualize while still defining a nonsingular elliptic curve. By the end of this article, we will reconstruct its 13 plotted affine points, add the point at infinity, and use the complete 14-element group for point addition.
 
 > [!NOTE]
 > Recall that $\mathbb{F}_{11}$ means arithmetic modulo $11$. Its elements are the representatives $0$ through $10$, and every operation is reduced modulo $11$.
 
+Next, we go step by step from the elliptic curve equation we have been seing so far, until we end up with the exact same result as above.
 
 
 ## Start with an Elliptic Curve Over the Real Numbers
@@ -53,9 +38,7 @@ $$
 y^2 = x^3 + x + 1
 $$
 
-Over the real numbers, $x$ and $y$ may take any real value.
-
-For each chosen $x$, we first compute
+Over the real numbers, where $x$ and $y$ may take any real value. For each chosen $x$, we first compute the right side:
 
 $$
 x^3 + x + 1
@@ -84,15 +67,15 @@ The result is the familiar smooth elliptic-curve shape.
 
 ## Replace the Infinite Coordinate Plane with a Finite Coordinate Set
 
-We are primarily interested in elliptic curves over a finite field.
+Since we are primarily interested in elliptic curves over a finite field, we will want to convert the real number curve into a finite set of points.
 
-For a prime number $p$, the finite field
+So we first restrict the inputs $x$ and $y$ to **not come from real numbers**, but from **natural numbers over some modulo $p$ - giving us a finite field**:
 
 $$
 \mathbb{F}_p
 $$
 
-contains the $p$ residue classes
+containing the $p$ values
 
 $$
 0, 1, 2, \ldots, p - 1
@@ -104,15 +87,13 @@ $$
 p = 11
 $$
 
-so the possible coordinate representatives are
+the possible coordinate representatives are
 
 $$
 0, 1, 2, \ldots, 10
 $$
 
-Both $x$ and $y$ must now come from this finite set.
-
-Visually, we can introduce a finite $11 \times 11$ coordinate grid:
+So both $x$ and $y$ must now come from this finite set. Visually, we can introduce a finite $11 \times 11$ coordinate grid:
 
 $$
 0 \le x < 11
@@ -333,6 +314,14 @@ For another $x$, the right-hand-side residue may have:
 * one corresponding $y$-value in the special case $y = 0$;
 * no corresponding $y$-value when the residue is not a quadratic residue.
 
+:::outcomes[How a right-hand-side residue determines the number of curve points]
+Right-hand-side residue $r$
+
+- **Non-zero quadratic residue**: Two curve points, $(x, y)$ and $(x, p - y)$
+- **$r = 0$**: One curve point, $(x, 0)$
+- **Non-residue**: No curve point for this $x$
+:::
+
 <iframe src="simulations/match_lhs_rhs.html" width="100%" height="520px" title="Animation matching square residues with the right-hand-side value for x equals 3"></iframe>
 
 ## Repeat the Matching Process for Every $x$
@@ -542,73 +531,6 @@ for x in 0 .. p-1:
             points.append((x, y))
 ```
 
-## Point Addition Over the Finite Field
-
-The chord-and-tangent picture from [Point Addition and the Elliptic Curve Group](/collections/computer-science/cryptography/elliptic-curves-and-finite-fields/point-addition-and-the-elliptic-curve-group/) explains *why* elliptic-curve addition is shaped the way it is. Over $\mathbb{F}_{11}$, we compute the same operation algebraically: every subtraction, multiplication, and division is performed modulo $11$.
-
-For two distinct ordinary points $P=(x_1,y_1)$ and $Q=(x_2,y_2)$ with $x_1 \ne x_2$, first compute the slope
-
-$$
-\lambda \equiv (y_2-y_1)(x_2-x_1)^{-1} \pmod{11}.
-$$
-
-Then their sum $P+Q=(x_3,y_3)$ is
-
-$$
-\begin{aligned}
-x_3 &\equiv \lambda^2-x_1-x_2 \pmod{11}, \\
-y_3 &\equiv \lambda(x_1-x_3)-y_1 \pmod{11}.
-\end{aligned}
-$$
-
-For doubling, when $P=Q$ and $y_1 \ne 0$, use
-
-$$
-\lambda \equiv (3x_1^2+a)(2y_1)^{-1} \pmod{11}.
-$$
-
-The same coordinate formulas then give $2P$. The remaining special cases complete the operation:
-
-* $P+\mathcal{O}=P$;
-* if $Q=-P=(x_1,-y_1 \bmod 11)$, then $P+Q=\mathcal{O}$;
-* if $P=(x,0)$, then $2P=\mathcal{O}$.
-
-For example, take $P=(1,5)$ on the running curve. Since $a=1$,
-
-$$
-\lambda \equiv (3\cdot1^2+1)(2\cdot5)^{-1}
-\equiv 4\cdot10^{-1}
-\equiv 4\cdot10
-\equiv 7 \pmod{11}.
-$$
-
-Therefore,
-
-$$
-\begin{aligned}
-x_{2P} &\equiv 7^2-1-1 \equiv 3 \pmod{11}, \\
-y_{2P} &\equiv 7(1-3)-5 \equiv 3 \pmod{11},
-\end{aligned}
-$$
-
-so
-
-$$
-2(1,5)=(3,3).
-$$
-
-Continuing the same finite-field additions produces a cycle:
-
-| Multiple of $P$ | Point |
-| --- | --- |
-| $P$ | $(1,5)$ |
-| $2P$ | $(3,3)$ |
-| $3P$ | $(8,2)$ |
-| $7P$ | $(2,0)$ |
-| $14P$ | $\mathcal{O}$ |
-
-This connects the lone point $(2,0)$ in the plot with the group law: because it has $y=0$, doubling it gives $\mathcal{O}$. [Base Points, Generators, Orders, and Cofactors](/collections/computer-science/cryptography/elliptic-curves-and-finite-fields/base-points-generators-orders-and-cofactors/) gives this cycle its standard names.
-
 ## From This Toy Cloud to Production Curves
 
 Our running example uses $p = 11$ so that every calculation and every point fits on the page. It is useful for learning, but it offers no security: anyone can enumerate its tiny field, list its curve points, and try every possible scalar.
@@ -661,23 +583,15 @@ The large modulus is not only about making the picture bigger. Together with a c
 
 The path from the real elliptic curve to the finite-field point cloud is:
 
-$$
-\boxed{
-\text{continuous real curve}
-\rightarrow
-\text{finite coordinate set}
-\rightarrow
-\text{discrete }x\text{ inputs}
-\rightarrow
-\text{RHS modulo }p
-\rightarrow
-\text{quadratic residues}
-\rightarrow
-\text{matching residues}
-\rightarrow
-\text{finite point cloud}
-}
-$$
+:::flow[The construction of a finite-field point cloud from a continuous real curve]
+- Continuous real curve
+- Finite coordinate set
+- Discrete $x$ inputs
+- RHS modulo $p$
+- Quadratic residues
+- Matching residues
+- Finite point cloud
+:::
 
 The cloud is not a distorted image of the real curve.
 

@@ -1,4 +1,4 @@
-const repoName = process.env.NEXT_PUBLIC_REPO_NAME || process.env.REPO_NAME || '';
+const repoName = process.env.NEXT_PUBLIC_REPO_NAME || '';
 
 export function getBasePath(): string {
   return repoName ? `/${repoName}` : '';

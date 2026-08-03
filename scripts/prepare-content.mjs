@@ -21,8 +21,6 @@ const SIM_LIB_SRC = path.join(PROJECT_ROOT, 'sim-lib');
 const SIM_LIB_DEST = path.join(PUBLIC_ROOT, 'sim-lib');
 const SIM_LIB_VERSION = 'v1';
 
-const ENV_REPO_NAME = `/${process.env.NEXT_REPO_NAME}` || '';
-
 function slugify(value) {
   return value
     .trim()

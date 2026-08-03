@@ -6,6 +6,7 @@ import remarkDirective from 'remark-directive';
 import remarkMath from 'remark-math';
 import remarkSpoiler from './remark-spoiler';
 import remarkDefinition from './remark-definition';
+import remarkDiagram from './remark-diagram';
 import remarkGithubAlerts from './remark-github-alerts';
 import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
@@ -52,6 +53,7 @@ export async function markdownToHtml(markdown: string, options?: MarkdownOptions
     .use(remarkDirective)
     .use(remarkSpoiler)
     .use(remarkDefinition)
+    .use(remarkDiagram)
     // GitHub-style alerts: > [!NOTE], > [!TIP], etc.
     .use(remarkGithubAlerts)
 
@@ -93,7 +95,7 @@ export async function markdownToHtml(markdown: string, options?: MarkdownOptions
     processor = processor.use(rehypeProductionImages, {
       slug,
       isDev,
-      repoName: process.env.NEXT_REPO_NAME,
+      repoName: process.env.REPO_NAME,
       parentCollectionSlug: options?.parentCollectionSlug,
       isCollection: options?.isCollection
     });
