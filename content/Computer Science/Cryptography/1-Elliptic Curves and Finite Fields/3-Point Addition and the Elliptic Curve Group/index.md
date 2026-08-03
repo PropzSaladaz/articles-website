@@ -1,5 +1,5 @@
 ---
-status: "draft"
+status: "published"
 date: "2026-06-11"
 summary: "Learn the chord-and-tangent point addition rule, point doubling, inverse points, the point at infinity, and why curve points form a group."
 ---

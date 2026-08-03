@@ -1,5 +1,5 @@
 ---
-status: "draft"
+status: "published"
 date: "2026-06-11"
 summary: "Build visual intuition for elliptic curves using real-number curves, Weierstrass form, smoothness, and curve points."
 ---

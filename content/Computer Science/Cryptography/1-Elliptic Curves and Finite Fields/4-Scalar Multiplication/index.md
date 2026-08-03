@@ -1,5 +1,5 @@
 ---
-status: "draft"
+status: "published"
 date: "2026-06-11"
 summary: "Understand scalar multiplication as repeated point addition and the efficient doubling methods that make large finite-field calculations practical."
 ---

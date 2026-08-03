@@ -1,5 +1,5 @@
 ---
-status: "draft"
+status: "published"
 date: "2026-06-11"
 summary: "A high-level orientation to elliptic curves and the mathematical path from smooth real curves to finite-field point groups."
 ---

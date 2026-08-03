@@ -1,5 +1,5 @@
 ---
-status: "draft"
+status: "published"
 date: "2026-06-11"
 summary: "Construct a finite-field elliptic curve point set, add its points with modular formulas, and connect the resulting group to cryptographic parameters."
 ---

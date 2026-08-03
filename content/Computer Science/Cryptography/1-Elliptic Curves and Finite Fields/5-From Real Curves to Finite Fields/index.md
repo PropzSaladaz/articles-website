@@ -1,5 +1,5 @@
 ---
-status: "draft"
+status: "published"
 date: "2026-06-11"
 summary: "Move from smooth real-number curves to exact finite-field arithmetic using modular arithmetic and modular inverses."
 ---

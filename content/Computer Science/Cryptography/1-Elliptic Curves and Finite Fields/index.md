@@ -1,5 +1,5 @@
 ---
-status: "draft"
+status: "published"
 summary: "A visual and mathematical path from real elliptic curves to finite-field point sets, groups, and the base-point subgroups used by cryptography."
 ---
 
