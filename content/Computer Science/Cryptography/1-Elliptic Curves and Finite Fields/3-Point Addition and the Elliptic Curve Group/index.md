@@ -86,6 +86,12 @@ $$
 2P = P + P
 $$
 
+If $P=(x,0)$, its inverse is itself: $-P=P$. Therefore this special doubling case is:
+
+$$
+2P=\mathcal{O}.
+$$
+
 <iframe src="simulations/ec_point_doubling.html" width="100%" height="600px"></iframe>
 
 Point doubling is important because scalar multiplication is built using repeated point addition and point doubling.
@@ -309,7 +315,7 @@ This means the set of points on the elliptic curve over the finite field modulo 
 So when we say that elliptic curve points form a group, we mean that the points can be added together in a complete and consistent way.
 
 
-## Closure, Identity, Inverses, Associativity
+## Closure, Identity, Inverses, Associativity, and Commutativity
 
 Groups have some rules that we have not discussed directly. You have probably already built intuition for them, but it is useful to name them explicitly:
 
@@ -320,6 +326,7 @@ Groups have some rules that we have not discussed directly. You have probably al
 | Identity      | There is a point $\mathcal{O}$ such that $P + \mathcal{O} = P$    |
 | Inverse       | Every point $P$ has an inverse $-P$ such that $P + (-P) = \mathcal{O}$ |
 | Associativity | `(P + Q) + R = P + (Q + R)`                                         |
+| Commutativity | $P + Q = Q + P$                                                     |
 :::
 
 The first three rules should now feel familiar.
@@ -405,6 +412,14 @@ P + (P + P)
 $$
 
 Both give the same result. This is what makes repeated point addition well-defined.
+
+Finally, **commutativity** means that the order of two points does not change their sum:
+
+$$
+P + Q = Q + P
+$$
+
+Point addition has all five properties above, so the curve points form an **abelian group**. “Abelian” is simply the name for a group whose operation is commutative.
 
 
 ## Why the Group Structure Matters

@@ -83,6 +83,27 @@
   transform: translateX(-50%);
 }
 
+.md .content-diagram--compare {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: stretch;
+  text-align: left;
+}
+
+.md .content-diagram--compare > .content-diagram__block {
+  height: 100%;
+  padding: 0.9rem 1rem;
+  font-weight: 500;
+}
+
+.md .content-diagram--compare > .content-diagram__block .md-p:first-child {
+  color: rgb(51, 65, 85);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.025em;
+}
+
 .md .content-diagram--branch > .content-diagram__block:first-child {
   position: relative;
   display: inline-block;
@@ -180,11 +201,20 @@
   color: rgb(203, 213, 225);
 }
 
+.dark .md .content-diagram--compare > .content-diagram__block .md-p:first-child {
+  color: rgb(203, 213, 225);
+}
+
 .dark .md .content-diagram--flow > .content-diagram__block + .content-diagram__block::before {
   color: rgb(94, 234, 212);
 }
 
 @media (max-width: 640px) {
+  .md .content-diagram--compare {
+    grid-template-columns: 1fr;
+    gap: 0.7rem;
+  }
+
   .md .content-diagram--branch > .content-diagram__block:first-child::after {
     height: 1.35rem;
   }

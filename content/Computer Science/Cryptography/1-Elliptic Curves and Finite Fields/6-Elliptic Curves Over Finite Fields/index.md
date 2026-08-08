@@ -472,21 +472,83 @@ The real and finite-field plots are two visualizations of the same algebraic equ
 The real curve provides useful geometric intuition, but the finite-field point set must be computed directly using modular arithmetic.
 
 
-## Why $p$ Is Normally Prime
+## Point Addition Over a Finite Field
 
-The integers modulo $p$ form a field when $p$ is prime.
+The chord-and-tangent picture from the real-number curve is useful intuition, but it is not a literal construction over $\mathbb{F}_p$. There is no continuous curve or ordinary straight line to draw through the finite point cloud.
 
-In a field:
+Instead, the same group law is defined algebraically with finite-field arithmetic. For a short Weierstrass curve over a prime field with $p > 3$, let
 
-* addition and multiplication remain inside the set;
-* every element has an additive inverse;
-* every nonzero element has a multiplicative inverse.
+$$
+P=(x_1,y_1)
+\qquad\text{and}\qquad
+Q=(x_2,y_2).
+$$
 
-The multiplicative inverse property is essential for elliptic-curve point addition, because the point-addition formulas require division.
+When $P \ne Q$ and $x_1 \ne x_2$, calculate the slope using a modular inverse:
 
-For composite moduli, some nonzero elements have no multiplicative inverse. The resulting arithmetic structure is a ring rather than a field, and the standard elliptic-curve group construction may fail.
+$$
+\lambda = (y_2-y_1)(x_2-x_1)^{-1} \pmod p.
+$$
 
-> Choosing a prime modulus does not mean that every curve is automatically suitable. The curve must also be nonsingular.
+Then the sum is $P+Q=(x_3,y_3)$, where
+
+$$
+\begin{aligned}
+x_3 &= \lambda^2-x_1-x_2 \pmod p, \\
+y_3 &= \lambda(x_1-x_3)-y_1 \pmod p.
+\end{aligned}
+$$
+
+If $P$ and $Q$ have the same $x$-coordinate but are different points, then $Q=-P$ and:
+
+$$
+P+Q=\mathcal{O}.
+$$
+
+For point doubling, when $P=Q$ and $y_1 \ne 0$, use:
+
+$$
+\lambda=(3x_1^2+a)(2y_1)^{-1}\pmod p,
+$$
+
+followed by the same formulas for $x_3$ and $y_3$. If $y_1=0$, then $P=-P$, so:
+
+$$
+2P=\mathcal{O}.
+$$
+
+> [!IMPORTANT]
+> Division in these formulas means multiplication by a modular inverse. The denominator must be non-zero; the exceptional cases above handle the times when it is zero.
+
+> [!EXAMPLE]
+> **Doubling a point in $E(\mathbb{F}_{11})$**
+>
+> On the running curve, $a=1$ and $P=(1,5)$. Because $10^{-1}\equiv10\pmod{11}$:
+>
+> $$
+> \lambda=(3\cdot1^2+1)(2\cdot5)^{-1}
+> =4\cdot10
+> \equiv7\pmod{11}.
+> $$
+>
+> Therefore:
+>
+> $$
+> \begin{aligned}
+> x_3&=7^2-1-1\equiv3\pmod{11},\\
+> y_3&=7(1-3)-5\equiv3\pmod{11}.
+> \end{aligned}
+> $$
+>
+> So $2(1,5)=(3,3)$. Adding $(1,5)$ to $(3,3)$ with the distinct-point formula gives $3(1,5)=(8,2)$.
+
+These formulas produce the same abstract group operation introduced earlier. Together with $\mathcal{O}$, the points of a nonsingular finite-field curve form an abelian group, even though the real-number geometric construction is no longer literal.
+
+<iframe src="simulations/doubling_over_f11.html" width="100%" height="620px" title="Animated modular calculation of 2(1,5) equals (3,3) over the finite field F11"></iframe>
+
+## Nonsingular Curves
+
+Choosing a prime modulus does not mean that every curve is automatically suitable. The curve must also be nonsingular.
 
 For a short Weierstrass curve
 

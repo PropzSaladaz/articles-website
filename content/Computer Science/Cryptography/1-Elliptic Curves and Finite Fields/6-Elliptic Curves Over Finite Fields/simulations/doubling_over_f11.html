@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="sim-paper" content="full">
+  <title>Elliptic-Curve Addition over F11</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      --paper: rgba(255, 252, 225, .93);
+      --ink: #2d2a26;
+      --muted: #5f5b56;
+      --border: rgba(45, 42, 38, .16);
+      --blue: #2f4f8f;
+    }
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #fbf6ea;
+      color: var(--ink);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    canvas { display: block; width: 100vw; height: 100vh; }
+
+    .paper-card {
+      position: absolute;
+      z-index: 3;
+      padding: 12px 14px;
+      background: var(--paper);
+      border: 1px solid var(--border);
+      box-shadow: 2px 3px 9px rgba(45, 42, 38, .13);
+    }
+    .paper-card h1,
+    .paper-card h2 {
+      margin: 0;
+      font-family: Caveat, cursive;
+      line-height: 1.08;
+    }
+    .paper-card h1 { font-size: 20px; }
+    .paper-card h2 { font-size: 19px; color: var(--blue); }
+    .paper-card p { margin: 6px 0 0; font-size: 10px; line-height: 1.48; color: var(--muted); }
+
+    .hud {
+      left: 16px;
+      top: 16px;
+      width: min(300px, calc(100vw - 32px));
+      transform: rotate(-.25deg);
+    }
+    .explanation-card {
+      left: 16px;
+      bottom: 76px;
+      width: min(345px, calc(100vw - 32px));
+      transform: rotate(.18deg);
+    }
+    .explanation-card ul {
+      margin: 9px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    .explanation-card li {
+      margin: 5px 0 0;
+      font-size: 11px;
+      line-height: 1.45;
+    }
+    .explanation-card li.muted { color: var(--muted); }
+    .explanation-card li.accent { color: var(--blue); font-weight: 700; }
+
+    .mode-tabs,
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+      margin-top: 10px;
+    }
+    button,
+    select {
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      background: rgba(45, 42, 38, .05);
+      color: var(--ink);
+      font: 700 10px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    button {
+      padding: 7px 8px;
+      cursor: pointer;
+    }
+    button:hover { background: rgba(45, 42, 38, .1); }
+    button.active {
+      color: var(--blue);
+      border-color: rgba(47, 79, 143, .42);
+      background: rgba(47, 79, 143, .09);
+    }
+    select { width: 100%; padding: 6px 7px; }
+
+    .progress-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(45, 42, 38, .12);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--muted);
+    }
+    .progress-row strong { color: var(--blue); text-align: right; }
+
+    .explorer-controls {
+      display: none;
+      margin-top: 10px;
+      padding-top: 9px;
+      border-top: 1px solid rgba(45, 42, 38, .12);
+    }
+    .field-row {
+      display: grid;
+      grid-template-columns: 72px 1fr;
+      align-items: center;
+      gap: 8px;
+      margin-top: 7px;
+    }
+    .field-row label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+    .explorer-note { margin-top: 8px !important; font-size: 9px !important; }
+
+    .step-nav {
+      position: absolute;
+      z-index: 4;
+      left: 18px;
+      right: 18px;
+      bottom: 14px;
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 6px;
+    }
+    .step-button {
+      position: relative;
+      min-width: 0;
+      padding: 7px 6px 9px;
+      overflow: hidden;
+      background: rgba(255, 252, 225, .86);
+      text-align: left;
+    }
+    .step-button .number {
+      display: block;
+      color: var(--muted);
+      font-size: 8px;
+      margin-bottom: 2px;
+    }
+    .step-button .label {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .step-button .bar {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 0;
+      height: 3px;
+      background: var(--blue);
+    }
+    .step-button.active { color: var(--blue); }
+
+    [hidden] { display: none !important; }
+
+    @media (max-width: 720px) {
+      .paper-card { padding: 9px 11px; }
+      .hud { left: 10px; top: 10px; width: 235px; }
+      .paper-card h1 { font-size: 18px; }
+      .paper-card h2 { font-size: 17px; }
+      .paper-card p { font-size: 8px; }
+      .explanation-card {
+        left: 10px;
+        right: 10px;
+        bottom: 66px;
+        width: auto;
+        max-height: 142px;
+        overflow: hidden;
+      }
+      .explanation-card li { font-size: 9px; margin-top: 3px; }
+      .mode-tabs, .controls { margin-top: 7px; }
+      button, select { font-size: 8px; }
+      button { padding: 6px; }
+      .field-row { grid-template-columns: 58px 1fr; margin-top: 5px; }
+      .field-row label { font-size: 8px; }
+      .step-nav { left: 10px; right: 10px; bottom: 9px; gap: 3px; }
+      .step-button { padding: 6px 4px 8px; font-size: 7px; }
+      .step-button .number { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas" aria-label="Interactive explanation of elliptic-curve point addition over F11"></canvas>
+
+  <aside class="paper-card hud" aria-label="Animation controls">
+    <h1 id="mainTitle">Doubling over F₁₁</h1>
+    <p id="mainSubtitle">See a modular tangent as a straight line on repeated copies of the field.</p>
+
+    <div class="mode-tabs" aria-label="View mode">
+      <button id="guidedMode" class="active" type="button">Guided</button>
+      <button id="exploreMode" type="button">Explore points</button>
+    </div>
+
+    <div id="guidedProgress" class="progress-row">
+      <span id="sceneLabel">1 of 6</span>
+      <strong id="sceneName">the finite curve</strong>
+    </div>
+
+    <div id="explorerControls" class="explorer-controls">
+      <div class="field-row">
+        <label for="operation">Operation</label>
+        <select id="operation">
+          <option value="double">Double P</option>
+          <option value="add">Add P + Q</option>
+        </select>
+      </div>
+      <div class="field-row">
+        <label for="pointP">Point P</label>
+        <select id="pointP"></select>
+      </div>
+      <div id="pointQRow" class="field-row" hidden>
+        <label for="pointQ">Point Q</label>
+        <select id="pointQ"></select>
+      </div>
+      <p class="explorer-note">You may also click a curve point to replace P.</p>
+    </div>
+
+    <div class="controls">
+      <button id="pause" type="button">Pause</button>
+      <button id="replay" type="button">Replay</button>
+    </div>
+  </aside>
+
+  <aside class="paper-card explanation-card" aria-live="polite">
+    <h2 id="explanationTitle">1. The curve is a set of points</h2>
+    <ul id="explanationLines"></ul>
+  </aside>
+
+  <nav id="stepNav" class="step-nav" aria-label="Animation steps"></nav>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const sk = Sketch.attach(canvas);
+
+    const mainTitle = document.getElementById('mainTitle');
+    const mainSubtitle = document.getElementById('mainSubtitle');
+    const guidedModeButton = document.getElementById('guidedMode');
+    const exploreModeButton = document.getElementById('exploreMode');
+    const guidedProgress = document.getElementById('guidedProgress');
+    const explorerControls = document.getElementById('explorerControls');
+    const sceneLabel = document.getElementById('sceneLabel');
+    const sceneName = document.getElementById('sceneName');
+    const pauseButton = document.getElementById('pause');
+    const replayButton = document.getElementById('replay');
+    const stepNav = document.getElementById('stepNav');
+    const explanationTitle = document.getElementById('explanationTitle');
+    const explanationLines = document.getElementById('explanationLines');
+    const operationSelect = document.getElementById('operation');
+    const pointPSelect = document.getElementById('pointP');
+    const pointQSelect = document.getElementById('pointQ');
+    const pointQRow = document.getElementById('pointQRow');
+
+    const curve = { p: 11, a: 1, b: 1 };
+    const infinity = null;
+    const guidedP = { x: 1, y: 5 };
+    const guidedThird = { x: 3, y: 8 };
+    const guidedResult = { x: 3, y: 3 };
+
+    const scenes = [
+      { name: 'the finite curve', short: 'Points', duration: 5600 },
+      { name: 'a modular direction', short: 'Direction', duration: 6400 },
+      { name: 'unwrap the field', short: 'Unwrap', duration: 7600 },
+      { name: 'fold the intersection', short: 'Fold', duration: 6100 },
+      { name: 'take the inverse', short: 'Inverse', duration: 6100 },
+      { name: 'repeat for kP', short: 'Multiply', duration: 6800 }
+    ];
+    const sceneOffsets = [];
+    let runningOffset = 0;
+    scenes.forEach((scene) => {
+      sceneOffsets.push(runningOffset);
+      runningOffset += scene.duration;
+    });
+    const TOTAL_DURATION = runningOffset;
+
+    const state = {
+      mode: 'guided',
+      elapsed: 0,
+      lastFrame: null,
+      paused: false,
+      operation: 'double',
+      pIndex: 2,
+      qIndex: 5
+    };
+
+    function mod(value, base = curve.p) {
+      return ((value % base) + base) % base;
+    }
+
+    function inverse(value) {
+      const normalized = mod(value);
+      for (let candidate = 1; candidate < curve.p; candidate += 1) {
+        if (mod(normalized * candidate) === 1) return candidate;
+      }
+      throw new Error(`No inverse for ${value}`);
+    }
+
+    function ease(value) {
+      const t = Math.max(0, Math.min(1, value));
+      return t * t * (3 - 2 * t);
+    }
+
+    function samePoint(left, right) {
+      if (left === infinity || right === infinity) return left === right;
+      return left.x === right.x && left.y === right.y;
+    }
+
+    function negate(point) {
+      return point === infinity ? infinity : { x: point.x, y: mod(-point.y) };
+    }
+
+    function curvePoints() {
+      const result = [];
+      for (let x = 0; x < curve.p; x += 1) {
+        for (let y = 0; y < curve.p; y += 1) {
+          if (mod(y * y) === mod(x * x * x + curve.a * x + curve.b)) {
+            result.push({ x, y });
+          }
+        }
+      }
+      return result;
+    }
+
+    const points = curvePoints();
+    const groupSize = points.length + 1;
+
+    function addPoints(P, Q) {
+      if (P === infinity) return Q;
+      if (Q === infinity) return P;
+      if (P.x === Q.x && mod(P.y + Q.y) === 0) return infinity;
+
+      let lambda;
+      if (samePoint(P, Q)) {
+        if (P.y === 0) return infinity;
+        lambda = mod((3 * P.x * P.x + curve.a) * inverse(2 * P.y));
+      } else {
+        lambda = mod((Q.y - P.y) * inverse(Q.x - P.x));
+      }
+
+      const x = mod(lambda * lambda - P.x - Q.x);
+      const y = mod(lambda * (P.x - x) - P.y);
+      return { x, y };
+    }
+
+    function multiplyPoint(k, point) {
+      let result = infinity;
+      let addend = point;
+      let scalar = k;
+      while (scalar > 0) {
+        if (scalar & 1) result = addPoints(result, addend);
+        addend = addPoints(addend, addend);
+        scalar >>= 1;
+      }
+      return result;
+    }
+
+    function pointOrder(point) {
+      for (let k = 1; k <= groupSize; k += 1) {
+        if (multiplyPoint(k, point) === infinity) return k;
+      }
+      return groupSize;
+    }
+
+    function pointText(point) {
+      return point === infinity ? '𝒪' : `(${point.x}, ${point.y})`;
+    }
+
+    function getLineData(P, Q) {
+      const isDoubling = samePoint(P, Q);
+      if (P.x === Q.x && (isDoubling ? P.y === 0 : mod(P.y + Q.y) === 0)) {
+        return {
+          vertical: true,
+          isDoubling,
+          sum: infinity,
+          third: infinity,
+          lambda: null,
+          visualSlope: null,
+          intercept: null
+        };
+      }
+
+      const lambda = isDoubling
+        ? mod((3 * P.x * P.x + curve.a) * inverse(2 * P.y))
+        : mod((Q.y - P.y) * inverse(Q.x - P.x));
+      const sum = addPoints(P, Q);
+      const third = negate(sum);
+      const visualSlope = lambda > curve.p / 2 ? lambda - curve.p : lambda;
+      return {
+        vertical: false,
+        isDoubling,
+        sum,
+        third,
+        lambda,
+        visualSlope,
+        intercept: mod(P.y - lambda * P.x)
+      };
+    }
+
+    function getScene() {
+      const time = mod(state.elapsed, TOTAL_DURATION);
+      let passed = 0;
+      for (let index = 0; index < scenes.length; index += 1) {
+        if (time < passed + scenes[index].duration) {
+          return { index, progress: (time - passed) / scenes[index].duration, time };
+        }
+        passed += scenes[index].duration;
+      }
+      return { index: scenes.length - 1, progress: 1, time };
+    }
+
+    function getLayout(sceneIndex = 0) {
+      const compact = canvas.width < 720;
+      const unfolded = state.mode === 'guided' && (sceneIndex === 2 || sceneIndex === 3);
+      const size = compact
+        ? Math.min(canvas.width * .76, canvas.height * (unfolded ? .24 : .43))
+        : Math.min(canvas.width * .46, canvas.height * (unfolded ? .34 : .67));
+      const centerX = compact ? canvas.width * .57 : canvas.width * .71;
+      const centerY = compact
+        ? canvas.height * (unfolded ? .61 : .52)
+        : canvas.height * (unfolded ? .66 : .54);
+      return {
+        compact,
+        unfolded,
+        size,
+        step: size / curve.p,
+        left: centerX - size / 2,
+        bottom: centerY + size / 2
+      };
+    }
+
+    function positionRaw(x, rawY, layout) {
+      return {
+        x: layout.left + x * layout.step,
+        y: layout.bottom - rawY * layout.step
+      };
+    }
+
+    function position(point, layout) {
+      return positionRaw(point.x, point.y, layout);
+    }
+
+    function drawTile(layout, yOffset = 0, options = {}) {
+      const { left, bottom, size, step, compact } = layout;
+      const tileBottom = bottom - yOffset * step;
+      const tileTop = tileBottom - size;
+      const ink = options.faded ? 'pencilLight' : 'pencil';
+
+      for (let value = 0; value <= curve.p; value += 1) {
+        const x = left + value * step;
+        const y = tileBottom - value * step;
+        sk.ruler(x, tileTop, x, tileBottom, {
+          ink: 'pencilLight',
+          width: value === 0 || value === curve.p ? 1.5 : .7
+        });
+        sk.ruler(left, y, left + size, y, {
+          ink: 'pencilLight',
+          width: value === 0 || value === curve.p ? 1.5 : .7
+        });
+      }
+      sk.rect(left, tileTop, size, size, { ink, width: 1.7, roughness: .35, boil: false });
+
+      if (!options.hideLabels) {
+        const labelSize = compact ? 9 : 12;
+        for (let value = 0; value < curve.p; value += 1) {
+          sk.text(String(value), left + value * step, tileBottom + (compact ? 13 : 17), {
+            ink, size: labelSize, align: 'center', boil: false
+          });
+          sk.text(String(value), left - (compact ? 12 : 16), tileBottom - value * step + 3, {
+            ink, size: labelSize, align: 'center', boil: false
+          });
+        }
+        sk.text('x', left + size + 10, tileBottom + (compact ? 13 : 17), {
+          ink, size: compact ? 13 : 16, boil: false
+        });
+        sk.text('y', left - (compact ? 12 : 16), tileTop - 10, {
+          ink, size: compact ? 13 : 16, align: 'center', boil: false
+        });
+      }
+
+      if (options.caption) {
+        sk.text(options.caption, left + size / 2, tileTop - (compact ? 10 : 14), {
+          ink, size: compact ? 11 : 14, align: 'center', boil: false
+        });
+      }
+    }
+
+    function drawCurvePoints(layout, yOffset = 0, options = {}) {
+      const visible = options.visible ?? points.length;
+      points.forEach((point, index) => {
+        if (index >= visible) return;
+        const at = positionRaw(point.x, point.y + yOffset, layout);
+        sk.circle(at.x, at.y, options.size || 4.8, {
+          ink: options.ink || 'pencilLight',
+          fill: options.fill || 'pencilLight',
+          fillStyle: 'solid',
+          roughness: .35
+        });
+      });
+    }
+
+    function drawPoint(point, layout, label, ink, rawYOffset = 0, size = 9) {
+      if (point === infinity) return null;
+      const at = positionRaw(point.x, point.y + rawYOffset, layout);
+      sk.circle(at.x, at.y, size, { ink, fill: ink, fillStyle: 'solid', roughness: .3 });
+      if (label) {
+        sk.text(label, at.x + 12, at.y - 11, {
+          ink, size: layout.compact ? 11 : 15, boil: false
+        });
+      }
+      return at;
+    }
+
+    function drawEdgeWrapping(layout, progress) {
+      const topLeft = positionRaw(0, curve.p, layout);
+      const topRight = positionRaw(curve.p, curve.p, layout);
+      const bottomRight = positionRaw(curve.p, 0, layout);
+      const t = ease(progress);
+
+      if (t > .15) {
+        sk.ruler(topLeft.x + layout.size * .2, topLeft.y - 17, topRight.x - layout.size * .2, topRight.y - 17, {
+          ink: 'purple', width: 1.5, dash: [5, 4]
+        });
+        sk.text('x + 11 returns to x', layout.left + layout.size / 2, topLeft.y - 25, {
+          ink: 'purple', size: layout.compact ? 10 : 13, align: 'center', boil: false
+        });
+      }
+      if (t > .55) {
+        sk.ruler(bottomRight.x + 18, bottomRight.y - layout.size * .2, topRight.x + 18, topRight.y + layout.size * .2, {
+          ink: 'purple', width: 1.5, dash: [5, 4]
+        });
+        sk.text('y wraps too', topRight.x + 28, layout.bottom - layout.size / 2, {
+          ink: 'purple', size: layout.compact ? 10 : 13, boil: false
+        });
+      }
+    }
+
+    function drawGuidedWrappedStep(layout, progress) {
+      const boundaryX = guidedP.x + (curve.p - guidedP.y) / 7;
+      const firstEnd = positionRaw(boundaryX, curve.p, layout);
+      const secondStart = positionRaw(boundaryX, 0, layout);
+      const end = positionRaw(2, 1, layout);
+      const startAt = position(guidedP, layout);
+      const t = ease(progress);
+
+      if (t < .65) {
+        const local = t / .65;
+        sk.ruler(startAt.x, startAt.y,
+          startAt.x + (firstEnd.x - startAt.x) * local,
+          startAt.y + (firstEnd.y - startAt.y) * local,
+          { ink: 'blue', width: 2.4 }
+        );
+      } else {
+        sk.ruler(startAt.x, startAt.y, firstEnd.x, firstEnd.y, { ink: 'blue', width: 2.4 });
+        const local = (t - .65) / .35;
+        sk.ruler(secondStart.x, secondStart.y,
+          secondStart.x + (end.x - secondStart.x) * local,
+          secondStart.y + (end.y - secondStart.y) * local,
+          { ink: 'blue', width: 2.4 }
+        );
+      }
+      if (t > .62) {
+        sk.text('wrap', firstEnd.x + 7, firstEnd.y - 8, {
+          ink: 'purple', size: layout.compact ? 10 : 13, boil: false
+        });
+      }
+      if (t > .92) {
+        sk.circle(end.x, end.y, 6.5, { ink: 'blue', fill: 'blue', fillStyle: 'solid', roughness: .3 });
+        sk.text('(2, 1)', end.x + 10, end.y + 16, {
+          ink: 'blue', size: layout.compact ? 10 : 13, boil: false
+        });
+      }
+    }
+
+    function drawGuidedUnwrappedLine(layout, progress, showFold, lineProgress = progress) {
+      drawTile(layout, 11, { faded: true, hideLabels: true, caption: 'same field, shifted by +11 in y' });
+      drawCurvePoints(layout, 11, { ink: 'pencilLight', fill: 'pencilLight', size: 4.3 });
+
+      const lineStart = positionRaw(.45, 7 * .45 - 2, layout);
+      const lineEnd = positionRaw(3.2, 7 * 3.2 - 2, layout);
+      const t = ease(Math.min(1, lineProgress / .72));
+      sk.ruler(lineStart.x, lineStart.y,
+        lineStart.x + (lineEnd.x - lineStart.x) * t,
+        lineStart.y + (lineEnd.y - lineStart.y) * t,
+        { ink: 'blue', width: 2.5 }
+      );
+
+      const middle = positionRaw(2, 12, layout);
+      if (lineProgress > .28) {
+        sk.circle(middle.x, middle.y, 5.5, { ink: 'blue', fill: 'blue', fillStyle: 'solid', roughness: .3 });
+        sk.text('(2, 12)', middle.x + 9, middle.y - 7, {
+          ink: 'blue', size: layout.compact ? 10 : 13, boil: false
+        });
+      }
+
+      if (lineProgress > .62) {
+        const at = positionRaw(3, 19, layout);
+        sk.circle(at.x, at.y, 9, { ink: 'purple', fill: 'purple', fillStyle: 'solid', roughness: .3 });
+        sk.text("R′ = (3, 19)", at.x + 12, at.y - 11, {
+          ink: 'purple', size: layout.compact ? 12 : 16, boil: false
+        });
+      }
+
+      const pAt = drawPoint(guidedP, layout, 'P = (1, 5)', 'green');
+      if (lineProgress > .46) {
+        sk.circle(pAt.x, pAt.y, 14, { ink: 'green', width: 1.5, roughness: .35 });
+        sk.text('double intersection', pAt.x - 44, pAt.y + 25, {
+          ink: 'green', size: layout.compact ? 10 : 13, boil: false
+        });
+      }
+
+      if (showFold && progress > .25) {
+        const from = positionRaw(3, 19, layout);
+        const to = positionRaw(3, 8, layout);
+        const foldT = ease((progress - .25) / .55);
+        const ghostY = from.y + (to.y - from.y) * foldT;
+        sk.ruler(from.x, from.y, to.x, to.y, { ink: 'purple', width: 1.4, dash: [5, 5] });
+        sk.circle(from.x, ghostY, 8, { ink: 'orange', fill: 'orange', fillStyle: 'solid', roughness: .3 });
+        if (progress > .78) {
+          drawPoint(guidedThird, layout, 'R = (3, 8)', 'orange');
+          sk.text('subtract 11 from y', to.x + 13, (from.y + to.y) / 2, {
+            ink: 'purple', size: layout.compact ? 10 : 13, boil: false
+          });
+        }
+      }
+    }
+
+    function drawGuidedInverse(layout, progress) {
+      const rAt = drawPoint(guidedThird, layout, 'R = (3, 8)', 'purple');
+      const resultAt = position(guidedResult, layout);
+      const t = ease(progress);
+      sk.ruler(rAt.x, rAt.y, resultAt.x, resultAt.y, { ink: 'orange', width: 2, dash: [6, 5] });
+      if (t > .25) {
+        sk.text('8 + 3 = 11 ≡ 0', rAt.x + 15, (rAt.y + resultAt.y) / 2, {
+          ink: 'purple', size: layout.compact ? 10 : 14, boil: false
+        });
+      }
+      if (t > .55) drawPoint(guidedResult, layout, '2P = (3, 3)', 'orange');
+    }
+
+    function guidedMultiples() {
+      const result = [];
+      for (let k = 1; k < pointOrder(guidedP); k += 1) {
+        const point = multiplyPoint(k, guidedP);
+        if (point !== infinity) result.push({ ...point, k });
+      }
+      return result;
+    }
+
+    const fixedMultiples = guidedMultiples();
+
+    function drawGuidedMultiples(layout, progress) {
+      const count = Math.max(1, Math.min(fixedMultiples.length, Math.floor(progress * (fixedMultiples.length + 1))));
+      fixedMultiples.forEach((point, index) => {
+        if (index >= count) return;
+        const ink = index === 0 ? 'green' : (index === 1 ? 'orange' : 'blue');
+        const at = position(point, layout);
+        sk.circle(at.x, at.y, 8, { ink, fill: ink, fillStyle: 'solid', roughness: .3 });
+        sk.circle(at.x, at.y, 13, { ink, width: 1.2, roughness: .35 });
+        sk.text(`${point.k}P`, at.x + 10, at.y - 9, {
+          ink, size: layout.compact ? 9 : 12, boil: false
+        });
+      });
+      if (progress > .88) {
+        sk.text('14P = 𝒪', layout.left + layout.size * .72, layout.bottom - layout.size * .88, {
+          ink: 'purple', size: layout.compact ? 12 : 16, boil: false
+        });
+      }
+    }
+
+    function drawModularPath(P, line, layout, progress) {
+      if (line.vertical) {
+        const x = layout.left + P.x * layout.step;
+        const top = layout.bottom - layout.size;
+        const t = ease(progress);
+        sk.ruler(x, layout.bottom, x, layout.bottom - layout.size * t, {
+          ink: 'blue', width: 2.4, dash: [6, 4]
+        });
+        if (progress > .58) {
+          sk.text('vertical line reaches 𝒪', x + 10, top + 18, {
+            ink: 'purple', size: layout.compact ? 10 : 14, boil: false
+          });
+        }
+        return;
+      }
+
+      const Q = state.operation === 'double' ? P : points[state.qIndex];
+      const targets = [line.third];
+      if (!samePoint(P, Q)) targets.push(Q);
+      const targetTimes = targets
+        .filter((point) => point !== infinity)
+        .map((point) => mod(point.x - P.x));
+      let endT = Math.max(1, ...targetTimes);
+      if (endT === 0) endT = curve.p;
+      const animatedEnd = endT * ease(progress);
+
+      const exactLinePoints = [];
+      for (let x = 0; x < curve.p; x += 1) {
+        exactLinePoints.push({ x, y: mod(line.lambda * x + line.intercept) });
+      }
+      exactLinePoints.forEach((point) => {
+        const at = position(point, layout);
+        sk.circle(at.x, at.y, 7, { ink: 'blue', width: 1.15, roughness: .25 });
+      });
+
+      const samples = Math.max(80, Math.ceil(animatedEnd * 40));
+      let previous = null;
+      for (let index = 0; index <= samples; index += 1) {
+        const t = animatedEnd * index / samples;
+        const x = mod(P.x + t);
+        const y = mod(P.y + line.visualSlope * t);
+        const current = positionRaw(x, y, layout);
+        if (previous) {
+          const jumpX = Math.abs(current.x - previous.x) > layout.size * .55;
+          const jumpY = Math.abs(current.y - previous.y) > layout.size * .55;
+          if (!jumpX && !jumpY) {
+            sk.ruler(previous.x, previous.y, current.x, current.y, {
+              ink: 'blue', width: 2.15, roughness: .18
+            });
+          }
+        }
+        previous = current;
+      }
+    }
+
+    function drawSubgroup(point, layout, progress) {
+      if (progress < .76) return;
+      const order = pointOrder(point);
+      for (let k = 1; k < order; k += 1) {
+        const multiple = multiplyPoint(k, point);
+        if (multiple === infinity) continue;
+        const at = position(multiple, layout);
+        sk.circle(at.x, at.y, 12, { ink: 'orange', width: 1, roughness: .35 });
+      }
+    }
+
+    function drawExplore(layout, progress) {
+      const P = points[state.pIndex];
+      const Q = state.operation === 'double' ? P : points[state.qIndex];
+      const line = getLineData(P, Q);
+
+      drawModularPath(P, line, layout, progress);
+      drawSubgroup(P, layout, progress);
+
+      drawPoint(P, layout, state.operation === 'double' ? `P = ${pointText(P)}` : `P = ${pointText(P)}`, 'green');
+      if (state.operation === 'add' && !samePoint(P, Q)) {
+        drawPoint(Q, layout, `Q = ${pointText(Q)}`, 'blue');
+      }
+
+      if (line.third !== infinity && progress > .52) {
+        drawPoint(line.third, layout, `R = ${pointText(line.third)}`, 'purple');
+      }
+
+      if (line.sum !== infinity && progress > .72) {
+        const rAt = position(line.third, layout);
+        const sumAt = position(line.sum, layout);
+        sk.ruler(rAt.x, rAt.y, sumAt.x, sumAt.y, {
+          ink: 'orange', width: 1.8, dash: [6, 5]
+        });
+        const label = state.operation === 'double'
+          ? `2P = ${pointText(line.sum)}`
+          : `P + Q = ${pointText(line.sum)}`;
+        drawPoint(line.sum, layout, label, 'orange');
+      }
+
+      if (line.sum === infinity && progress > .68) {
+        sk.text(state.operation === 'double' ? '2P = 𝒪' : 'P + Q = 𝒪',
+          layout.left + layout.size * .58,
+          layout.bottom - layout.size * .88,
+          { ink: 'orange', size: layout.compact ? 14 : 20, boil: false }
+        );
+      }
+    }
+
+    function guidedExplanation(scene) {
+      if (scene === 0) return {
+        title: '1. The curve is a set of points',
+        lines: [
+          ['y² ≡ x³ + x + 1   (mod 11)', 'accent'],
+          ['Only the lattice points satisfying it exist.', 'normal'],
+          ['The square represents one repeating modulo tile.', 'muted']
+        ]
+      };
+      if (scene === 1) return {
+        title: '2. A tangent gives a direction',
+        lines: [
+          ['At P = (1, 5), the slope is λ = 7.', 'accent'],
+          ['Read this visually as: move 1 right and 7 up.', 'normal'],
+          ['Leaving an edge means re-entering from the opposite edge.', 'muted']
+        ]
+      };
+      if (scene === 2) return {
+        title: '3. Unwrap the modular field',
+        lines: [
+          ['Place another copy of the field above the first.', 'normal'],
+          ['The wrapped path becomes the straight line y = 7x − 2.', 'accent'],
+          ['It reaches the lifted point R′ = (3, 19).', 'muted']
+        ]
+      };
+      if (scene === 3) return {
+        title: '4. Fold the intersection back',
+        lines: [
+          ['R′ = (3, 19)', 'accent'],
+          ['Because 19 mod 11 = 8, it folds to R = (3, 8).', 'normal'],
+          ['P is counted twice because the line is tangent at P.', 'muted']
+        ]
+      };
+      if (scene === 4) return {
+        title: '5. Take the inverse point',
+        lines: [
+          ['The group operation returns −R, not R.', 'normal'],
+          ['−8 ≡ 3 (mod 11), so 2P = (3, 3).', 'accent'],
+          ['R and −R share x and have y-values summing to 0 modulo 11.', 'muted']
+        ]
+      };
+      return {
+        title: '6. Point multiplication repeats addition',
+        lines: [
+          ['kP means P + P + ··· + P.', 'normal'],
+          ['The coordinates themselves are never multiplied by k.', 'muted'],
+          ['Here P has order 14, so its multiples visit every group element.', 'accent']
+        ]
+      };
+    }
+
+    function explorerExplanation() {
+      const P = points[state.pIndex];
+      const Q = state.operation === 'double' ? P : points[state.qIndex];
+      const line = getLineData(P, Q);
+      const order = pointOrder(P);
+      const generator = order === groupSize;
+      const title = state.operation === 'double'
+        ? `Doubling P = ${pointText(P)}`
+        : `Adding ${pointText(P)} + ${pointText(Q)}`;
+      const lines = [];
+
+      if (line.vertical) {
+        lines.push(['The tangent/secant is vertical, so the result is the point at infinity 𝒪.', 'accent']);
+      } else {
+        const visual = line.visualSlope === line.lambda
+          ? `λ = ${line.lambda}`
+          : `λ = ${line.lambda} ≡ ${line.visualSlope} (mod 11)`;
+        lines.push([`${visual}. The blue lattice points are the exact finite-field line.`, 'accent']);
+        lines.push([`The line meets the curve again at R = ${pointText(line.third)}.`, 'normal']);
+        lines.push([
+          state.operation === 'double'
+            ? `Reflect R: 2P = −R = ${pointText(line.sum)}.`
+            : `Reflect R: P + Q = −R = ${pointText(line.sum)}.`,
+          'normal'
+        ]);
+      }
+
+      lines.push([
+        `ord(P) = ${order}; ⟨P⟩ contains ${order} of the ${groupSize} group elements.`,
+        'muted'
+      ]);
+      lines.push([
+        generator
+          ? 'P is a generator of E(F₁₁).'
+          : 'P generates only a proper subgroup, not the whole curve group.',
+        generator ? 'accent' : 'muted'
+      ]);
+      return { title, lines };
+    }
+
+    function updateExplanation(data) {
+      explanationTitle.textContent = data.title;
+      explanationLines.replaceChildren();
+      data.lines.forEach(([text, style]) => {
+        const item = document.createElement('li');
+        item.textContent = text;
+        if (style === 'accent') item.className = 'accent';
+        if (style === 'muted') item.className = 'muted';
+        explanationLines.appendChild(item);
+      });
+    }
+
+    function updateStepNav(scene, progress) {
+      const buttons = stepNav.querySelectorAll('.step-button');
+      buttons.forEach((button, index) => {
+        button.classList.toggle('active', index === scene);
+        const bar = button.querySelector('.bar');
+        const amount = index < scene ? 100 : (index === scene ? progress * 100 : 0);
+        bar.style.width = `${amount}%`;
+      });
+    }
+
+    function drawGuided(scene) {
+      const layout = getLayout(scene.index);
+      drawTile(layout);
+      const visiblePoints = scene.index === 0
+        ? Math.max(1, Math.min(points.length, Math.floor(scene.progress * (points.length + 3))))
+        : points.length;
+      drawCurvePoints(layout, 0, { visible: visiblePoints });
+
+      if (scene.index === 0) {
+        drawEdgeWrapping(layout, scene.progress);
+      } else if (scene.index === 1) {
+        drawPoint(guidedP, layout, 'P = (1, 5)', 'green');
+        drawGuidedWrappedStep(layout, scene.progress);
+      } else if (scene.index === 2) {
+        drawGuidedUnwrappedLine(layout, scene.progress, false);
+      } else if (scene.index === 3) {
+        drawGuidedUnwrappedLine(layout, scene.progress, true, 1);
+      } else if (scene.index === 4) {
+        drawGuidedInverse(layout, scene.progress);
+      } else {
+        drawGuidedMultiples(layout, scene.progress);
+      }
+
+      sceneLabel.textContent = `${scene.index + 1} of ${scenes.length}`;
+      sceneName.textContent = scenes[scene.index].name;
+      updateStepNav(scene.index, scene.progress);
+      updateExplanation(guidedExplanation(scene.index));
+    }
+
+    function drawExplorer() {
+      const layout = getLayout(0);
+      const progress = mod(state.elapsed, 7200) / 7200;
+      drawTile(layout);
+      drawCurvePoints(layout);
+      drawExplore(layout, progress);
+      updateExplanation(explorerExplanation());
+    }
+
+    function draw() {
+      sk.clear({ paper: false });
+      if (state.mode === 'guided') drawGuided(getScene());
+      else drawExplorer();
+    }
+
+    function animationLoop(timestamp) {
+      if (state.lastFrame !== null && !state.paused) {
+        state.elapsed += Math.min(timestamp - state.lastFrame, 50);
+      }
+      state.lastFrame = timestamp;
+      draw();
+      requestAnimationFrame(animationLoop);
+    }
+
+    function fitCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      draw();
+    }
+
+    function setMode(mode) {
+      state.mode = mode;
+      state.elapsed = 0;
+      state.lastFrame = null;
+      guidedModeButton.classList.toggle('active', mode === 'guided');
+      exploreModeButton.classList.toggle('active', mode === 'explore');
+      guidedProgress.hidden = mode !== 'guided';
+      explorerControls.style.display = mode === 'explore' ? 'block' : 'none';
+      stepNav.hidden = mode !== 'guided';
+      mainTitle.textContent = mode === 'guided' ? 'Doubling over F₁₁' : 'Explore E(F₁₁)';
+      mainSubtitle.textContent = mode === 'guided'
+        ? 'See a modular tangent as a straight line on repeated copies of the field.'
+        : 'Choose curve points and watch the exact modular line produce their sum.';
+      draw();
+    }
+
+    function resetPlayback() {
+      state.elapsed = 0;
+      state.lastFrame = null;
+      state.paused = false;
+      pauseButton.textContent = 'Pause';
+      draw();
+    }
+
+    function populatePointSelectors() {
+      points.forEach((point, index) => {
+        const text = pointText(point);
+        const pOption = document.createElement('option');
+        pOption.value = String(index);
+        pOption.textContent = text;
+        pointPSelect.appendChild(pOption);
+
+        const qOption = document.createElement('option');
+        qOption.value = String(index);
+        qOption.textContent = text;
+        pointQSelect.appendChild(qOption);
+      });
+      pointPSelect.value = String(state.pIndex);
+      pointQSelect.value = String(state.qIndex);
+    }
+
+    function buildStepNavigation() {
+      scenes.forEach((scene, index) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'step-button';
+        button.setAttribute('aria-label', `Go to step ${index + 1}: ${scene.name}`);
+        button.innerHTML = `<span class="number">Step ${index + 1}</span><span class="label">${scene.short}</span><span class="bar"></span>`;
+        button.addEventListener('click', () => {
+          state.elapsed = sceneOffsets[index] + 1;
+          state.paused = true;
+          state.lastFrame = null;
+          pauseButton.textContent = 'Resume';
+          draw();
+        });
+        stepNav.appendChild(button);
+      });
+    }
+
+    guidedModeButton.addEventListener('click', () => setMode('guided'));
+    exploreModeButton.addEventListener('click', () => setMode('explore'));
+
+    pauseButton.addEventListener('click', () => {
+      state.paused = !state.paused;
+      pauseButton.textContent = state.paused ? 'Resume' : 'Pause';
+    });
+
+    replayButton.addEventListener('click', resetPlayback);
+
+    operationSelect.addEventListener('change', () => {
+      state.operation = operationSelect.value;
+      pointQRow.hidden = state.operation !== 'add';
+      resetPlayback();
+    });
+
+    pointPSelect.addEventListener('change', () => {
+      state.pIndex = Number(pointPSelect.value);
+      resetPlayback();
+    });
+
+    pointQSelect.addEventListener('change', () => {
+      state.qIndex = Number(pointQSelect.value);
+      resetPlayback();
+    });
+
+    canvas.addEventListener('click', (event) => {
+      if (state.mode !== 'explore') return;
+      const layout = getLayout(0);
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const mouse = {
+        x: (event.clientX - rect.left) * scaleX,
+        y: (event.clientY - rect.top) * scaleY
+      };
+      let bestIndex = -1;
+      let bestDistance = Infinity;
+      points.forEach((point, index) => {
+        const at = position(point, layout);
+        const distance = Math.hypot(mouse.x - at.x, mouse.y - at.y);
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          bestIndex = index;
+        }
+      });
+      if (bestIndex >= 0 && bestDistance <= Math.max(15, layout.step * .38)) {
+        state.pIndex = bestIndex;
+        pointPSelect.value = String(bestIndex);
+        resetPlayback();
+      }
+    });
+
+    window.addEventListener('resize', fitCanvas);
+    window.addEventListener('load', () => {
+      populatePointSelectors();
+      buildStepNavigation();
+      fitCanvas();
+      requestAnimationFrame(animationLoop);
+    });
+  </script>
+</body>
+</html>

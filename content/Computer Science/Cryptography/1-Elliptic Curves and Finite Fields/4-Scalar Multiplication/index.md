@@ -163,15 +163,24 @@ where each `+` is elliptic curve point addition.
 > 
 > This takes fewer operations than adding `P` five times.
 > 
-> For very large values of `k`, efficient scalar multiplication uses algorithms similar in spirit to repeated squaring.
-> 
-> The number of required operations grows roughly with:
-> 
+> For very large values of `k`, efficient scalar multiplication uses **double-and-add**, an algorithm similar in spirit to repeated squaring. It reads the binary representation of the scalar from left to right: double the running point for each bit, then add $P$ when the bit is $1$.
+>
+> For example:
+>
 > $$
-> \log(k)
+> 13 = (1101)_2
 > $$
+>
+> Starting from $\mathcal{O}$, the steps are:
+>
+> 1. Read `1`: $\mathcal{O} + P = P$
+> 2. Read `1`: double to $2P$, then add $P$ to get $3P$
+> 3. Read `0`: double to $6P$
+> 4. Read `1`: double to $12P$, then add $P$ to get $13P$
+>
+> After initializing the running point as $P$, this computes $13P$ with three doublings and two further additions, rather than twelve point additions.
 > 
-> instead of growing linearly with `k`.
+> The number of required operations grows roughly with $\log_2 k$, instead of growing linearly with $k$.
 > 
 > This is important because finite-field scalar calculations use very large numbers.
 > 
@@ -185,4 +194,4 @@ The smooth real-number curve gives us a useful way to see point addition and dou
 
 Cryptographic curves are interpreted over finite fields, where coordinates and arithmetic are discrete and exact. There, scalar multiplication still means repeated point addition, but the possible points form a finite set rather than a continuous curve.
 
-Next, [From Real Curves to Finite Fields](/collections/computer-science/cryptography/elliptic-curves-and-finite-fields/from-real-curves-to-finite-fields/) establishes the exact arithmetic that replaces the real-number geometry. The following article then constructs the resulting finite point set.
+Next, [Finite Fields and Modular Arithmetic](/collections/computer-science/cryptography/elliptic-curves-and-finite-fields/finite-fields-and-modular-arithmetic/) establishes the exact arithmetic that replaces the real-number geometry. The following article then constructs the resulting finite point set.

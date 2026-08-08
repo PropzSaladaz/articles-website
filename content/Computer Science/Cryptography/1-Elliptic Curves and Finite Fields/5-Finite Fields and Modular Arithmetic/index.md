@@ -1,7 +1,7 @@
 ---
 status: "published"
 date: "2026-06-11"
-summary: "Move from smooth real-number curves to exact finite-field arithmetic using modular arithmetic and modular inverses."
+summary: "Learn the prime-field arithmetic behind elliptic curves: modular operations, inverses, and division modulo p."
 ---
 
 
@@ -58,7 +58,6 @@ A finite field gives us:
 > Real-number curves are useful for intuition.
 >
 > Finite-field curves are used in real cryptography.
-
 
 ## Modular Arithmetic
 
@@ -347,4 +346,18 @@ This creates an elliptic curve over a finite field. Unlike the real-number versi
 
 Instead, it looks like a set of scattered points. In the next article, we use this same field, $\mathbb{F}_{11}$, to construct every point of the curve $y^2 \equiv x^3 + x + 1 \pmod{11}$.
 
-The arithmetic layer is now complete. Continue to [Elliptic Curves Over Finite Fields](/collections/computer-science/cryptography/elliptic-curves-and-finite-fields/elliptic-curves-over-finite-fields/) to build that finite point set and then add its points directly.
+## Why the Modulus Is Prime
+
+ECC commonly uses a **prime field**, written $\mathbb{F}_p$, where $p$ is prime. Primality is what makes every non-zero field element invertible.
+
+For example, modulo $11$, every value from $1$ through $10$ has a multiplicative inverse. In particular:
+
+$$
+3 \cdot 4 = 12 \equiv 1 \pmod{11}
+$$
+
+so $4$ is the inverse of $3$.
+
+This is not true for a composite modulus. Modulo $15$, for example, no value multiplied by $5$ gives $1$, because every product with $5$ is divisible by $5$. So $5$ has no inverse modulo $15$.
+
+Without inverses, the divisions required by elliptic-curve point addition would not always be defined. That is why the integers modulo a prime form the field $\mathbb{F}_p$, while integers modulo a composite number generally do not.

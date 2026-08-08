@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="sim-paper" content="full">
+  <title>Scalar Cycles and Subgroups over F11</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap');
+    body { font-family: 'Fira Code', monospace; }
+    .mode-button.active {
+      color: var(--sk-blue, #315f8c);
+      background: rgba(49, 95, 140, 0.1);
+      border-color: rgba(49, 95, 140, 0.3);
+    }
+    .infinity-badge.active {
+      color: var(--sk-orange, #bd632f);
+      background: rgba(189, 99, 47, 0.12);
+      border-color: rgba(189, 99, 47, 0.35);
+    }
+  </style>
+</head>
+<body class="sk-page w-screen h-screen overflow-hidden m-0 p-0 relative select-none">
+  <canvas id="fieldCanvas" class="absolute inset-0 w-full h-full block" aria-label="Scalar multiples moving through an elliptic curve group and a prime-order subgroup over F11"></canvas>
+
+  <section class="absolute left-4 top-4 md:left-6 md:top-6 z-10 w-[238px] sm:w-[258px] sk-sticky pointer-events-auto" aria-label="Scalar-cycle controls and information">
+    <div class="border-b border-black/10 pb-2.5">
+      <p class="sk-hand text-xl font-semibold ink-black leading-none">Two routes, one group</p>
+      <p class="mt-2 text-[11px] font-bold ink-blue leading-relaxed">y² ≡ x³ + x + 1 (mod 11)</p>
+      <p class="mt-1 text-[9px] ink-pencil leading-relaxed">Treat Chapter 6's gray points as stops on a finite route.</p>
+    </div>
+
+    <div class="mt-2.5 grid grid-cols-2 gap-1.5" role="group" aria-label="Choose a scalar cycle">
+      <button id="fullModeButton" type="button" class="mode-button active rounded-md border border-black/10 bg-black/5 px-2 py-1.5 text-[9px] font-semibold ink-pencil transition-colors hover:bg-black/10">
+        Every stop · P
+      </button>
+      <button id="subgroupModeButton" type="button" class="mode-button rounded-md border border-black/10 bg-black/5 px-2 py-1.5 text-[9px] font-semibold ink-pencil transition-colors hover:bg-black/10">
+        Every other · G
+      </button>
+    </div>
+
+    <div class="mt-2.5 text-[10px] font-mono">
+      <div class="sk-row">
+        <span class="ink-pencil">generator</span>
+        <span id="generatorReadout" class="font-bold ink-green">P = (1, 5)</span>
+      </div>
+      <div class="sk-row mt-1">
+        <span class="ink-pencil">point order</span>
+        <span id="orderReadout" class="font-bold ink-blue">14</span>
+      </div>
+      <div class="sk-row mt-1">
+        <span class="ink-pencil">current</span>
+        <span id="multipleReadout" class="font-bold ink-orange">0P = O</span>
+      </div>
+    </div>
+
+    <div class="mt-2.5 flex items-center gap-2 border-t border-black/10 pt-2.5">
+      <span id="infinityBadge" class="infinity-badge active inline-flex h-7 min-w-9 items-center justify-center rounded-md border border-black/15 bg-black/5 px-2 text-[12px] font-bold ink-pencil">O</span>
+      <p id="explanationReadout" class="text-[9px] leading-relaxed ink-pencil">Start at the identity, then add P.</p>
+    </div>
+
+    <button id="replayButton" type="button" class="mt-2.5 w-full rounded-md border border-black/10 bg-black/5 px-2 py-1.5 text-[9px] font-semibold ink-pencil transition-colors hover:bg-black/10">
+      Replay scalar cycle
+    </button>
+  </section>
+
+  <script>
+    const canvas = document.getElementById('fieldCanvas');
+    const sk = Sketch.attach(canvas);
+    const fullModeButton = document.getElementById('fullModeButton');
+    const subgroupModeButton = document.getElementById('subgroupModeButton');
+    const generatorReadout = document.getElementById('generatorReadout');
+    const orderReadout = document.getElementById('orderReadout');
+    const multipleReadout = document.getElementById('multipleReadout');
+    const infinityBadge = document.getElementById('infinityBadge');
+    const explanationReadout = document.getElementById('explanationReadout');
+    const replayButton = document.getElementById('replayButton');
+
+    const curve = { p: 11, a: 1, b: 1 };
+    const INTRO_PAUSE = 450;
+    const STEP_DELAY = 720;
+    const HOLD_AFTER_CYCLE = 2200;
+
+    const state = {
+      mode: 'full',
+      elapsed: 0,
+      lastFrame: null
+    };
+
+    function mod(value, base = curve.p) {
+      return ((value % base) + base) % base;
+    }
+
+    function inverse(value) {
+      const normalized = mod(value);
+      for (let candidate = 1; candidate < curve.p; candidate += 1) {
+        if (mod(normalized * candidate) === 1) return candidate;
+      }
+      throw new Error(`No inverse exists for ${value} modulo ${curve.p}`);
+    }
+
+    function addPoints(first, second) {
+      if (first === null) return second;
+      if (second === null) return first;
+
+      if (first.x === second.x && mod(first.y + second.y) === 0) {
+        return null;
+      }
+
+      const doubling = first.x === second.x && first.y === second.y;
+      const numerator = doubling
+        ? 3 * first.x * first.x + curve.a
+        : second.y - first.y;
+      const denominator = doubling
+        ? 2 * first.y
+        : second.x - first.x;
+      const slope = mod(numerator * inverse(denominator));
+      const x = mod(slope * slope - first.x - second.x);
+      const y = mod(slope * (first.x - x) - first.y);
+
+      return { x, y };
+    }
+
+    function scalarOrbit(generator) {
+      const orbit = [null];
+      let current = null;
+
+      for (let scalar = 1; scalar <= curve.p * 2 + 2; scalar += 1) {
+        current = addPoints(current, generator);
+        orbit.push(current);
+        if (current === null) return orbit;
+      }
+
+      throw new Error('The scalar orbit did not return to the identity');
+    }
+
+    function curvePoints() {
+      const points = [];
+      for (let x = 0; x < curve.p; x += 1) {
+        for (let y = 0; y < curve.p; y += 1) {
+          if (mod(y * y) === mod(x * x * x + curve.a * x + curve.b)) {
+            points.push({ x, y });
+          }
+        }
+      }
+      return points;
+    }
+
+    const modes = {
+      full: {
+        symbol: 'P',
+        generator: { x: 1, y: 5 },
+        ink: 'blue',
+        description: 'One more P-step moves to the next stop on the full route.'
+      },
+      subgroup: {
+        symbol: 'G',
+        generator: { x: 3, y: 3 },
+        ink: 'green',
+        description: 'Each G-step equals two P-steps, so it skips every other stop.'
+      }
+    };
+
+    Object.values(modes).forEach((mode) => {
+      mode.orbit = scalarOrbit(mode.generator);
+      mode.order = mode.orbit.length - 1;
+    });
+
+    const points = curvePoints();
+
+    function getLayout() {
+      const compact = canvas.width < 650;
+      const size = compact
+        ? Math.min(canvas.width * 0.72, canvas.height * 0.48)
+        : Math.min(canvas.width * 0.48, canvas.height * 0.72);
+      const centerX = compact ? canvas.width / 2 : canvas.width * 0.64;
+      const centerY = compact ? canvas.height * 0.72 : canvas.height * 0.53;
+
+      return {
+        compact,
+        size,
+        left: centerX - size / 2,
+        top: centerY - size / 2,
+        step: size / (curve.p - 1)
+      };
+    }
+
+    function pointPosition(point, layout) {
+      return {
+        x: layout.left + point.x * layout.step,
+        y: layout.top + (curve.p - 1 - point.y) * layout.step
+      };
+    }
+
+    function activeMode() {
+      return modes[state.mode];
+    }
+
+    function currentStep() {
+      const mode = activeMode();
+      const period = INTRO_PAUSE + mode.orbit.length * STEP_DELAY + HOLD_AFTER_CYCLE;
+      const phase = state.elapsed % period;
+
+      if (phase < INTRO_PAUSE) return 0;
+      return Math.min(
+        mode.orbit.length - 1,
+        Math.floor((phase - INTRO_PAUSE) / STEP_DELAY)
+      );
+    }
+
+    function drawGrid(layout) {
+      const { left, top, size, step, compact } = layout;
+      const bottom = top + size;
+      const right = left + size;
+
+      for (let value = 1; value < curve.p - 1; value += 1) {
+        const x = left + value * step;
+        const y = top + value * step;
+        sk.ruler(x, top, x, bottom, { ink: 'pencilLight', width: 0.8 });
+        sk.ruler(left, y, right, y, { ink: 'pencilLight', width: 0.8 });
+      }
+
+      sk.rect(left, top, size, size, {
+        ink: 'pencil', width: 2, roughness: 0.45, boil: false
+      });
+
+      for (let value = 0; value < curve.p; value += 1) {
+        const x = left + value * step;
+        const y = bottom - value * step;
+        const labelSize = compact ? 11 : 13;
+
+        sk.text(String(value), x, bottom + (compact ? 16 : 19), {
+          ink: 'pencil', size: labelSize, align: 'center', boil: false
+        });
+        sk.text(String(value), left - (compact ? 15 : 18), y + 3, {
+          ink: 'pencil', size: labelSize, align: 'center', boil: false
+        });
+      }
+
+      sk.text('x', right + 12, bottom + (compact ? 17 : 20), {
+        ink: 'pencil', size: compact ? 15 : 17, boil: false
+      });
+      sk.text('y', left - (compact ? 15 : 18), top - 12, {
+        ink: 'pencil', size: compact ? 15 : 17, align: 'center', boil: false
+      });
+    }
+
+    function drawPointCloud(layout) {
+      points.forEach((point) => {
+        const position = pointPosition(point, layout);
+        sk.circle(position.x, position.y, 4.3, {
+          ink: 'pencilLight',
+          fill: 'pencilLight',
+          fillStyle: 'solid',
+          roughness: 0.35
+        });
+      });
+    }
+
+    function drawOrbit(layout, step) {
+      const mode = activeMode();
+      const history = mode.orbit.slice(1, step + 1).filter((point) => point !== null);
+
+      history.forEach((point) => {
+        const position = pointPosition(point, layout);
+        sk.circle(position.x, position.y, 6, {
+          ink: mode.ink,
+          fill: mode.ink,
+          fillStyle: 'solid',
+          roughness: 0.4
+        });
+      });
+
+      const current = mode.orbit[step];
+      if (current === null) return;
+
+      const position = pointPosition(current, layout);
+      sk.circle(position.x, position.y, 14, {
+        ink: 'orange',
+        fill: 'orange',
+        fillStyle: 'hachure',
+        roughness: 0.5
+      });
+      sk.circle(position.x, position.y, 6.2, {
+        ink: mode.ink,
+        fill: mode.ink,
+        fillStyle: 'solid',
+        roughness: 0.35
+      });
+
+      const labelX = current.x >= 8 ? position.x - 12 : position.x + 12;
+      const align = current.x >= 8 ? 'right' : 'left';
+      sk.text(`${step}${mode.symbol}`, labelX, position.y - 10, {
+        ink: 'orange', size: layout.compact ? 12 : 15, align, boil: false
+      });
+    }
+
+    function updateHud(step) {
+      const mode = activeMode();
+      const current = mode.orbit[step];
+      const atIdentity = current === null;
+      const coordinate = atIdentity ? 'O' : `(${current.x}, ${current.y})`;
+
+      generatorReadout.textContent = `${mode.symbol} = (${mode.generator.x}, ${mode.generator.y})`;
+      orderReadout.textContent = String(mode.order);
+      multipleReadout.textContent = `${step}${mode.symbol} = ${coordinate}`;
+      infinityBadge.classList.toggle('active', atIdentity);
+
+      if (step === 0) {
+        explanationReadout.textContent = `Start at the identity, then add ${mode.symbol}.`;
+      } else if (step === mode.order) {
+        explanationReadout.textContent = `${mode.order}${mode.symbol} is the first return to the identity.`;
+      } else {
+        explanationReadout.textContent = mode.description;
+      }
+    }
+
+    function draw() {
+      const layout = getLayout();
+      const step = currentStep();
+      const mode = activeMode();
+
+      sk.clear({ paper: false });
+      drawGrid(layout);
+      drawPointCloud(layout);
+      drawOrbit(layout, step);
+      updateHud(step);
+
+      sk.text(
+        state.mode === 'full'
+          ? 'P takes a 14-stop lap through the whole group'
+          : 'G = 2P takes a 7-stop lap through a subgroup',
+        layout.left + layout.size / 2,
+        layout.top - 24,
+        {
+          ink: mode.ink,
+          size: layout.compact ? 12 : 15,
+          align: 'center',
+          boil: false
+        }
+      );
+    }
+
+    function restart(mode = state.mode) {
+      state.mode = mode;
+      state.elapsed = 0;
+      state.lastFrame = null;
+      fullModeButton.classList.toggle('active', mode === 'full');
+      subgroupModeButton.classList.toggle('active', mode === 'subgroup');
+      draw();
+    }
+
+    function animationLoop(timestamp) {
+      if (state.lastFrame !== null) {
+        // The article pauses off-screen iframe animation. Do not count that
+        // invisible time as part of the scalar cycle.
+        state.elapsed += Math.min(timestamp - state.lastFrame, 50);
+      }
+      state.lastFrame = timestamp;
+      draw();
+      requestAnimationFrame(animationLoop);
+    }
+
+    function fitCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      draw();
+    }
+
+    fullModeButton.addEventListener('click', () => restart('full'));
+    subgroupModeButton.addEventListener('click', () => restart('subgroup'));
+    replayButton.addEventListener('click', () => restart());
+    window.addEventListener('resize', fitCanvas);
+    window.addEventListener('load', () => {
+      fitCanvas();
+      requestAnimationFrame(animationLoop);
+    });
+  </script>
+</body>
+</html>

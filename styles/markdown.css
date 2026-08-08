@@ -248,7 +248,7 @@
 }
 
 .md .md-definition .katex-display {
-  margin: 1.1rem 0 0.75rem;
+  margin: 0.75rem 0 0.4rem;
 }
 
 .md .md-definition .md-p:not(.md-definition-title):last-child {
@@ -982,10 +982,20 @@
   font-size: 1.2em;
 }
 
-/* Add comfortable vertical whitespace to display math blocks */
+/* Add comfortable vertical whitespace to display math blocks.
+
+   The padding is not decorative: KaTeX sizes its `.strut` from TeX font
+   metrics, so the tallest ink (an `\xrightarrow` label, an accent, an
+   overline) sits flush with this box's top edge with zero slack — and real
+   glyph ink plus the em-vs-pixel rounding inside `.vlist` table cells pokes
+   a hair past it. `overflow-y: hidden` (which we can't avoid: with
+   `overflow-x: auto`, `visible` computes to `auto` and `clip` to `hidden`)
+   turns that hair into a visible flat cut. The bottom padding also keeps the
+   horizontal scrollbar of a wide formula off the descenders. */
 .md .katex-display {
   max-width: 100%;
   overflow-x: auto;
   overflow-y: hidden;
-  margin: 2.5rem 0;
+  padding: 0.35em 0;
+  margin: 2.15rem 0;
 }

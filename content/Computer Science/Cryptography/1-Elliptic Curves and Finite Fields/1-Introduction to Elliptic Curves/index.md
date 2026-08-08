@@ -4,7 +4,7 @@ date: "2026-06-11"
 summary: "A high-level orientation to elliptic curves and the mathematical path from smooth real curves to finite-field point groups."
 ---
 
-**Elliptic-curve cryptography (ECC)** begins with something surprisingly simple: a **curve** drawn on a plane.
+Elliptic-curve cryptography (ECC) is built on something surprisingly simple: an **elliptic curve** drawn on a plane.
 
 Imagine placing a few points on that curve. At first, they are just coordinates on a graph. But suppose we introduce a special rule for **combining two of those points and producing another point on the same curve**. Suddenly, the curve is no longer just a shape. It becomes a system in which we can perform arithmetic.
 
