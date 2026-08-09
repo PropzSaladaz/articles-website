@@ -1,6 +1,7 @@
 import '../styles/globals.css';
 import '../styles/markdown.css';
 import '../styles/content-diagrams.css';
+import Script from 'next/script';
 import { AppProviders } from '../components/AppProviders';
 import { SiteShell } from '../components/SiteShell';
 import { getCollections, getSubjectTree } from '../lib/content/content';
@@ -26,6 +27,12 @@ export default async function RootLayout({
             {children}
           </SiteShell>
         </AppProviders>
+        <Script
+          type="module"
+          src="https://static.cloudflareinsights.com/beacon.min.js"
+          data-cf-beacon='{"token":"4b9d3e16e95141999b5f3b72ceb13063"}'
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );
