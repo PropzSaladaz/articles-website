@@ -63,7 +63,7 @@ export async function markdownToHtml(markdown: string, options?: MarkdownOptions
     // transform to HTML AST
     .use(remarkRehype, { allowDangerousHtml: true })
     // support raw HTML in markdown
-    .use(rehypeRaw as any)
+    .use(rehypeRaw)
     // wrap iframes in styled window
     .use(rehypeIframeWindow)
     // render math equations
