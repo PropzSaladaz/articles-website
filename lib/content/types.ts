@@ -67,6 +67,8 @@ export type Article = {
   title: string;
   status: ContentStatus;
   date: string;
+  /** Manually promote this article in the home-page featured slot. */
+  featured: boolean;
   description: string;
   summary: ArticleSummary;
   cover?: string | null;

@@ -112,10 +112,13 @@ status: "published"      # draft | published | archived
 date: "2026-01-15"       # ISO date string
 summary: "One-line description shown on article cards and in SEO metadata."
 coverImage: "./images/cover.png"   # optional
+featured: true            # optional: display this article in the home-page Featured slot
 ---
 ```
 
 > **Note:** The `summary` frontmatter field is a **short one-liner** for article cards and SEO. For a richer expandable summary shown when clicking the Summary button, create a `summary.md` file alongside `index.md`.
+
+The homepage always promotes the newest published standalone article. Add `featured: true` to one other published standalone article to fill its separate Featured slot. Highlighted articles are omitted from the chronological archive below, so they do not appear twice.
 
 ---
 

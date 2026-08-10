@@ -29,6 +29,10 @@ function parseOptionalDate(value: unknown): string | null {
   return date.toISOString();
 }
 
+function parseBoolean(value: unknown): boolean {
+  return value === true;
+}
+
 /**
  * Extract the first meaningful paragraph from markdown content for use as summary.
  * Skips headings, empty lines, and frontmatter-like content.
@@ -119,6 +123,7 @@ export async function buildArticleFromFolder({
     title,
     status,
     date: publishedAt,
+    featured: parseBoolean(front.featured),
     description: descriptionRaw,
     summary: { text: summaryText, html: summaryHtml },
     cover,
