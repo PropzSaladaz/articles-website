@@ -249,7 +249,9 @@ Push to `main`. The included workflow (`.github/workflows/pages.yml`) builds and
 
 ### Custom domain
 
-Set `SITE_URL` during the build to generate correct canonical URLs, RSS feed links, and sitemap entries:
+The production canonical URL defaults to `https://articles.sidneiteixeira.com` for
+sitemaps, RSS feed links, and canonical URLs. Set `SITE_URL` only when building
+for a different domain:
 
 ```bash
 SITE_URL=https://yourdomain.com npm run build
@@ -273,7 +275,7 @@ NEXT_PUBLIC_GISCUS_REPO_ID=R_...
 NEXT_PUBLIC_GISCUS_CATEGORY=Announcements
 NEXT_PUBLIC_GISCUS_CATEGORY_ID=DIC_...
 
-# Custom domain for sitemap/RSS canonical URLs (optional)
+# Optional override for sitemap/RSS canonical URLs
 SITE_URL=https://yourdomain.com
 ```
 

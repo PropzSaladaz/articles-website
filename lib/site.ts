@@ -1,11 +1,12 @@
 const siteUrlEnv = process.env.SITE_URL || '';
+const productionSiteUrl = 'https://articles.sidneiteixeira.com';
 
 export function getSiteUrl(): string {
   if (siteUrlEnv) {
     return siteUrlEnv.replace(/\/$/, '');
   }
   if (process.env.NODE_ENV === 'production') {
-    throw new Error('SITE_URL must be configured for production builds');
+    return productionSiteUrl;
   }
   return 'http://localhost:3000';
 }
