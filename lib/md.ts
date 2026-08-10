@@ -1,4 +1,6 @@
 import { unified } from 'unified';
+import type { Plugin } from 'unified';
+import type { Root } from 'hast';
 import remarkParse from 'remark-parse';
 import remarkGfm from 'remark-gfm';
 import remarkRehype from 'remark-rehype';
@@ -27,6 +29,11 @@ import rehypeDevImages from './rehype-dev-images';
 import rehypeProductionImages from './rehype-production-images';
 import rehypeIframeWindow from './rehype-iframe-window';
 import rehypeImageWrapper from './rehype-image-wrapper';
+
+// rehype-katex and the rest of this pipeline operate on the same HAST root.
+// Its exported transformer signature is not inferred as a Unified plugin by
+// TypeScript in every dependency-resolution layout (notably pnpm's CI layout).
+const rehypeKatexPlugin = rehypeKatex as unknown as Plugin<[], Root>;
 
 interface MarkdownOptions {
   slug?: string;
@@ -67,7 +74,7 @@ export async function markdownToHtml(markdown: string, options?: MarkdownOptions
     // wrap iframes in styled window
     .use(rehypeIframeWindow)
     // render math equations
-    .use(rehypeKatex)
+    .use(rehypeKatexPlugin)
     // code highlighting
     .use(rehypeShiki, {
       themes: {
