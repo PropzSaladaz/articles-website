@@ -2,12 +2,11 @@
 
 import { useState } from 'react';
 import { ArticlePreviewCard } from './ArticlePreviewCard';
-import { Article } from '../lib/content/types';
-import { cn } from '../lib/utils';
+import type { ArticlePreview } from '../lib/content/types';
 import { Button } from './ui/button';
 
 type ArchiveListProps = {
-    articlesByYear: Record<string, Article[]>;
+    articlesByYear: Record<string, ArticlePreview[]>;
     years: string[];
 };
 
@@ -23,7 +22,7 @@ export function ArchiveList({ articlesByYear, years }: ArchiveListProps) {
                 <div key={year} className="flex flex-col gap-6 animate-fade-up" style={{ animationDelay: `${yearIndex * 50}ms` }}>
                     <h3 className="text-2xl font-semibold text-foreground border-b border-border pb-2">{year}</h3>
                     <div className="flex flex-col gap-4">
-                        {articlesByYear[year].map((article, index) => (
+                        {articlesByYear[year].map((article) => (
                             <ArticlePreviewCard
                                 key={article.slug}
                                 article={article}

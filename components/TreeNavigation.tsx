@@ -2,18 +2,18 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ChevronRight, FolderOpen, FileText } from 'lucide-react';
 import { getBasePath } from '../lib/paths';
+import { collectionPath, contentPath } from '../lib/content/urls';
 import { cn } from '../lib/utils';
-import { Collection, SubjectNode, NodeKind, StandaloneArticle } from '../lib/content/types';
+import { SubjectNode, NodeKind, StandaloneArticle } from '../lib/content/types';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 
 const TOGGLE_SIZE = 24;
 
 type TreeNavigationProps = {
   tree: SubjectNode;
-  collections: Collection[];
 };
 
 type ActiveState = {
@@ -21,7 +21,7 @@ type ActiveState = {
   articleSlug?: string;
 };
 
-export function TreeNavigation({ tree, collections }: TreeNavigationProps) {
+export function TreeNavigation({ tree }: TreeNavigationProps) {
   const pathname = usePathname();
   const basePath = getBasePath();
 
@@ -34,13 +34,7 @@ export function TreeNavigation({ tree, collections }: TreeNavigationProps) {
     return pathname || '/';
   }, [pathname, basePath]);
 
-  const collectionSlugs = useMemo(() => {
-    const set = new Set<string>();
-    for (const collection of collections) {
-      set.add(normalizeSlug(collection.slug));
-    }
-    return set;
-  }, [collections]);
+  const collectionSlugs = useMemo(() => collectCollectionSlugs(tree), [tree]);
 
   const active = useMemo(
     () => deriveActiveState(normalizedPath, collectionSlugs),
@@ -125,81 +119,39 @@ function TreeNodeItem({ node, depth, active, expandedKeys, onToggle }: TreeNodeI
   return <StandaloneLeaf node={node as StandaloneArticle} depth={depth} active={active} />;
 }
 
-function SubjectBranch({ node, depth, active, expandedKeys, onToggle }: TreeNodeItemProps) {
-  const slug = normalizeSlug(node.slug);
-  const key = makeNodeKey(slug);
-  const isExpanded = expandedKeys.has(key);
-  const hasChildren = Boolean(node.children?.length);
-  const isActive = branchContainsActive(slug, active);
+type BranchShellProps = {
+  branchKey: string;
+  depth: number;
+  isActive: boolean;
+  childNodes: SubjectNode[];
+  active: ActiveState;
+  expandedKeys: Set<string>;
+  onToggle: (key: string, value?: boolean) => void;
+  children: ReactNode;
+};
 
-  return (
-    <Collapsible
-      className="space-y-1"
-      open={isExpanded}
-      onOpenChange={(value) => onToggle(key, value)}
-    >
-      <div
-        className={cn(
-          'flex items-center gap-2 rounded-md px-2 py-1 text-sm font-medium transition-colors',
-          isActive
-            ? 'bg-primary/[0.08] text-primary/80 border-l-2 border-primary/70 pl-[calc(0.5rem-2px)]'
-            : 'text-muted-foreground/70 hover:text-foreground'
-        )}
-        style={{ paddingLeft: depth * 12 }}
-      >
-        {hasChildren ? (
-          <ToggleButton label={`Toggle ${node.title}`} />
-        ) : (
-          <span className="inline-flex h-6 w-6 items-center justify-center text-xs text-muted-foreground">•</span>
-        )}
-        <span className="truncate">{node.title}</span>
-      </div>
-      {hasChildren && (
-        <CollapsibleContent className="space-y-1 pt-1">
-          {node.children!.map((child) => (
-            <TreeNodeItem
-              key={child.id}
-              node={child}
-              depth={depth + 1}
-              active={active}
-              expandedKeys={expandedKeys}
-              onToggle={onToggle}
-            />
-          ))}
-        </CollapsibleContent>
-      )}
-    </Collapsible>
-  );
-}
-
-function CollectionBranch({
-  node,
+/**
+ * The shell shared by every branch kind: the collapsible wrapper, the indented row, and
+ * the recursive child list. Variants supply only the row contents, so the disclosure and
+ * indentation behaviour cannot drift between them.
+ */
+function BranchShell({
+  branchKey,
   depth,
+  isActive,
+  childNodes,
   active,
   expandedKeys,
   onToggle,
-}: TreeNodeItemProps) {
-  if (node.kind !== NodeKind.CollectionArticle) return null;
-
-  const slug = normalizeSlug(node.slug);
-  const key = makeCollectionKey(slug);
-  const isExpanded = expandedKeys.has(key);
-  const childNodes = node.children ?? [];
+  children,
+}: BranchShellProps) {
   const hasChildren = childNodes.length > 0;
-  const isActive = active.collectionSlug === slug || Boolean(active.articleSlug && active.articleSlug.startsWith(`${slug}/`));
-  const collectionCount = node.collectionsCount ?? 0;
-  const articleCount = node.articlesCount ?? 0;
-  const badgeValue = collectionCount > 0 ? collectionCount : articleCount;
-  const badgeLabel =
-    collectionCount > 0
-      ? `${collectionCount} ${collectionCount === 1 ? 'collection' : 'collections'}`
-      : `${articleCount} ${articleCount === 1 ? 'article' : 'articles'}`;
 
   return (
     <Collapsible
       className="space-y-1"
-      open={isExpanded}
-      onOpenChange={(value) => onToggle(key, value)}
+      open={expandedKeys.has(branchKey)}
+      onOpenChange={(value) => onToggle(branchKey, value)}
     >
       <div
         className={cn(
@@ -210,21 +162,7 @@ function CollectionBranch({
         )}
         style={{ paddingLeft: depth * 12 }}
       >
-        {hasChildren ? (
-          <ToggleButton label={`Toggle ${node.title}`} />
-        ) : (
-          <FolderOpen className="h-4 w-4 text-primary/70" />
-        )}
-        <FolderOpen className="h-4 w-4 text-primary/70" />
-        <Link href={`/collections/${slug}/`} className="flex-1 truncate font-medium">
-          {node.title}
-        </Link>
-        <span
-          className="rounded-full bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground"
-          title={badgeLabel}
-        >
-          {badgeValue}
-        </span>
+        {children}
       </div>
       {hasChildren && (
         <CollapsibleContent className="space-y-1 pt-1">
@@ -244,10 +182,96 @@ function CollectionBranch({
   );
 }
 
+/**
+ * The fixed-width slot opening every branch row: a disclosure toggle when the branch has
+ * children, otherwise a placeholder of the same footprint so sibling rows stay aligned.
+ */
+function BranchLead({
+  hasChildren,
+  label,
+  placeholder,
+}: {
+  hasChildren: boolean;
+  label: string;
+  placeholder?: ReactNode;
+}) {
+  if (hasChildren) {
+    return <ToggleButton label={label} />;
+  }
+
+  return (
+    <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center text-xs text-muted-foreground">
+      {placeholder}
+    </span>
+  );
+}
+
+function SubjectBranch({ node, depth, active, expandedKeys, onToggle }: TreeNodeItemProps) {
+  const slug = normalizeSlug(node.slug);
+  const childNodes = node.children ?? [];
+
+  return (
+    <BranchShell
+      branchKey={makeNodeKey(slug)}
+      depth={depth}
+      isActive={branchContainsActive(slug, active)}
+      childNodes={childNodes}
+      active={active}
+      expandedKeys={expandedKeys}
+      onToggle={onToggle}
+    >
+      <BranchLead hasChildren={childNodes.length > 0} label={`Toggle ${node.title}`} placeholder="•" />
+      <span className="truncate font-medium">{node.title}</span>
+    </BranchShell>
+  );
+}
+
+function CollectionBranch({ node, depth, active, expandedKeys, onToggle }: TreeNodeItemProps) {
+  if (node.kind !== NodeKind.CollectionArticle) return null;
+
+  const slug = normalizeSlug(node.slug);
+  const childNodes = node.children ?? [];
+  const isActive =
+    active.collectionSlug === slug ||
+    Boolean(active.articleSlug && active.articleSlug.startsWith(`${slug}/`));
+
+  const collectionCount = node.collectionsCount ?? 0;
+  const articleCount = node.articlesCount ?? 0;
+  const badgeValue = collectionCount > 0 ? collectionCount : articleCount;
+  const badgeLabel =
+    collectionCount > 0
+      ? `${collectionCount} ${collectionCount === 1 ? 'collection' : 'collections'}`
+      : `${articleCount} ${articleCount === 1 ? 'article' : 'articles'}`;
+
+  return (
+    <BranchShell
+      branchKey={makeCollectionKey(slug)}
+      depth={depth}
+      isActive={isActive}
+      childNodes={childNodes}
+      active={active}
+      expandedKeys={expandedKeys}
+      onToggle={onToggle}
+    >
+      <BranchLead hasChildren={childNodes.length > 0} label={`Toggle ${node.title}`} />
+      <FolderOpen className="h-4 w-4 shrink-0 text-primary/70" />
+      <Link href={collectionPath(slug)} className="flex-1 truncate font-medium">
+        {node.title}
+      </Link>
+      <span
+        className="rounded-full bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground"
+        title={badgeLabel}
+      >
+        {badgeValue}
+      </span>
+    </BranchShell>
+  );
+}
+
 function StandaloneLeaf({ node, depth, active }: { node: StandaloneArticle; depth: number; active: ActiveState }) {
   const slug = normalizeSlug(node.articleSlug);
   const isCollectionArticle = Boolean(node.collectionSlug);
-  const href = isCollectionArticle ? `/collections/${slug}/` : `/articles/${slug}/`;
+  const href = contentPath(slug, { isCollection: isCollectionArticle });
   const isActive = active.articleSlug === slug;
 
   return (
@@ -324,6 +348,31 @@ function computeInitialExpandedKeys(tree: SubjectNode, active: ActiveState) {
 
   tree.children?.forEach(visit);
   return Array.from(keys);
+}
+
+/**
+ * Every collection slug reachable in the nav tree.
+ *
+ * `walk()` in lib/content/tree.ts emits a Collection object and a
+ * NodeKind.CollectionArticle node from the same branch, so this set is
+ * identical to the slugs of `getCollections()` — deriving it here avoids
+ * shipping the full Collection[] (and with it every article body) into the
+ * client bundle just to answer prefix-membership questions.
+ *
+ * One caveat: getSubjectTree() prunes a draft node together with its whole
+ * subtree, while getCollections() filters drafts flatly. A *published*
+ * collection nested under a *draft* one would therefore be missing here. No
+ * such content exists today (every draft is a leaf article), but if that
+ * changes, fix the cascade in filterTreeNode rather than reinstating the prop.
+ */
+function collectCollectionSlugs(node: SubjectNode, slugs = new Set<string>()): Set<string> {
+  if (node.kind === NodeKind.CollectionArticle) {
+    slugs.add(normalizeSlug(node.slug));
+  }
+
+  node.children?.forEach((child) => collectCollectionSlugs(child, slugs));
+
+  return slugs;
 }
 
 function deriveActiveState(pathname: string, collectionSlugs: Set<string>): ActiveState {

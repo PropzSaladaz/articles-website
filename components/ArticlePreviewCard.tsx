@@ -1,9 +1,10 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import type { CSSProperties } from 'react';
-import { Article } from '../lib/content/types';
+import type { ArticlePreview } from '../lib/content/types';
 import { formatDate } from '../lib/format';
 import { withBasePath } from '../lib/paths';
+import { articlePath } from '../lib/content/urls';
 import { Card, CardContent } from './ui/card';
 import { cn } from '../lib/utils';
 
@@ -17,14 +18,14 @@ function truncate(text: string, length: number) {
 type Variant = 'default' | 'featured' | 'compact';
 
 type ArticlePreviewCardProps = {
-  article: Article;
+  article: ArticlePreview;
   variant?: Variant;
   className?: string;
   style?: CSSProperties;
 };
 
 export function ArticlePreviewCard({ article, variant = 'default', className, style }: ArticlePreviewCardProps) {
-  const href = article.collectionSlug ? `/collections/${article.slug}/` : `/articles/${article.slug}/`;
+  const href = articlePath(article);
   const excerptLength = variant === 'featured' ? 220 : variant === 'compact' ? 140 : 160;
   const excerpt = truncate(article.description, excerptLength);
 
@@ -104,5 +105,4 @@ export function ArticlePreviewCard({ article, variant = 'default', className, st
     </Card>
   );
 }
-
 

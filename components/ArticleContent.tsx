@@ -8,6 +8,7 @@ import { MarkdownRenderer } from './MarkdownRenderer';
 import { ArticleViewToggle, useIsSummaryView } from './ArticleViewToggle';
 import { formatDate } from '../lib/format';
 import { withBasePath } from '../lib/paths';
+import { collectionPath } from '../lib/content/urls';
 import { GiscusComments } from './GiscusComments';
 import { ArticleNavigation } from './ArticleNavigation';
 import { cn } from '../lib/utils';
@@ -84,7 +85,7 @@ export function ArticleContent({
                         <li key={node.slug} className="flex items-center gap-1.5">
                           {!isLast && collectionSlugSet.has(node.slug) ? (
                             <Link
-                              href={`/collections/${node.slug}/`}
+                              href={collectionPath(node.slug)}
                               className="transition-colors hover:text-foreground"
                             >
                               {node.title}

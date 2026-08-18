@@ -3,8 +3,12 @@ export type Slug = string; // e.g., "computer-science/3d-graphics/article-name"
 export type ContentStatus = 'draft' | 'published' | 'archived';
 
 // ========================================
-//            Subject Node Tree
+//         Navigation Read Models
 // ========================================
+//
+// The subject tree is the navigation payload: slugs, titles, kinds, counts and
+// children, with no article bodies. It is safe to hand to Client Components as
+// a whole, and it is the only content structure that should be.
 
 export enum NodeKind {
   StandaloneArticle = 'standalone',
@@ -30,7 +34,6 @@ export interface StandaloneArticle extends SubjectNode {
   articleSlug: Slug;
   status: ContentStatus;
   collectionSlug?: Slug | null;
-  folderAbs?: string;
 }
 
 export interface CollectionArticle extends SubjectNode {
@@ -43,7 +46,7 @@ export interface CollectionArticle extends SubjectNode {
 
 
 // ========================================
-//            Article Data
+//          Rich Content Models
 // ========================================
 
 export type ArticleSummary = {
@@ -57,11 +60,19 @@ export type Heading = {
   level: number;
 };
 
-export type KnowledgePathItem = {
-  title: string;
-  slug: string;
-};
-
+/**
+ * Rich content models built by the server-side content loader.
+ *
+ * Avoid passing complete instances into Client Components. `Collection`
+ * transitively embeds every descendant `Article` — bodies included — so one
+ * serialized instance can drag most of the corpus into a page payload. Project
+ * them into a purpose-specific read model first, or pass `SubjectNode` when all
+ * that is needed is navigation structure.
+ *
+ * TypeScript does not enforce this; the modules that *build* these values are
+ * marked `server-only` instead. The types themselves stay dependency-free so
+ * Client Components can `import type` from here.
+ */
 export type Article = {
   slug: string;
   title: string;
@@ -97,4 +108,30 @@ export type Collection = {
   totalArticles: number;
   totalCollections: number;
   folderAbs?: string;
+};
+
+
+// ========================================
+//       Client-Facing Projections
+// ========================================
+//
+// Add a projection here only once a Client Component actually needs it.
+
+/** The serializable article fields used by cards and home-page listings. */
+export type ArticlePreview = Pick<
+  Article,
+  | 'slug'
+  | 'title'
+  | 'date'
+  | 'featured'
+  | 'description'
+  | 'cover'
+  | 'readingTime'
+  | 'collectionSlug'
+>;
+
+/** One breadcrumb step from the subject tree down to an article. */
+export type KnowledgePathItem = {
+  title: string;
+  slug: string;
 };

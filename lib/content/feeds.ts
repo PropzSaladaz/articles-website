@@ -2,20 +2,7 @@ import path from "path";
 import fs from "fs";
 import { Article, Collection } from "./types";
 import { getSiteUrl } from "../site";
-import { WalkResult } from "./tree";
-
-/**
- * Persists the content tree, articles, and collections to the cache directory as JSON files.
- * @param payload The full walk result to persist
- */
-export function persistCaches(payload: WalkResult) {
-  const cacheDir = path.join(process.cwd(), '.cache');
-  if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir, { recursive: true });
-
-  fs.writeFileSync(path.join(cacheDir, 'content-tree.json'), JSON.stringify(payload.tree, null, 2));
-  fs.writeFileSync(path.join(cacheDir, 'articles.json'), JSON.stringify(payload.articles, null, 2));
-  fs.writeFileSync(path.join(cacheDir, 'collections.json'), JSON.stringify(payload.collections, null, 2));
-}
+import { articlePath, collectionPath } from "./urls";
 
 /**
  * Generates a sitemap XML from the given articles and collections.
@@ -28,17 +15,17 @@ export function generateSitemap(articles: Article[], collections: Collection[]) 
   const pages = new Set<string>();
   pages.add(`${siteUrl}/`);
 
-  // Standalone vs chapter URLs:
+  // Every published article and every published collection gets exactly one URL.
+  // Do not also add an article's *parent* collection here: for a published parent
+  // the loop below already covers it, and for a draft parent it would advertise a
+  // page that was never exported. Status does not cascade — each folder's own
+  // frontmatter decides it — so a published chapter under a draft collection is
+  // exported while its parent is not.
   for (const a of articles) {
-    if (a.collectionSlug) {
-      pages.add(`${siteUrl}/collections/${a.collectionSlug}/`);
-      pages.add(`${siteUrl}/collections/${a.slug}/`);
-    } else {
-      pages.add(`${siteUrl}/articles/${a.slug}/`);
-    }
+    pages.add(`${siteUrl}${articlePath(a)}`);
   }
   for (const c of collections) {
-    pages.add(`${siteUrl}/collections/${c.slug}/`);
+    pages.add(`${siteUrl}${collectionPath(c.slug)}`);
   }
 
   const xml =
@@ -65,9 +52,7 @@ export function generateRss(articles: Article[]) {
 
   const items = articles
     .map((a) => {
-      const link = a.collectionSlug
-        ? `${siteUrl}/collections/${a.slug}/`
-        : `${siteUrl}/articles/${a.slug}/`;
+      const link = `${siteUrl}${articlePath(a)}`;
 
       return `\n  <item>\n    <title><![CDATA[${a.title}]]></title>\n    <link>${link}</link>\n    <guid>${link}</guid>\n    <pubDate>${new Date(a.date).toUTCString()}</pubDate>\n    <description><![CDATA[${a.summary.text}]]></description>\n  </item>`;
     })

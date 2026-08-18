@@ -1,4 +1,3 @@
-// remark-spoiler.js
 import { visit } from 'unist-util-visit';
 import { toString } from 'mdast-util-to-string';
 

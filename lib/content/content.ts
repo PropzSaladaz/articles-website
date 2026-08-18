@@ -1,14 +1,57 @@
+import 'server-only'; // prevent accidental client-side usage
+
 import { SubjectNode, Article, Collection, KnowledgePathItem, NodeKind } from './types';
 import { getCanonicalUrl } from '../site';
 import { loadAllFromDisk } from './tree';
-import { generateRss, generateSitemap, persistCaches } from './cache';
+import { generateRss, generateSitemap } from './feeds';
+import { articlePath, collectionPath } from './urls';
+import { watch, type FSWatcher } from 'fs';
+import { CONTENT_ROOT } from './files';
 
-// Global cache holding loaded content
-let cachePromise: Promise<{
+type LoadedContent = {
   tree: SubjectNode;
   articles: Article[];
   collections: Collection[];
-}> | null = null;
+};
+
+type ContentCacheState = {
+  promise: Promise<LoadedContent> | null;
+  watcher: FSWatcher | null;
+};
+
+// Keep the watcher and cache across Next.js development module reloads. Without
+// this, Fast Refresh can leave old watchers alive while creating new ones.
+const globalForContentCache = globalThis as typeof globalThis & {
+  __articlesContentCache?: ContentCacheState;
+};
+
+const contentCache: ContentCacheState = globalForContentCache.__articlesContentCache ?? {
+  promise: null,
+  watcher: null,
+};
+
+if (process.env.NODE_ENV === 'development') {
+  globalForContentCache.__articlesContentCache = contentCache;
+}
+
+function ensureDevelopmentWatcher() {
+  if (process.env.NODE_ENV !== 'development' || contentCache.watcher) return;
+
+  try {
+    contentCache.watcher = watch(CONTENT_ROOT, { recursive: true }, () => {
+      contentCache.promise = null;
+    });
+
+    contentCache.watcher.on('error', (error) => {
+      console.error('[content] Failed to watch content directory:', error);
+      contentCache.watcher?.close();
+      contentCache.watcher = null;
+      contentCache.promise = null;
+    });
+  } catch (error) {
+    console.error('[content] Failed to watch content directory:', error);
+  }
+}
 
 /**
  * Check if we should include draft content.
@@ -53,30 +96,43 @@ function filterTreeNode(node: SubjectNode): SubjectNode | null {
 }
 
 /**
- * Try loading content from disk if not already loaded. If not loaded, parse
- * all articles & generate sitemap + RSS feed.
- * In development mode, always reload to pick up changes.
+ * Load and cache content from disk. Concurrent callers share the same promise.
+ * In development the cache is invalidated when the content directory changes.
  * @returns A promise that ensures content is loaded and cached
  */
 async function ensureLoaded() {
   const isDev = process.env.NODE_ENV === 'development';
+  ensureDevelopmentWatcher();
 
-  // In dev mode, always reload content to pick up changes
-  if (isDev || !cachePromise) {
-    cachePromise = (async () => {
+  if (!contentCache.promise) {
+    contentCache.promise = (async () => {
       const res = await loadAllFromDisk();
       // Sort by date desc
       res.articles.sort((a, b) => (a.date > b.date ? -1 : 1));
-      // Only persist caches and generate feeds in production
+      // Only generate feeds in production.
+      // Drafts are excluded from the static export by getAllArticles/getCollections,
+      // so they must be excluded here too — otherwise the sitemap and feed advertise
+      // URLs that were never exported and 404.
       if (!isDev) {
-        persistCaches(res);
-        generateSitemap(res.articles, res.collections);
-        generateRss(res.articles);
+        const publishedArticles = res.articles.filter((a) => a.status !== 'draft');
+        const publishedCollections = res.collections.filter((c) => c.status !== 'draft');
+        generateSitemap(publishedArticles, publishedCollections);
+        generateRss(publishedArticles);
       }
       return res;
     })();
   }
-  return cachePromise;
+
+  const currentPromise = contentCache.promise;
+  try {
+    return await currentPromise;
+  } catch (error) {
+    // A transient parse or filesystem error should not poison the cache forever.
+    if (contentCache.promise === currentPromise) {
+      contentCache.promise = null;
+    }
+    throw error;
+  }
 }
 
 /**
@@ -145,14 +201,11 @@ export async function getCollectionBySlug(slug: string): Promise<Collection | un
  * @returns The canonical URL as a string
  */
 export function getArticleCanonicalUrl(article: Article) {
-  if (article.collectionSlug) {
-    return getCanonicalUrl(`/collections/${article.slug}/`);
-  }
-  return getCanonicalUrl(`/articles/${article.slug}/`);
+  return getCanonicalUrl(articlePath(article));
 }
 
 export function getCollectionCanonicalUrl(slug: string) {
-  return getCanonicalUrl(`/collections/${slug}/`);
+  return getCanonicalUrl(collectionPath(slug));
 }
 
 function findNodePath(node: SubjectNode, targetSlug: string): SubjectNode[] | null {

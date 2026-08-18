@@ -1,4 +1,3 @@
-// remark-strong-hr.ts
 import { visit } from 'unist-util-visit';
 
 const STRONG_HR_MARKERS = new Set(['===', '...']);

@@ -30,7 +30,7 @@ A static knowledge-publishing platform built with **Next.js 14** (App Router, st
 |-------|-------------|
 | **Next.js 14 App Router** | Static export (`output: "export"`) — produces a fully static `out/` directory at build time. |
 | **Content loader** (`lib/content/`) | Walks `content/`, classifies folders as standalone articles or collections, and converts Markdown to HTML. |
-| **Markdown pipeline** (`lib/md.ts`) | unified/remark/rehype pipeline: GFM, math (KaTeX), directives, GitHub alerts, spoilers, code highlighting (Shiki), heading anchors, image handling, iframe wrapping. |
+| **Markdown pipeline** (`lib/markdown/`) | unified/remark/rehype pipeline: GFM, math (KaTeX), directives, GitHub alerts, spoilers, code highlighting (Shiki), heading anchors, image handling, iframe wrapping. |
 | **Prebuild script** (`scripts/prepare-content.mjs`) | Runs before every build and dev start. Copies `images/` and `simulations/` from `content/` into `public/`, rewrites in-article relative paths, generates `sitemap.xml` and `rss.xml`. |
 | **Content watcher** (`scripts/watch-content.mjs`) | File watcher process (runs alongside `next dev`) that keeps `public/` in sync as you edit content. |
 | **UI shell** (`components/`, `app/`) | Resizable sidebar, tree navigation, article reading shell, table of contents, reading progress bar, dark/light theme. |

@@ -3,7 +3,7 @@ import path from "path";
 import { buildArticleFromFolder, buildCollectionFromFolder } from "./builders";
 import { CONTENT_ROOT, isFile } from "./files";
 import { Article, Collection, CollectionArticle, NodeKind, StandaloneArticle, SubjectNode } from "./types";
-import { numericPrefixOrNull, pathToId, slugify, titleFromFolder } from "./utilities";
+import { numericPrefixOrNull, slugify, titleFromFolder } from "./utilities";
 
 type WalkResult = {
   tree: SubjectNode;
@@ -43,7 +43,7 @@ async function walk(
 ): Promise<WalkResult> {
   const folderName = path.basename(dirAbs);
   const slug = slugPieces.join("/");
-  const id = pathToId(slug);
+  const id = slug;
   const title = slugPieces.length === 0 ? "Root" : titleFromFolder(folderName);
 
   const childDirents = sortDirents(listChildDirs(dirAbs));

@@ -1,9 +1,28 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "articles-website",
+  "main": "worker/index.ts",
   "compatibility_date": "2026-08-16",
+  "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "directory": "./out",
-    "not_found_handling": "404-page"
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "articles",
+      "database_id": "1e13ef84-e99e-4396-8dbe-b2e722e49a99",
+      "migrations_dir": "./migrations"
+    }
+  ],
+  "observability": {
+    "enabled": true,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1
+    }
   }
 }

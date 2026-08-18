@@ -6,10 +6,10 @@ import remarkGfm from 'remark-gfm';
 import remarkRehype from 'remark-rehype';
 import remarkDirective from 'remark-directive';
 import remarkMath from 'remark-math';
-import remarkSpoiler from './remark-spoiler';
-import remarkDefinition from './remark-definition';
-import remarkDiagram from './remark-diagram';
-import remarkGithubAlerts from './remark-github-alerts';
+import remarkSpoiler from './remark/spoiler';
+import remarkDefinition from './remark/definition';
+import remarkDiagram from './remark/diagram';
+import remarkGithubAlerts from './remark/github-alerts';
 import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import rehypeKatex from 'rehype-katex';
@@ -19,16 +19,17 @@ import { remark } from 'remark';
 import { visit } from 'unist-util-visit';
 import { toString } from 'mdast-util-to-string';
 import GithubSlugger from 'github-slugger';
-import rehypeScopeClasses from './rehypeScopeClasses';
-import { Heading } from './content/types';
+import rehypeScopeClasses from './rehype/scope-classes';
+import { Heading } from '../content/types';
 import rehypeShiki from '@shikijs/rehype';
-import rehypeCodeBlockCopy from './rehypeCodeBlockCopy';
-import remarkStrongHr from './remark-strong-hr';
-import rehypeDevImages from './rehype-dev-images';
+import rehypeCodeBlockCopy from './rehype/code-block-copy';
+import remarkStrongHr from './remark/strong-hr';
+import rehypeDevImages from './rehype/dev-images';
 
-import rehypeProductionImages from './rehype-production-images';
-import rehypeIframeWindow from './rehype-iframe-window';
-import rehypeImageWrapper from './rehype-image-wrapper';
+import rehypeProductionImages from './rehype/production-images';
+import rehypeIframeWindow from './rehype/iframe-window';
+import rehypeImageWrapper from './rehype/image-wrapper';
+import { getBasePath } from '../paths';
 
 // rehype-katex and the rest of this pipeline operate on the same HAST root.
 // Its exported transformer signature is not inferred as a Unified plugin by
@@ -81,6 +82,21 @@ export async function markdownToHtml(markdown: string, options?: MarkdownOptions
         light: 'github-dark',
         dark: 'github-dark',
       },
+      // Pin the grammar set explicitly. Omitting `langs` makes @shikijs/rehype
+      // default to Object.keys(bundledLanguages) — all 332 bundled grammars —
+      // which costs ~2.9s and ~58MB of extra heap per process on first use.
+      // This list loads in ~90ms. Keep it a superset of what content/ actually
+      // uses (currently just js + text) and add entries as new fences appear.
+      langs: [
+        'js', 'ts', 'jsx', 'tsx', 'json',
+        'bash', 'html', 'css', 'python',
+        'c', 'cpp', 'rust', 'glsl', 'wgsl',
+        'sql', 'yaml', 'diff', 'md', 'text',
+      ],
+      // A fence in a language missing from `langs` renders as plain text
+      // instead of throwing, so adding e.g. ```haskell degrades gracefully
+      // rather than breaking the build.
+      fallbackLanguage: 'text',
       // Optional: add line numbers, highlight lines, etc., later
     })
     // add ids to headings - allow making link jumps to sections possible
@@ -102,9 +118,9 @@ export async function markdownToHtml(markdown: string, options?: MarkdownOptions
     processor = processor.use(rehypeProductionImages, {
       slug,
       isDev,
-      repoName: process.env.REPO_NAME,
+      basePath: getBasePath(),
       parentCollectionSlug: options?.parentCollectionSlug,
-      isCollection: options?.isCollection
+      isCollection: options?.isCollection,
     });
   }
 

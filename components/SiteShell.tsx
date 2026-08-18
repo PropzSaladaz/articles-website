@@ -10,7 +10,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react';
-import type { Collection, SubjectNode } from '../lib/content/types';
+import type { SubjectNode } from '../lib/content/types';
 import { getBasePath } from '../lib/paths';
 import { cn } from '../lib/utils';
 import { TreeNavigation } from './TreeNavigation';
@@ -26,11 +26,10 @@ const AUTO_COLLAPSE_BREAKPOINT = 1280;
 
 type SiteShellProps = {
   tree: SubjectNode;
-  collections: Collection[];
   children: ReactNode;
 };
 
-export function SiteShell({ tree, collections, children }: SiteShellProps) {
+export function SiteShell({ tree, children }: SiteShellProps) {
   const pathname = usePathname();
   const basePath = getBasePath();
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -212,7 +211,7 @@ export function SiteShell({ tree, collections, children }: SiteShellProps) {
           >
             <div className="overflow-hidden">
               <div className="max-h-[60vh] overflow-y-auto rounded-lg border border-border bg-background px-2 py-2">
-                <TreeNavigation tree={tree} collections={collections} />
+                <TreeNavigation tree={tree} />
               </div>
             </div>
           </div>
@@ -240,7 +239,7 @@ export function SiteShell({ tree, collections, children }: SiteShellProps) {
             style={{ maxHeight: `calc(100vh - ${HEADER_HEIGHT}px)` }}
             aria-hidden={isSidebarCollapsed}
           >
-            <TreeNavigation tree={tree} collections={collections} />
+            <TreeNavigation tree={tree} />
           </div>
         </aside>
         <div

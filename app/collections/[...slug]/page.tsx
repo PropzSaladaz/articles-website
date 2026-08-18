@@ -15,6 +15,7 @@ import {
   getKnowledgePathForSlug,
 } from '../../../lib/content/content';
 import { formatDate } from '../../../lib/format';
+import { articlePath, collectionPath } from '../../../lib/content/urls';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-static';
@@ -113,7 +114,7 @@ export default async function CollectionSlugPage({ params }: PageProps) {
     <div className="flex flex-col gap-6">
       <div className="space-y-2">
         <Link
-          href={`/collections/${article.collectionSlug}/`}
+          href={collectionPath(article.collectionSlug)}
           className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground transition-colors hover:text-primary"
         >
           ← Back to {parentCollection ? parentCollection.title : 'collection'}
@@ -184,7 +185,7 @@ function CollectionView({ collection }: { collection: LoadedCollection }) {
                   <div className="flex-1 space-y-2">
                     <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
                       <Link
-                        href={`/collections/${child.slug}/`}
+                        href={collectionPath(child.slug)}
                         className="text-lg font-semibold text-foreground transition-colors hover:text-primary"
                       >
                         {child.title}
@@ -222,7 +223,7 @@ function CollectionView({ collection }: { collection: LoadedCollection }) {
                   <div className="flex-1 space-y-2">
                     <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
                       <Link
-                        href={`/collections/${article.slug}/`}
+                        href={articlePath(article)}
                         className="text-lg font-semibold text-foreground transition-colors hover:text-primary"
                       >
                         {article.title}

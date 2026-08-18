@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { extractHeadings, markdownToHtml } from "../md";
+import { extractHeadings, markdownToHtml } from "../markdown";
 import { markdownToPlainText } from "../summaries";
 import { deriveCover, isFile, loadMarkdown } from "./files";
 import { Article, Collection } from "./types";
@@ -106,7 +106,7 @@ export async function buildArticleFromFolder({
   // Rich summary for article summary view (from summary.md or first paragraph)
   const summaryRaw = summarySource(folderAbs, content);
 
-  const cover = deriveCover(front, folderAbs);
+  const cover = deriveCover(front);
   const fileStats = fs.statSync(indexPath);
   const publishedAt = parseOptionalDate(front.date) ?? fileStats.mtime.toISOString();
 
@@ -152,7 +152,7 @@ export async function buildCollectionFromFolder({
   const title = titleFromFolder(path.basename(folderAbs));
   const slug = slugPieces.join('/');
 
-  const cover = deriveCover(front, folderAbs);
+  const cover = deriveCover(front);
   const summaryRaw = descriptionSource(front, content);
   const summaryHtml = await markdownToHtml(summaryRaw, { slug, isCollection: true });
   const summaryText = await markdownToPlainText(summaryRaw);

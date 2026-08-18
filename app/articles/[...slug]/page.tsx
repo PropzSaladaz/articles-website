@@ -11,6 +11,7 @@ import {
 } from '../../../lib/content/content';
 import { Suspense } from 'react';
 import { CopyCodeButtons } from '@/components/CopyCodeButtons';
+import { ArticleViewTracker } from '@/components/ArticleViewTracker';
 
 export const runtime = 'nodejs';           // ensure Node runtime (fs available)
 export const dynamic = 'force-static';     // keep SSG if you’re reading local files
@@ -54,6 +55,8 @@ export default async function ArticlePage({ params }: PageProps) {
 
   return (
     <div className="flex flex-col gap-6">
+      <ArticleViewTracker slug={article.slug} />
+
       <div className="flex items-center justify-between lg:hidden">
         <span className="text-sm uppercase tracking-wide text-slate-500 dark:text-slate-400">
           Article view

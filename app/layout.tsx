@@ -4,7 +4,7 @@ import '../styles/content-diagrams.css';
 import Script from 'next/script';
 import { AppProviders } from '../components/AppProviders';
 import { SiteShell } from '../components/SiteShell';
-import { getCollections, getSubjectTree } from '../lib/content/content';
+import { getSubjectTree } from '../lib/content/content';
 import 'katex/dist/katex.min.css';
 
 
@@ -13,17 +13,14 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [tree, collections] = await Promise.all([
-    getSubjectTree(),
-    getCollections(),
-  ]);
+  const tree = await getSubjectTree();
 
   return (
     <html lang="en" suppressHydrationWarning>
       <head />
       <body className="min-h-screen bg-background text-foreground antialiased">
         <AppProviders>
-          <SiteShell tree={tree} collections={collections}>
+          <SiteShell tree={tree}>
             {children}
           </SiteShell>
         </AppProviders>

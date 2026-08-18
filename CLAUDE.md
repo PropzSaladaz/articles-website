@@ -3,8 +3,75 @@
 Next.js static articles site. `content/` (markdown + per-article `simulations/*.html`)
 is compiled into `public/` by `scripts/prepare-content.mjs` (runs on predev/prebuild);
 `public/` is fully generated and gitignored. Simulations are self-contained HTML files
-embedded via `<iframe>`, wrapped by `lib/rehype-iframe-window.ts`, with play/pause +
+embedded via `<iframe>`, wrapped by `lib/markdown/rehype/iframe-window.ts`, with play/pause +
 rAF interception injected by `components/MarkdownRenderer.tsx` (same-origin).
+
+## Content loading, sitemap & RSS
+
+`lib/content/content.ts`'s `ensureLoaded()` memoizes the whole corpus in a module-level
+`cachePromise`. This matters: `loadAllFromDisk()` re-runs the full unified pipeline
+(remark/rehype + Shiki + KaTeX) over all ~45 `index.md` files, and every page funnels
+through it — `app/layout.tsx` alone pulls the nav tree on *every* page. It caches the
+*promise*, not the resolved value, so parallel builds share one load. Dev deliberately
+bypasses the cache (reload each request, paired with `watch-content.mjs`).
+
+`lib/content/feeds.ts` (`generateSitemap` / `generateRss`) writes `public/sitemap.xml`
+and `public/rss.xml`. Two non-obvious things about it:
+
+- **Drafts must be filtered at the call site.** `ensureLoaded()` hands the feeds
+  `res.articles`/`res.collections`, the *raw* walk result — draft filtering otherwise
+  only happens downstream in `getAllArticles`/`getCollections`, which is what
+  `generateStaticParams` uses. Before this was fixed the sitemap advertised 25 draft
+  URLs that were never exported and 404'd. Any new consumer of the raw walk result
+  needs the same `status !== 'draft'` filter.
+- **It runs as a side effect of the first page render, not as a build step.** So what
+  lands in `out/` is whatever `public/sitemap.xml` held when Next copied `public/` —
+  a real ordering hazard (observed once as an exported sitemap older than its source).
+  Moving the call into `scripts/prepare-content.mjs`, which already runs on `prebuild`,
+  would remove it. Also note the URLs ignore `basePath`/`REPO_NAME`.
+
+A `persistCaches()` used to dump the walk result to `.cache/*.json` (5.1 MB/build).
+Nothing ever read it back — it was removed along with the directory, and `feeds.ts`
+was named `cache.ts` because of it.
+
+## lib/ layout
+
+`lib/markdown/` holds the unified pipeline: `index.ts` assembles it, `remark/` and
+`rehype/` hold the custom plugins (all kebab-case). `lib/content/` is the disk-walk
+layer, and only `lib/content/builders.ts` imports the markdown pipeline — the
+dependency runs one way, content → markdown, and should stay that way.
+
+**`lib/content/urls.ts` owns the `/articles` vs `/collections` rule.** `contentPath()`
+(plus the `articlePath` / `collectionPath` wrappers) is the single source of truth for
+where a slug lives: `/articles` *only* for a standalone article with no parent
+collection; a collection's own `index.md` and every chapter inside one go to
+`/collections`. Everything builds its URLs through it — canonical URLs, sitemap, RSS,
+image `src` rewriting, every component href, and the Worker's asset probe. It is
+deliberately dependency-free (type-only imports) so client components and the
+esbuild-bundled Worker can both import it. **Don't hand-roll the ternary again.**
+
+This rule was previously written out in nine places, and two of them drifted: the image
+plugin said `/articles` while `prepare-content.mjs` copied to `/collections`, so images
+in a collection page pointed at nothing. A second copy in `worker/index.ts` hardcoded
+`/articles`, which would have silently stopped recording views for collection chapters.
+
+**The one remaining copy is `scripts/prepare-content.mjs`'s `canonicalPathForEntry`.**
+It decides where files are actually *copied*, and it is plain `.mjs` running on
+`prebuild`, so it cannot import the TypeScript helper. These two must be kept in
+agreement by hand — that constraint is the same one that keeps the content walk
+duplicated between `lib/content/tree.ts` and that script. Note the walks are not pure
+copies: `prepare-content.mjs` never reads frontmatter, so it has no notion of `status`
+and copies draft assets too.
+
+**One base path, two env var names.** `next.config.js` reads `REPO_NAME` and re-exports
+it as `NEXT_PUBLIC_REPO_NAME` (Next only inlines `NEXT_PUBLIC_`-prefixed vars into
+browser bundles). `lib/paths.ts` accepts either and is the single source of truth —
+read `getBasePath()` from there rather than touching `process.env` directly.
+
+**`lib/format.ts` pins locale and time zone deliberately.** `formatDate` is called from
+`'use client'` components, so an unpinned `toLocaleDateString` formats with Node's locale
+on the server and the visitor's in the browser — a hydration mismatch for anyone outside
+the build machine's locale.
 
 ## sim-lib (hand-drawn simulation renderer)
 
@@ -116,7 +183,7 @@ added when `ec_point_addition.html` needed a 6th distinct semantic color. Add
 new ink colors to *both* files by hand when a sim genuinely needs one — don't
 reuse an existing color for two unrelated roles just to avoid the edit.
 
-Shared iframe chrome (`lib/rehype-iframe-window.ts`) has no top bar and no border
+Shared iframe chrome (`lib/markdown/rehype/iframe-window.ts`) has no top bar and no border
 at all now — the simulation content is the whole visible surface, not framed as an
 "app window" (this went through two stages: first the macOS-style traffic-light
 dots were removed from the top bar, then the top bar and border were removed

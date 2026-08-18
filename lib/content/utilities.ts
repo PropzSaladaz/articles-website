@@ -31,10 +31,6 @@ export function numericPrefixOrNull(name: string): number | null {
   return m ? parseInt(m[1], 10) : null;
 }
 
-export function pathToId(slug: string) {
-  return slug;
-}
-
 /**
  * Convert a folder name into a human-readable title.
  * @param folderName Folder name to convert
@@ -66,9 +62,4 @@ export function parseStatus(value: unknown, filePath: string): ContentStatus {
   throw new Error(
     `Invalid frontmatter in ${filePath}: "status" must be one of ${Array.from(allowed).join(', ')}.`
   );
-}
-
-export function extractTags(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
-  return value.filter((item) => typeof item === 'string').map((tag) => tag.trim()).filter(Boolean);
 }
