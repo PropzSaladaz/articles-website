@@ -53,8 +53,9 @@ not a bundled grammar; `fallbackLanguage: 'text'` continues to provide the
 intended plain-text fallback. Both the direct TypeScript check and
 `./node_modules/.bin/next build` pass.
 
-## 2. Generate sitemap and RSS as deterministic build outputs
+## 2. ✅ Generate sitemap and RSS as deterministic build outputs
 
+- **Status:** ✅ Complete
 - **Severity:** High
 - **Files:** `lib/content/content.ts`, `lib/content/feeds.ts`
 - **Current location:** `ensureLoaded()` calls `generateSitemap()` and `generateRss()` as a side effect
@@ -86,10 +87,20 @@ Generate these artifacts in a dedicated build phase, or expose them through dete
 
 ### Acceptance criteria
 
-- Rendering a page does not write `public/sitemap.xml` or `public/rss.xml`.
-- A clean build always produces feeds from the same content revision.
-- Draft URLs are absent.
-- XML-sensitive fixture content produces valid XML.
+- [x] Rendering a page does not write `public/sitemap.xml` or `public/rss.xml`.
+- [x] A clean build always produces feeds from the same content revision.
+- [x] Draft URLs are absent.
+- [x] XML-sensitive fixture content produces valid XML.
+
+### Resolution
+
+`app/sitemap.ts` now uses Next's static sitemap convention, and
+`app/rss.xml/route.ts` is a forced-static route. Both consume the published content
+accessors, so drafts are filtered at the API boundary. `feeds.ts` now contains only
+pure URL/RSS serialization; it safely escapes XML text and splits `]]>` inside CDATA
+values. The tracked generated files were removed from `public/`. A production build
+produces valid `out/sitemap.xml` and `out/rss.xml` (21 URLs and 16 RSS items) without
+writing to `public/`.
 
 ## 3. Make draft visibility one coherent content projection
 

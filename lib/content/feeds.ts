@@ -1,16 +1,14 @@
-import path from "path";
-import fs from "fs";
-import { Article, Collection } from "./types";
-import { getSiteUrl } from "../site";
-import { articlePath, collectionPath } from "./urls";
+import type { Article, Collection } from './types';
+import { getSiteUrl } from '../site';
+import { articlePath, collectionPath } from './urls';
 
 /**
- * Generates a sitemap XML from the given articles and collections.
- * Useful for SEO.
- * @param articles The list of articles to include
- * @param collections The list of collections to include
+ * Returns the absolute URLs for the published sitemap.
+ *
+ * The App Router's `app/sitemap.ts` serializes these into XML. Keeping this
+ * function free of filesystem writes makes it safe for any server-side caller.
  */
-export function generateSitemap(articles: Article[], collections: Collection[]) {
+export function getSitemapUrls(articles: Article[], collections: Collection[]): string[] {
   const siteUrl = getSiteUrl();
   const pages = new Set<string>();
   pages.add(`${siteUrl}/`);
@@ -28,40 +26,46 @@ export function generateSitemap(articles: Article[], collections: Collection[]) 
     pages.add(`${siteUrl}${collectionPath(c.slug)}`);
   }
 
-  const xml =
-    `<?xml version="1.0" encoding="UTF-8"?>\n` +
-    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' +
-    Array.from(pages)
-      .sort()
-      .map((url) => `<url><loc>${url}</loc></url>`)
-      .join('') +
-    '</urlset>';
+  return Array.from(pages).sort();
+}
 
-  const publicDir = path.join(process.cwd(), 'public');
-  if (!fs.existsSync(publicDir)) fs.mkdirSync(publicDir, { recursive: true });
-  fs.writeFileSync(path.join(publicDir, 'sitemap.xml'), xml, 'utf8');
+function escapeXml(value: string): string {
+  return value.replace(/[&<>"']/g, (character) => {
+    switch (character) {
+      case '&':
+        return '&amp;';
+      case '<':
+        return '&lt;';
+      case '>':
+        return '&gt;';
+      case '"':
+        return '&quot;';
+      case "'":
+        return '&apos;';
+      default:
+        return character;
+    }
+  });
+}
+
+function escapeCdata(value: string): string {
+  return value.replace(/]]>/g, ']]]]><![CDATA[>');
 }
 
 /**
- * Generates an RSS feed XML from the given articles.
- * Useful for discribing updates to subscribers.
- * @param articles The list of articles to include
+ * Serializes articles as RSS XML. The caller is responsible for serving the
+ * result; this module never writes build inputs such as `public/`.
  */
-export function generateRss(articles: Article[]) {
+export function generateRssXml(articles: Article[]): string {
   const siteUrl = getSiteUrl();
 
   const items = articles
     .map((a) => {
       const link = `${siteUrl}${articlePath(a)}`;
 
-      return `\n  <item>\n    <title><![CDATA[${a.title}]]></title>\n    <link>${link}</link>\n    <guid>${link}</guid>\n    <pubDate>${new Date(a.date).toUTCString()}</pubDate>\n    <description><![CDATA[${a.summary.text}]]></description>\n  </item>`;
+      return `\n  <item>\n    <title><![CDATA[${escapeCdata(a.title)}]]></title>\n    <link>${escapeXml(link)}</link>\n    <guid>${escapeXml(link)}</guid>\n    <pubDate>${new Date(a.date).toUTCString()}</pubDate>\n    <description><![CDATA[${escapeCdata(a.summary.text)}]]></description>\n  </item>`;
     })
     .join('');
 
-  const rss =
-    `<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0">\n<channel>\n  <title>Articles</title>\n  <link>${siteUrl}/</link>\n  <description>Latest articles</description>${items}\n</channel>\n</rss>`;
-
-  const publicDir = path.join(process.cwd(), 'public');
-  if (!fs.existsSync(publicDir)) fs.mkdirSync(publicDir, { recursive: true });
-  fs.writeFileSync(path.join(publicDir, 'rss.xml'), rss, 'utf8');
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0">\n<channel>\n  <title>Articles</title>\n  <link>${siteUrl}/</link>\n  <description>Latest articles</description>${items}\n</channel>\n</rss>`;
 }

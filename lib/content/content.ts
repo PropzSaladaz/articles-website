@@ -3,7 +3,6 @@ import 'server-only'; // prevent accidental client-side usage
 import { SubjectNode, Article, Collection, ContentStatus, KnowledgePathItem, NodeKind } from './types';
 import { getCanonicalUrl } from '../site';
 import { loadAllFromDisk } from './tree';
-import { generateRss, generateSitemap } from './feeds';
 import { articlePath, collectionPath } from './urls';
 import { watch, type FSWatcher } from 'fs';
 import { CONTENT_ROOT } from './files';
@@ -149,7 +148,6 @@ function filterTreeNode(node: SubjectNode): SubjectNode | null {
  * @returns A promise that ensures content is loaded and cached
  */
 async function ensureLoaded() {
-  const isDev = process.env.NODE_ENV === 'development';
   ensureDevelopmentWatcher();
 
   if (!contentCache.promise) {
@@ -157,14 +155,6 @@ async function ensureLoaded() {
       const res = await loadAllFromDisk();
       // Sort by date desc
       res.articles.sort((a, b) => (a.date > b.date ? -1 : 1));
-      // Only generate feeds in production.
-      // Drafts are excluded from the static export by getAllArticles/getCollections,
-      // so they must be excluded here too — otherwise the sitemap and feed advertise
-      // URLs that were never exported and 404.
-      if (!isDev) {
-        generateSitemap(withoutDrafts(res.articles), withoutDrafts(res.collections));
-        generateRss(withoutDrafts(res.articles));
-      }
       return res;
     })();
   }

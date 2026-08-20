@@ -15,20 +15,12 @@ through it — `app/layout.tsx` alone pulls the nav tree on *every* page. It cac
 *promise*, not the resolved value, so parallel builds share one load. Dev deliberately
 bypasses the cache (reload each request, paired with `watch-content.mjs`).
 
-`lib/content/feeds.ts` (`generateSitemap` / `generateRss`) writes `public/sitemap.xml`
-and `public/rss.xml`. Two non-obvious things about it:
-
-- **Drafts must be filtered at the call site.** `ensureLoaded()` hands the feeds
-  `res.articles`/`res.collections`, the *raw* walk result — draft filtering otherwise
-  only happens downstream in `getAllArticles`/`getCollections`, which is what
-  `generateStaticParams` uses. Before this was fixed the sitemap advertised 25 draft
-  URLs that were never exported and 404'd. Any new consumer of the raw walk result
-  needs the same `status !== 'draft'` filter.
-- **It runs as a side effect of the first page render, not as a build step.** So what
-  lands in `out/` is whatever `public/sitemap.xml` held when Next copied `public/` —
-  a real ordering hazard (observed once as an exported sitemap older than its source).
-  Moving the call into `scripts/prepare-content.mjs`, which already runs on `prebuild`,
-  would remove it.
+`app/sitemap.ts` and `app/rss.xml/route.ts` are static App Router routes. During a
+production export, Next writes their responses directly to `out/sitemap.xml` and
+`out/rss.xml`; neither route writes into `public/`. Both use the published
+`getAllArticles()` / `getCollections()` projections, so draft URLs cannot leak into
+the exported feeds. `lib/content/feeds.ts` only contains pure sitemap/RSS serializers
+and may safely be reused by either route or tests.
 
 A `persistCaches()` used to dump the walk result to `.cache/*.json` (5.1 MB/build).
 Nothing ever read it back — it was removed along with the directory, and `feeds.ts`
