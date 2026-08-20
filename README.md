@@ -161,6 +161,10 @@ it while they are being written.
 
 - Folder names accept numeric prefixes (`1-`, `01-`, `2-`) to control sort order.
 - Sorting priority: **numeric prefix → alphabetical**.
+- Folder names must produce a non-empty, unique URL slug after their numeric prefix and
+  punctuation are removed.
+- Every content level needs its own `index.md`. Do not place an indexed article or
+  collection below an intermediate folder without one.
 - The article/chapter title is automatically derived from the folder name (prefix stripped, hyphens → spaces, title-cased).
 - Slugs are generated from the full filesystem path, so uniqueness is guaranteed by directory structure.
 

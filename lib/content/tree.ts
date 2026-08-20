@@ -13,6 +13,10 @@ type WalkResult = {
   selfCollection?: Collection;
 };
 
+type WalkContext = {
+  slugSources: Map<string, string>;
+};
+
 const INDEX_FILENAME = "index.md";
 
 function hasIndex(fileAbs: string) {
@@ -36,15 +40,64 @@ function sortDirents(dirents: fs.Dirent[]) {
   });
 }
 
+function slugPieceForFolder(folderName: string, folderAbs: string): string {
+  const slugPiece = slugify(folderName);
+  if (!slugPiece) {
+    throw new Error(`Content folder produces an empty URL slug: ${folderAbs}`);
+  }
+  return slugPiece;
+}
+
+function registerSlug(slug: string, dirAbs: string, context: WalkContext) {
+  if (!slug) return;
+
+  const firstSource = context.slugSources.get(slug);
+  if (firstSource) {
+    throw new Error(
+      `Duplicate URL slug "${slug}" from content folders ${firstSource} and ${dirAbs}`
+    );
+  }
+  context.slugSources.set(slug, dirAbs);
+}
+
+function findIndexedDescendant(dirAbs: string): string | null {
+  for (const child of listChildDirs(dirAbs)) {
+    const childAbs = path.join(dirAbs, child.name);
+    if (hasIndex(childAbs)) return childAbs;
+
+    const indexedDescendant = findIndexedDescendant(childAbs);
+    if (indexedDescendant) return indexedDescendant;
+  }
+  return null;
+}
+
+function assertNoIndirectContentChildren(dirAbs: string, childDirents: fs.Dirent[]) {
+  for (const child of childDirents) {
+    const childAbs = path.join(dirAbs, child.name);
+    if (hasIndex(childAbs)) continue;
+
+    const indexedDescendant = findIndexedDescendant(childAbs);
+    if (indexedDescendant) {
+      throw new Error(
+        `Unsupported content layout: indexed folder ${dirAbs} has content at ${indexedDescendant} ` +
+          `below non-index folder ${childAbs}. Add an index.md to ${childAbs} or move the content.`
+      );
+    }
+  }
+}
+
 async function walk(
   dirAbs: string,
   slugPieces: string[],
-  parentCollectionSlug: string | null
+  parentCollectionSlug: string | null,
+  context: WalkContext
 ): Promise<WalkResult> {
   const folderName = path.basename(dirAbs);
   const slug = slugPieces.join("/");
   const id = slug;
   const title = slugPieces.length === 0 ? "Root" : titleFromFolder(folderName);
+
+  registerSlug(slug, dirAbs, context);
 
   const childDirents = sortDirents(listChildDirs(dirAbs));
   const contentChildDirents = childDirents.filter((entry) =>
@@ -52,6 +105,9 @@ async function walk(
   );
 
   const currentHasIndex = hasIndex(dirAbs);
+  if (currentHasIndex) {
+    assertNoIndirectContentChildren(dirAbs, childDirents);
+  }
 
   // Determine classification
   if (currentHasIndex && contentChildDirents.length === 0) {
@@ -85,11 +141,10 @@ async function walk(
     const childResults: WalkResult[] = [];
     for (const child of contentChildDirents) {
       const childAbs = path.join(dirAbs, child.name);
+      const childSlugPiece = slugPieceForFolder(child.name, childAbs);
       const childSlugPieces =
-        slugPieces.length === 0
-          ? [slugify(child.name)]
-          : [...slugPieces, slugify(child.name)];
-      const childResult = await walk(childAbs, childSlugPieces, slug);
+        slugPieces.length === 0 ? [childSlugPiece] : [...slugPieces, childSlugPiece];
+      const childResult = await walk(childAbs, childSlugPieces, slug, context);
       childResults.push(childResult);
     }
 
@@ -135,9 +190,10 @@ async function walk(
   const childResults: WalkResult[] = [];
   for (const child of childDirents) {
     const childAbs = path.join(dirAbs, child.name);
+    const childSlugPiece = slugPieceForFolder(child.name, childAbs);
     const childSlugPieces =
-      slugPieces.length === 0 ? [slugify(child.name)] : [...slugPieces, slugify(child.name)];
-    const childResult = await walk(childAbs, childSlugPieces, parentCollectionSlug);
+      slugPieces.length === 0 ? [childSlugPiece] : [...slugPieces, childSlugPiece];
+    const childResult = await walk(childAbs, childSlugPieces, parentCollectionSlug, context);
     childResults.push(childResult);
   }
 
@@ -176,7 +232,7 @@ async function loadAllFromDisk(): Promise<WalkResult> {
     throw new Error(`Content directory not found: ${CONTENT_ROOT}`);
   }
 
-  return walk(CONTENT_ROOT, [], null);
+  return walk(CONTENT_ROOT, [], null, { slugSources: new Map() });
 }
 
 export { loadAllFromDisk };

@@ -189,9 +189,9 @@ Route canonical, sitemap, RSS, and robots URL construction through that helper.
 - Base paths appear exactly once.
 - Internal routes, canonical URLs, feeds, and robots agree.
 
-## 5. Validate frontmatter and filesystem invariants at load time
+## 5. ✅ Validate frontmatter and filesystem invariants at load time
 
-- **Status:** In progress — frontmatter validation complete; filesystem topology validation pending
+- **Status:** ✅ Complete
 - **Severity:** Medium
 - **Files:** `lib/content/builders.ts`, `lib/content/files.ts`, `lib/content/tree.ts`, `lib/content/utilities.ts`
 
@@ -226,10 +226,23 @@ Only treat `ENOENT` as “not a file”; rethrow other filesystem errors with th
 
 ### Acceptance criteria
 
-- Invalid frontmatter fails the build with a precise filename and field name.
-- Published article dates are deterministic.
-- Duplicate/empty slugs fail before static parameters or assets are generated.
-- Unsupported nested directory layouts fail explicitly instead of dropping content.
+- [x] Invalid frontmatter fails the build with a precise filename and field name.
+- [x] Published article dates are deterministic.
+- [x] Duplicate/empty slugs fail before static parameters or assets are generated.
+- [x] Unsupported nested directory layouts fail explicitly instead of dropping content.
+
+### Resolution
+
+`frontmatter.ts` now validates the supported article and collection fields before
+building content. Published and archived articles require a real `YYYY-MM-DD` date;
+the one published article that lacked one now has its authored date recorded. Drafts
+may omit it while being authored. Invalid field types now identify both the file and
+the field instead of silently falling back.
+
+The tree walker rejects empty normalized slug segments, duplicate full URL slugs,
+and indexed content reached through a non-index directory. `isFile()` treats only
+`ENOENT` as absent and rethrows real filesystem failures. The production build and
+direct TypeScript check pass with the existing content corpus.
 
 ## 6. Derive rendered HTML and TOC headings in one Markdown pass
 
