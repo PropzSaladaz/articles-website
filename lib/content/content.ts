@@ -7,10 +7,14 @@ import { articlePath, collectionPath } from './urls';
 import { watch, type FSWatcher } from 'fs';
 import { CONTENT_ROOT } from './files';
 
-type LoadedContent = {
+type ContentProjection = {
   tree: SubjectNode;
   articles: Article[];
   collections: Collection[];
+};
+
+type LoadedContent = ContentProjection & {
+  published: ContentProjection;
 };
 
 type ContentCacheState = {
@@ -60,28 +64,41 @@ function shouldIncludeDrafts(): boolean {
   return process.env.NODE_ENV === 'development';
 }
 
-/** Whether a single entry may be shown. The one draft predicate in the codebase. */
-export function isVisible(entry: { status: ContentStatus }): boolean {
-  return shouldIncludeDrafts() || entry.status !== 'draft';
+type ContentEntry = { slug: string; status: ContentStatus };
+
+function isDescendantOf(slug: string, ancestorSlug: string): boolean {
+  return slug.startsWith(`${ancestorSlug}/`);
 }
 
-function withoutDrafts<T extends { status: ContentStatus }>(entries: T[]): T[] {
-  return shouldIncludeDrafts() ? entries : entries.filter((entry) => entry.status !== 'draft');
+/**
+ * A draft collection hides its entire subtree in production. This is deliberately
+ * stricter than checking an entry's own status: a published child must not make a
+ * work-in-progress collection reachable through a page, feed, or direct lookup.
+ */
+function isPublishedEntry(entry: ContentEntry, draftCollectionSlugs: readonly string[]): boolean {
+  return (
+    entry.status !== 'draft' &&
+    !draftCollectionSlugs.some((draftSlug) => isDescendantOf(entry.slug, draftSlug))
+  );
 }
 
 /**
  * A Collection with its embedded children filtered, recursively.
  *
- * `loadAllFromDisk` populates `articles`/`collections` straight from the walk, so a
- * published collection carries its draft chapters around with it. Filtering only the
- * flat `getCollections()` result left those in place, and `CollectionView` rendered
- * links to pages that were never exported — an observable 404 from a published page.
- * Every accessor below returns collections through here so no call site has to
- * remember the rule. Counts are recomputed so headers agree with what is listed.
+ * Draft collection status cascades in the production projection. This mirrors the
+ * tree and flat article filters, so a collection page cannot expose a descendant
+ * whose URL was intentionally omitted from the static export.
  */
-function visibleCollection(collection: Collection): Collection {
-  const articles = withoutDrafts(collection.articles);
-  const collections = withoutDrafts(collection.collections).map(visibleCollection);
+function publishedCollection(
+  collection: Collection,
+  draftCollectionSlugs: readonly string[]
+): Collection {
+  const articles = collection.articles.filter((article) =>
+    isPublishedEntry(article, draftCollectionSlugs)
+  );
+  const collections = collection.collections
+    .filter((child) => isPublishedEntry(child, draftCollectionSlugs))
+    .map((child) => publishedCollection(child, draftCollectionSlugs));
 
   return {
     ...collection,
@@ -93,35 +110,22 @@ function visibleCollection(collection: Collection): Collection {
 }
 
 /**
- * Filter a tree node to exclude draft content in production.
+ * Filter a tree node to exclude draft content and every descendant of a draft
+ * collection in production.
  *
- * Status does not cascade (see the note in feeds.ts): each folder's own frontmatter
- * decides it, so a published chapter under a draft collection is still exported. This
- * used to return null for a draft node *before* recursing, which took those published
- * descendants down with it — they were built, but vanished from the navigation and
- * their "Back to ..." link pointed at a page that never existed.
- *
- * So recurse first, and drop only what genuinely has nothing left to show. A draft
- * collection with surviving descendants keeps its place in the hierarchy with
- * `hasPage: false`, which renders as a non-linking branch.
+ * This is intentionally fail-closed: a draft collection means its whole branch is
+ * unfinished. Descendants must be published by publishing their ancestor too.
  */
 function filterTreeNode(node: SubjectNode): SubjectNode | null {
-  if (shouldIncludeDrafts()) return node;
+  if (node.status === 'draft') return null;
 
   const hadChildren = (node.children?.length ?? 0) > 0;
   const survivors = (node.children ?? [])
     .map(filterTreeNode)
     .filter((child): child is SubjectNode => child !== null);
 
-  const isDraft = node.status === 'draft';
-
-  // A draft leaf, or a draft branch whose descendants are all drafts too.
-  if (isDraft && survivors.length === 0) {
-    return null;
-  }
-
   // A structural folder that lost every child has nothing left to show.
-  if (!isDraft && hadChildren && survivors.length === 0 && node.kind === NodeKind.Node) {
+  if (hadChildren && survivors.length === 0 && node.kind === NodeKind.Node) {
     return null;
   }
 
@@ -134,12 +138,37 @@ function filterTreeNode(node: SubjectNode): SubjectNode | null {
       }
     : { ...node };
 
-  // Survives for its descendants' sake, but has no page of its own to link to.
-  if (isDraft) {
-    filtered.hasPage = false;
-  }
-
   return filtered;
+}
+
+function emptySubjectTree(): SubjectNode {
+  return {
+    kind: NodeKind.Node,
+    id: 'root',
+    slug: '',
+    title: 'Root',
+    children: [],
+    articlesCount: 0,
+    collectionsCount: 0,
+  };
+}
+
+function createPublishedProjection(content: ContentProjection): ContentProjection {
+  const draftCollectionSlugs = content.collections
+    .filter((collection) => collection.status === 'draft')
+    .map((collection) => collection.slug);
+
+  return {
+    tree: filterTreeNode(content.tree) ?? emptySubjectTree(),
+    articles: content.articles.filter((article) => isPublishedEntry(article, draftCollectionSlugs)),
+    collections: content.collections
+      .filter((collection) => isPublishedEntry(collection, draftCollectionSlugs))
+      .map((collection) => publishedCollection(collection, draftCollectionSlugs)),
+  };
+}
+
+function selectContent(loaded: LoadedContent): ContentProjection {
+  return shouldIncludeDrafts() ? loaded : loaded.published;
 }
 
 /**
@@ -155,7 +184,12 @@ async function ensureLoaded() {
       const res = await loadAllFromDisk();
       // Sort by date desc
       res.articles.sort((a, b) => (a.date > b.date ? -1 : 1));
-      return res;
+      const content: ContentProjection = {
+        tree: res.tree,
+        articles: res.articles,
+        collections: res.collections,
+      };
+      return { ...content, published: createPublishedProjection(content) };
     })();
   }
 
@@ -172,37 +206,24 @@ async function ensureLoaded() {
 }
 
 /**
- * @returns The root tree node (filtered for draft status in production)
+ * @returns The root tree node (with cascading draft visibility in production)
  */
 export async function getSubjectTree(): Promise<SubjectNode> {
-  const { tree } = await ensureLoaded();
-  const filteredTree = filterTreeNode(tree);
-  // Return an empty root if everything was filtered
-  return filteredTree || {
-    kind: NodeKind.Node,
-    id: 'root',
-    slug: '',
-    title: 'Root',
-    children: [],
-    articlesCount: 0,
-    collectionsCount: 0,
-  };
+  return selectContent(await ensureLoaded()).tree;
 }
 
 /**
- * @returns All articles (filtered for draft status in production)
+ * @returns All articles reachable in the current environment
  */
 export async function getAllArticles(): Promise<Article[]> {
-  const { articles } = await ensureLoaded();
-  return withoutDrafts(articles);
+  return selectContent(await ensureLoaded()).articles;
 }
 
 /**
- * @returns All collections (filtered for draft status in production)
+ * @returns All collections reachable in the current environment
  */
 export async function getCollections(): Promise<Collection[]> {
-  const { collections } = await ensureLoaded();
-  return withoutDrafts(collections).map(visibleCollection);
+  return selectContent(await ensureLoaded()).collections;
 }
 
 /**
@@ -211,7 +232,7 @@ export async function getCollections(): Promise<Collection[]> {
  * @returns The article if found, otherwise undefined
  */
 export async function getArticleBySlug(slug: string): Promise<Article | undefined> {
-  const { articles } = await ensureLoaded();
+  const { articles } = selectContent(await ensureLoaded());
   return articles.find((a) => a.slug === slug);
 }
 
@@ -221,11 +242,8 @@ export async function getArticleBySlug(slug: string): Promise<Article | undefine
  * @returns The collection if found, otherwise undefined
  */
 export async function getCollectionBySlug(slug: string): Promise<Collection | undefined> {
-  const { collections } = await ensureLoaded();
-  const collection = collections.find((c) => c.slug === slug);
-  // Deliberately returns draft collections too: a published chapter still needs its
-  // parent for sibling navigation. Callers decide whether to *link* to it via isVisible.
-  return collection ? visibleCollection(collection) : undefined;
+  const { collections } = selectContent(await ensureLoaded());
+  return collections.find((collection) => collection.slug === slug);
 }
 
 /**
@@ -259,7 +277,7 @@ function findNodePath(node: SubjectNode, targetSlug: string): SubjectNode[] | nu
 }
 
 export async function getKnowledgePathForSlug(slug: string): Promise<KnowledgePathItem[]> {
-  const { tree } = await ensureLoaded();
+  const { tree } = selectContent(await ensureLoaded());
   const path = findNodePath(tree, slug);
   if (!path) return [];
 

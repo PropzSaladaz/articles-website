@@ -13,12 +13,8 @@ export function getSitemapUrls(articles: Article[], collections: Collection[]): 
   const pages = new Set<string>();
   pages.add(`${siteUrl}/`);
 
-  // Every published article and every published collection gets exactly one URL.
-  // Do not also add an article's *parent* collection here: for a published parent
-  // the loop below already covers it, and for a draft parent it would advertise a
-  // page that was never exported. Status does not cascade — each folder's own
-  // frontmatter decides it — so a published chapter under a draft collection is
-  // exported while its parent is not.
+  // Every public article and collection gets exactly one URL. The content accessors
+  // apply cascading draft visibility before values reach this serializer.
   for (const a of articles) {
     pages.add(`${siteUrl}${articlePath(a)}`);
   }

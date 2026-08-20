@@ -245,15 +245,9 @@ function CollectionBranch({ node, depth, active, expandedKeys, onToggle }: TreeN
     >
       <BranchLead hasChildren={childNodes.length > 0} label={`Toggle ${node.title}`} />
       <FolderOpen className="h-4 w-4 shrink-0 text-primary/70" />
-      {/* A draft collection kept only for its published descendants has no page of
-          its own, so it reads as a plain branch label rather than a dead link. */}
-      {node.hasPage === false ? (
-        <span className="flex-1 truncate font-medium">{node.title}</span>
-      ) : (
-        <Link href={collectionPath(slug)} className="flex-1 truncate font-medium">
-          {node.title}
-        </Link>
-      )}
+      <Link href={collectionPath(slug)} className="flex-1 truncate font-medium">
+        {node.title}
+      </Link>
       <span
         className="rounded-full bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground"
         title={badgeLabel}
@@ -355,11 +349,8 @@ function computeInitialExpandedKeys(tree: SubjectNode, active: ActiveState) {
  * shipping the full Collection[] (and with it every article body) into the
  * client bundle just to answer prefix-membership questions.
  *
- * One caveat: getSubjectTree() prunes a draft node together with its whole
- * subtree, while getCollections() filters drafts flatly. A *published*
- * collection nested under a *draft* one would therefore be missing here. No
- * such content exists today (every draft is a leaf article), but if that
- * changes, fix the cascade in filterTreeNode rather than reinstating the prop.
+ * Both accessors use the same cascading draft projection, so this set contains
+ * exactly the public collection URLs without shipping the rich collection model.
  */
 function collectCollectionSlugs(node: SubjectNode, slugs = new Set<string>()): Set<string> {
   if (node.kind === NodeKind.CollectionArticle) {

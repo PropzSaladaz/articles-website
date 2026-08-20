@@ -13,7 +13,6 @@ import {
   getCollectionCanonicalUrl,
   getCollections,
   getKnowledgePathForSlug,
-  isVisible,
 } from '../../../lib/content/content';
 import { formatDate } from '../../../lib/format';
 import { articlePath, collectionPath } from '../../../lib/content/urls';
@@ -114,9 +113,7 @@ export default async function CollectionSlugPage({ params }: PageProps) {
   return (
     <div className="flex flex-col gap-6">
       <div className="space-y-2">
-        {/* Only link back to a parent that was actually exported. A draft parent still
-            supplies sibling navigation below, but has no page to return to. */}
-        {parentCollection && isVisible(parentCollection) && (
+        {parentCollection && (
           <Link
             href={collectionPath(article.collectionSlug)}
             className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground transition-colors hover:text-primary"

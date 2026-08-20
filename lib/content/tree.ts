@@ -120,7 +120,6 @@ async function walk(
       collectionSlug: collection.slug,
       articlesCount: collection.totalArticles,
       collectionsCount: collection.totalCollections,
-      hasPage: true,
       children: treeChildren,
     };
 
