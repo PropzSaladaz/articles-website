@@ -151,8 +151,9 @@ was removed because draft collections no longer appear in the production tree.
 - [x] Public single-item lookups cannot accidentally return drafts or their descendants.
 - [x] Development continues to expose drafts for authoring.
 
-## 4. Centralize public URL construction, including `basePath`
+## 4. ⏭️ Centralize public URL construction, including `basePath`
 
+- **Status:** Not applicable — the site is deployed at the domain root and has no `basePath` configuration.
 - **Severity:** Medium
 - **Files:** `lib/site.ts`, `lib/paths.ts`, `lib/content/feeds.ts`, `lib/content/content.ts`
 
