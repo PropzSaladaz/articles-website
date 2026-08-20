@@ -105,7 +105,7 @@ produces valid `out/sitemap.xml` and `out/rss.xml` without writing to `public/`.
 
 - **Status:** ✅ Complete
 - **Severity:** High
-- **Files:** `lib/content/content.ts`, `lib/content/tree.ts`, `lib/content/types.ts`, `components/TreeNavigation.tsx`, `scripts/prepare-content.mjs`
+- **Files:** `lib/content/content.ts`, `lib/content/visibility.ts`, `lib/content/tree.ts`, `lib/content/types.ts`, `components/TreeNavigation.tsx`, `scripts/prepare-content.mjs`
 
 ### Problem
 
