@@ -6,8 +6,6 @@ import { contentPath } from '../../content/urls';
 interface Options {
     slug: string;
     isDev: boolean;
-    /** Deployment base path, e.g. "/articles-website". Already leading-slashed, or empty. */
-    basePath?: string;
     parentCollectionSlug?: string | null;
     isCollection?: boolean;
 }
@@ -24,7 +22,6 @@ interface Options {
 const rehypeProductionImages: Plugin<[Options], Root> = ({
     slug,
     isDev,
-    basePath = '',
     parentCollectionSlug,
     isCollection,
 }) => {
@@ -40,7 +37,7 @@ const rehypeProductionImages: Plugin<[Options], Root> = ({
             const imagePath = src.startsWith('./') ? src.slice(2) : src;
 
             node.properties.src =
-                `${basePath}${contentPath(slug, { collectionSlug: parentCollectionSlug, isCollection })}${imagePath}`;
+                `${contentPath(slug, { collectionSlug: parentCollectionSlug, isCollection })}${imagePath}`;
         });
     };
 };

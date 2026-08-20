@@ -42,7 +42,7 @@ A static knowledge-publishing platform built with **Next.js 14** (App Router, st
   content-tree.json   ← hierarchical subject tree
   articles.json       ← flat list of all articles
   collections.json    ← flat list of all collections
-out/                  ← static HTML/CSS/JS (GitHub Pages target)
+out/                  ← static HTML/CSS/JS (deploy target)
 public/
   sitemap.xml
   rss.xml
@@ -243,9 +243,13 @@ This runs:
 
 ## Deployment
 
-### GitHub Pages (default)
+### Cloudflare Workers
 
-Push to `main`. The included workflow (`.github/workflows/pages.yml`) builds and deploys the `out/` directory automatically. `REPO_NAME` is inferred from the repository name for correct `basePath` / `assetPrefix` handling.
+`npm run build` writes the static export to `out/`, then `npm run deploy` (`wrangler deploy`)
+publishes it. `wrangler.jsonc` serves `out/` as static assets at the domain root and routes
+`/api/*` to `worker/index.ts`, which records article views in the `articles` D1 database.
+
+The site is always served from a domain root, so there is no `basePath` to configure.
 
 ### Custom domain
 
@@ -264,11 +268,6 @@ SITE_URL=https://yourdomain.com npm run build
 Create a `.env` (or `.env.local`) file at the project root:
 
 ```env
-# Repository name — used to set basePath/assetPrefix for GitHub Pages project-site
-# hosting (drives both routing and image path rewriting). Leave unset for a root
-# domain deploy; the GitHub Actions workflow sets this automatically from the repo name.
-REPO_NAME=articles-website
-
 # Giscus comments (optional) — get values from https://giscus.app/
 NEXT_PUBLIC_GISCUS_REPO=owner/repo
 NEXT_PUBLIC_GISCUS_REPO_ID=R_...

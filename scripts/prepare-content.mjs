@@ -214,8 +214,8 @@ async function findAssetDirectories(entry) {
  *   <meta name="sim-paper" content="full">
  * (any value other than "full"/"off" is ignored so future modes fail closed).
  *
- * Script paths are computed relative to the destination file so they resolve
- * correctly under any deployment basePath (e.g. GitHub Pages project sites).
+ * Script paths are computed relative to the destination file, so a simulation
+ * resolves them wherever `out/` happens to be mounted.
  * No-op for HTML without the meta tag, so un-migrated simulations are untouched.
  *
  * @param {string} html      source HTML

@@ -3,7 +3,6 @@ import Image from 'next/image';
 import type { CSSProperties } from 'react';
 import type { ArticlePreview } from '../lib/content/types';
 import { formatDate } from '../lib/format';
-import { withBasePath } from '../lib/paths';
 import { articlePath } from '../lib/content/urls';
 import { Card, CardContent } from './ui/card';
 import { cn } from '../lib/utils';
@@ -64,7 +63,7 @@ export function ArticlePreviewCard({ article, variant = 'default', className, st
           {
             article.cover &&
             <Image // only show image if it exists
-              src={withBasePath(article.cover)}
+              src={article.cover}
               alt={article.title}
               fill
               className="h-full w-full object-cover transition duration-700 ease-out group-hover:scale-105"

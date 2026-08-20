@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ChevronRight, FolderOpen, FileText } from 'lucide-react';
-import { getBasePath } from '../lib/paths';
 import { collectionPath, contentPath } from '../lib/content/urls';
 import { cn } from '../lib/utils';
 import { SubjectNode, NodeKind, StandaloneArticle } from '../lib/content/types';
@@ -23,16 +22,7 @@ type ActiveState = {
 
 export function TreeNavigation({ tree }: TreeNavigationProps) {
   const pathname = usePathname();
-  const basePath = getBasePath();
-
-  const normalizedPath = useMemo(() => {
-    if (!pathname) return '/';
-    if (basePath && pathname.startsWith(basePath)) {
-      const sliced = pathname.slice(basePath.length);
-      return sliced.length > 0 ? sliced : '/';
-    }
-    return pathname || '/';
-  }, [pathname, basePath]);
+  const normalizedPath = pathname || '/';
 
   const collectionSlugs = useMemo(() => collectCollectionSlugs(tree), [tree]);
 
@@ -255,9 +245,15 @@ function CollectionBranch({ node, depth, active, expandedKeys, onToggle }: TreeN
     >
       <BranchLead hasChildren={childNodes.length > 0} label={`Toggle ${node.title}`} />
       <FolderOpen className="h-4 w-4 shrink-0 text-primary/70" />
-      <Link href={collectionPath(slug)} className="flex-1 truncate font-medium">
-        {node.title}
-      </Link>
+      {/* A draft collection kept only for its published descendants has no page of
+          its own, so it reads as a plain branch label rather than a dead link. */}
+      {node.hasPage === false ? (
+        <span className="flex-1 truncate font-medium">{node.title}</span>
+      ) : (
+        <Link href={collectionPath(slug)} className="flex-1 truncate font-medium">
+          {node.title}
+        </Link>
+      )}
       <span
         className="rounded-full bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground"
         title={badgeLabel}

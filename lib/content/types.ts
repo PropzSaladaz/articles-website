@@ -27,6 +27,7 @@ export interface SubjectNode {
   children?: SubjectNode[];
   articlesCount?: number;
   collectionsCount?: number;
+  hasPage?: boolean;
 }
 
 export interface StandaloneArticle extends SubjectNode {
@@ -42,6 +43,17 @@ export interface CollectionArticle extends SubjectNode {
   status: ContentStatus;
   articlesCount: number;
   collectionsCount: number;
+  /**
+   * Whether this collection has an exported page of its own.
+   *
+   * False for a draft collection that survives in the tree only because it has
+   * published descendants: it keeps its title and its place in the hierarchy so
+   * those chapters stay reachable, but nothing links to it. The node stays a
+   * CollectionArticle rather than being demoted to a structural NodeKind.Node,
+   * because its slug is still a `/collections/...` prefix and `deriveActiveState`
+   * needs it to split a chapter URL into collection + article.
+   */
+  hasPage: boolean;
 }
 
 
@@ -83,7 +95,6 @@ export type Article = {
   description: string;
   summary: ArticleSummary;
   cover?: string | null;
-  content: string;
   html: string;
   headings: Heading[];
   readingTime: {
@@ -101,7 +112,6 @@ export type Collection = {
   status: ContentStatus;
   cover?: string | null;
   summary: ArticleSummary;
-  content: string;
   html: string;
   articles: Article[];
   collections: Collection[];

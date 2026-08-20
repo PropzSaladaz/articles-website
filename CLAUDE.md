@@ -28,7 +28,7 @@ and `public/rss.xml`. Two non-obvious things about it:
   lands in `out/` is whatever `public/sitemap.xml` held when Next copied `public/` —
   a real ordering hazard (observed once as an exported sitemap older than its source).
   Moving the call into `scripts/prepare-content.mjs`, which already runs on `prebuild`,
-  would remove it. Also note the URLs ignore `basePath`/`REPO_NAME`.
+  would remove it.
 
 A `persistCaches()` used to dump the walk result to `.cache/*.json` (5.1 MB/build).
 Nothing ever read it back — it was removed along with the directory, and `feeds.ts`
@@ -62,11 +62,6 @@ agreement by hand — that constraint is the same one that keeps the content wal
 duplicated between `lib/content/tree.ts` and that script. Note the walks are not pure
 copies: `prepare-content.mjs` never reads frontmatter, so it has no notion of `status`
 and copies draft assets too.
-
-**One base path, two env var names.** `next.config.js` reads `REPO_NAME` and re-exports
-it as `NEXT_PUBLIC_REPO_NAME` (Next only inlines `NEXT_PUBLIC_`-prefixed vars into
-browser bundles). `lib/paths.ts` accepts either and is the single source of truth —
-read `getBasePath()` from there rather than touching `process.env` directly.
 
 **`lib/format.ts` pins locale and time zone deliberately.** `formatDate` is called from
 `'use client'` components, so an unpinned `toLocaleDateString` formats with Node's locale
@@ -160,7 +155,7 @@ sample counts (fewer points near the boundary to mask one flickering away).
 - `injectSimLib(html, destFile)` injects the rough.js + sketch.js + Caveat-font
   tags into a simulation's HTML, **opt-in** via `<meta name="sim-paper" content="full">`.
   Sims without the meta tag are copied untouched. Script URLs are computed relative
-  to the destination file, so they survive a deployment `basePath`.
+  to the destination file, so they resolve wherever `out/` is mounted.
 - `watch-content.mjs` watches both `content/` and `sim-lib/` in dev.
 - `injectSimLib` is exported and the pipeline only auto-runs when invoked as a script,
   so the injector is unit-testable without running the full build.

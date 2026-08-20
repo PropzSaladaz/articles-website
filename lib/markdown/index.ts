@@ -21,7 +21,7 @@ import { toString } from 'mdast-util-to-string';
 import GithubSlugger from 'github-slugger';
 import rehypeScopeClasses from './rehype/scope-classes';
 import { Heading } from '../content/types';
-import rehypeShiki from '@shikijs/rehype';
+import rehypeShiki, { type RehypeShikiOptions } from '@shikijs/rehype';
 import rehypeCodeBlockCopy from './rehype/code-block-copy';
 import remarkStrongHr from './remark/strong-hr';
 import rehypeDevImages from './rehype/dev-images';
@@ -29,12 +29,33 @@ import rehypeDevImages from './rehype/dev-images';
 import rehypeProductionImages from './rehype/production-images';
 import rehypeIframeWindow from './rehype/iframe-window';
 import rehypeImageWrapper from './rehype/image-wrapper';
-import { getBasePath } from '../paths';
 
 // rehype-katex and the rest of this pipeline operate on the same HAST root.
 // Its exported transformer signature is not inferred as a Unified plugin by
 // TypeScript in every dependency-resolution layout (notably pnpm's CI layout).
 const rehypeKatexPlugin = rehypeKatex as unknown as Plugin<[], Root>;
+
+const rehypeShikiOptions = {
+  themes: {
+    light: 'github-dark',
+    dark: 'github-dark',
+  },
+  // Pin the grammar set explicitly. Omitting `langs` makes @shikijs/rehype
+  // default to Object.keys(bundledLanguages) — all 332 bundled grammars —
+  // which costs ~2.9s and ~58MB of extra heap per process on first use.
+  // This list loads in ~90ms. Keep it a superset of what content/ actually
+  // uses (currently just js + text) and add entries as new fences appear.
+  langs: [
+    'js', 'ts', 'jsx', 'tsx', 'json',
+    'bash', 'html', 'css', 'python',
+    'c', 'cpp', 'rust', 'glsl', 'wgsl',
+    'sql', 'yaml', 'diff', 'md',
+  ],
+  // `text` is a Shiki special language rather than a bundled grammar, so it does
+  // not belong in `langs`. It remains the fallback for unknown or plain-text
+  // fences, so adding e.g. ```haskell degrades gracefully instead of throwing.
+  fallbackLanguage: 'text',
+} satisfies RehypeShikiOptions;
 
 interface MarkdownOptions {
   slug?: string;
@@ -74,33 +95,20 @@ export async function markdownToHtml(markdown: string, options?: MarkdownOptions
     .use(rehypeRaw)
     // wrap iframes in styled window
     .use(rehypeIframeWindow)
+    // Add ids to headings, so section links and the table of contents can target them.
+    //
+    // This MUST stay ahead of rehypeKatex. KaTeX expands `$p$` into three text-bearing
+    // pieces — a MathML annotation holding the TeX source, the MathML render, and the
+    // visual katex-html span — so `hast-util-to-string` reads "ppp" and rehype-slug
+    // minted `...modulo-ppp`. extractHeadings() below slugs the *markdown* text and
+    // gets `...modulo-p`, so every table-of-contents entry for a heading containing
+    // math pointed at an id that did not exist on the page. Running before KaTeX makes
+    // both sides read the same text.
+    .use(rehypeSlug)
     // render math equations
     .use(rehypeKatexPlugin)
     // code highlighting
-    .use(rehypeShiki, {
-      themes: {
-        light: 'github-dark',
-        dark: 'github-dark',
-      },
-      // Pin the grammar set explicitly. Omitting `langs` makes @shikijs/rehype
-      // default to Object.keys(bundledLanguages) — all 332 bundled grammars —
-      // which costs ~2.9s and ~58MB of extra heap per process on first use.
-      // This list loads in ~90ms. Keep it a superset of what content/ actually
-      // uses (currently just js + text) and add entries as new fences appear.
-      langs: [
-        'js', 'ts', 'jsx', 'tsx', 'json',
-        'bash', 'html', 'css', 'python',
-        'c', 'cpp', 'rust', 'glsl', 'wgsl',
-        'sql', 'yaml', 'diff', 'md', 'text',
-      ],
-      // A fence in a language missing from `langs` renders as plain text
-      // instead of throwing, so adding e.g. ```haskell degrades gracefully
-      // rather than breaking the build.
-      fallbackLanguage: 'text',
-      // Optional: add line numbers, highlight lines, etc., later
-    })
-    // add ids to headings - allow making link jumps to sections possible
-    .use(rehypeSlug)
+    .use(rehypeShiki, rehypeShikiOptions)
     .use(rehypeAutolinkHeadings, {
       behavior: 'prepend',
       properties: { className: ['anchor-link'], ariaHidden: 'true', tabIndex: -1 },
@@ -118,7 +126,6 @@ export async function markdownToHtml(markdown: string, options?: MarkdownOptions
     processor = processor.use(rehypeProductionImages, {
       slug,
       isDev,
-      basePath: getBasePath(),
       parentCollectionSlug: options?.parentCollectionSlug,
       isCollection: options?.isCollection,
     });

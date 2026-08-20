@@ -7,7 +7,6 @@ import Link from 'next/link';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { ArticleViewToggle, useIsSummaryView } from './ArticleViewToggle';
 import { formatDate } from '../lib/format';
-import { withBasePath } from '../lib/paths';
 import { collectionPath } from '../lib/content/urls';
 import { GiscusComments } from './GiscusComments';
 import { ArticleNavigation } from './ArticleNavigation';
@@ -150,7 +149,7 @@ export function ArticleContent({
                   {article.cover && (
                     <figure className="not-prose overflow-hidden rounded-3xl border border-slate-200 shadow-sm dark:border-slate-800">
                       <Image
-                        src={withBasePath(article.cover)}
+                        src={article.cover}
                         alt={article.title}
                         width={1200}
                         height={630}

@@ -1,6 +1,6 @@
 import 'server-only'; // prevent accidental client-side usage
 
-import { SubjectNode, Article, Collection, KnowledgePathItem, NodeKind } from './types';
+import { SubjectNode, Article, Collection, ContentStatus, KnowledgePathItem, NodeKind } from './types';
 import { getCanonicalUrl } from '../site';
 import { loadAllFromDisk } from './tree';
 import { generateRss, generateSitemap } from './feeds';
@@ -61,38 +61,86 @@ function shouldIncludeDrafts(): boolean {
   return process.env.NODE_ENV === 'development';
 }
 
+/** Whether a single entry may be shown. The one draft predicate in the codebase. */
+export function isVisible(entry: { status: ContentStatus }): boolean {
+  return shouldIncludeDrafts() || entry.status !== 'draft';
+}
+
+function withoutDrafts<T extends { status: ContentStatus }>(entries: T[]): T[] {
+  return shouldIncludeDrafts() ? entries : entries.filter((entry) => entry.status !== 'draft');
+}
+
+/**
+ * A Collection with its embedded children filtered, recursively.
+ *
+ * `loadAllFromDisk` populates `articles`/`collections` straight from the walk, so a
+ * published collection carries its draft chapters around with it. Filtering only the
+ * flat `getCollections()` result left those in place, and `CollectionView` rendered
+ * links to pages that were never exported — an observable 404 from a published page.
+ * Every accessor below returns collections through here so no call site has to
+ * remember the rule. Counts are recomputed so headers agree with what is listed.
+ */
+function visibleCollection(collection: Collection): Collection {
+  const articles = withoutDrafts(collection.articles);
+  const collections = withoutDrafts(collection.collections).map(visibleCollection);
+
+  return {
+    ...collection,
+    articles,
+    collections,
+    totalArticles: articles.length,
+    totalCollections: collections.length,
+  };
+}
+
 /**
  * Filter a tree node to exclude draft content in production.
- * Returns null if the node itself or all its children are drafts.
+ *
+ * Status does not cascade (see the note in feeds.ts): each folder's own frontmatter
+ * decides it, so a published chapter under a draft collection is still exported. This
+ * used to return null for a draft node *before* recursing, which took those published
+ * descendants down with it — they were built, but vanished from the navigation and
+ * their "Back to ..." link pointed at a page that never existed.
+ *
+ * So recurse first, and drop only what genuinely has nothing left to show. A draft
+ * collection with surviving descendants keeps its place in the hierarchy with
+ * `hasPage: false`, which renders as a non-linking branch.
  */
 function filterTreeNode(node: SubjectNode): SubjectNode | null {
-  const includeDrafts = shouldIncludeDrafts();
+  if (shouldIncludeDrafts()) return node;
 
-  // Check if this node is a draft article/collection
-  if (node.status === 'draft' && !includeDrafts) {
+  const hadChildren = (node.children?.length ?? 0) > 0;
+  const survivors = (node.children ?? [])
+    .map(filterTreeNode)
+    .filter((child): child is SubjectNode => child !== null);
+
+  const isDraft = node.status === 'draft';
+
+  // A draft leaf, or a draft branch whose descendants are all drafts too.
+  if (isDraft && survivors.length === 0) {
     return null;
   }
 
-  // If node has children, filter them recursively
-  if (node.children && node.children.length > 0) {
-    const filteredChildren = node.children
-      .map(filterTreeNode)
-      .filter((child): child is SubjectNode => child !== null);
-
-    // If all children were filtered out and this is just a structural node, skip it
-    if (filteredChildren.length === 0 && node.kind === NodeKind.Node) {
-      return null;
-    }
-
-    return {
-      ...node,
-      children: filteredChildren,
-      articlesCount: filteredChildren.filter(c => c.kind === NodeKind.StandaloneArticle).length,
-      collectionsCount: filteredChildren.filter(c => c.kind === NodeKind.CollectionArticle).length,
-    };
+  // A structural folder that lost every child has nothing left to show.
+  if (!isDraft && hadChildren && survivors.length === 0 && node.kind === NodeKind.Node) {
+    return null;
   }
 
-  return node;
+  const filtered: SubjectNode = hadChildren
+    ? {
+        ...node,
+        children: survivors,
+        articlesCount: survivors.filter((c) => c.kind === NodeKind.StandaloneArticle).length,
+        collectionsCount: survivors.filter((c) => c.kind === NodeKind.CollectionArticle).length,
+      }
+    : { ...node };
+
+  // Survives for its descendants' sake, but has no page of its own to link to.
+  if (isDraft) {
+    filtered.hasPage = false;
+  }
+
+  return filtered;
 }
 
 /**
@@ -114,10 +162,8 @@ async function ensureLoaded() {
       // so they must be excluded here too — otherwise the sitemap and feed advertise
       // URLs that were never exported and 404.
       if (!isDev) {
-        const publishedArticles = res.articles.filter((a) => a.status !== 'draft');
-        const publishedCollections = res.collections.filter((c) => c.status !== 'draft');
-        generateSitemap(publishedArticles, publishedCollections);
-        generateRss(publishedArticles);
+        generateSitemap(withoutDrafts(res.articles), withoutDrafts(res.collections));
+        generateRss(withoutDrafts(res.articles));
       }
       return res;
     })();
@@ -158,10 +204,7 @@ export async function getSubjectTree(): Promise<SubjectNode> {
  */
 export async function getAllArticles(): Promise<Article[]> {
   const { articles } = await ensureLoaded();
-  if (shouldIncludeDrafts()) {
-    return articles;
-  }
-  return articles.filter(a => a.status !== 'draft');
+  return withoutDrafts(articles);
 }
 
 /**
@@ -169,10 +212,7 @@ export async function getAllArticles(): Promise<Article[]> {
  */
 export async function getCollections(): Promise<Collection[]> {
   const { collections } = await ensureLoaded();
-  if (shouldIncludeDrafts()) {
-    return collections;
-  }
-  return collections.filter(c => c.status !== 'draft');
+  return withoutDrafts(collections).map(visibleCollection);
 }
 
 /**
@@ -192,7 +232,10 @@ export async function getArticleBySlug(slug: string): Promise<Article | undefine
  */
 export async function getCollectionBySlug(slug: string): Promise<Collection | undefined> {
   const { collections } = await ensureLoaded();
-  return collections.find((c) => c.slug === slug);
+  const collection = collections.find((c) => c.slug === slug);
+  // Deliberately returns draft collections too: a published chapter still needs its
+  // parent for sibling navigation. Callers decide whether to *link* to it via isVisible.
+  return collection ? visibleCollection(collection) : undefined;
 }
 
 /**

@@ -11,7 +11,6 @@ import {
   type ReactNode,
 } from 'react';
 import type { SubjectNode } from '../lib/content/types';
-import { getBasePath } from '../lib/paths';
 import { cn } from '../lib/utils';
 import { TreeNavigation } from './TreeNavigation';
 import { ThemeToggle } from './ThemeToggle';
@@ -31,7 +30,6 @@ type SiteShellProps = {
 
 export function SiteShell({ tree, children }: SiteShellProps) {
   const pathname = usePathname();
-  const basePath = getBasePath();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const dragOriginRef = useRef(0);
   const lastExpandedWidthRef = useRef(DEFAULT_SIDEBAR_WIDTH);
@@ -160,7 +158,7 @@ export function SiteShell({ tree, children }: SiteShellProps) {
         className="sticky top-0 z-30 dotted-bg"
       >
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-5">
-          <Link href={`${basePath}/`} className="text-xl font-semibold tracking-tight">
+          <Link href="/" className="text-xl font-semibold tracking-tight">
             Sid Makes Sense
           </Link>
           <div className="flex items-center gap-3">
