@@ -191,6 +191,7 @@ Route canonical, sitemap, RSS, and robots URL construction through that helper.
 
 ## 5. Validate frontmatter and filesystem invariants at load time
 
+- **Status:** In progress — frontmatter validation complete; filesystem topology validation pending
 - **Severity:** Medium
 - **Files:** `lib/content/builders.ts`, `lib/content/files.ts`, `lib/content/tree.ts`, `lib/content/utilities.ts`
 

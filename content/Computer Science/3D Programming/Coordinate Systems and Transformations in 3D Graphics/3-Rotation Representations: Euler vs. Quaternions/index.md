@@ -1,5 +1,6 @@
 ---
 status: "published"          # draft | published | archived
+date: "2025-12-15"
 summary: "A pragmatic route to 3–10× faster pipelines using caching and graph-aware jobs."
 ---
 

@@ -2,9 +2,10 @@ import fs from "fs";
 import path from "path";
 import { extractHeadings, markdownToHtml } from "../markdown";
 import { markdownToPlainText } from "../summaries";
-import { deriveCover, isFile, loadMarkdown } from "./files";
+import { isFile, loadMarkdown } from "./files";
+import { parseArticleFrontmatter, parseCollectionFrontmatter } from "./frontmatter";
 import { Article, Collection } from "./types";
-import { parseStatus, titleFromFolder } from "./utilities";
+import { titleFromFolder } from "./utilities";
 import readingTime from "reading-time";
 
 type BuildArticleParams = {
@@ -19,19 +20,6 @@ type BuildCollectionParams = {
   childArticles: Article[];
   childCollections: Collection[];
 };
-
-function parseOptionalDate(value: unknown): string | null {
-  if (typeof value !== 'string') return null;
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  const date = new Date(trimmed);
-  if (Number.isNaN(date.getTime())) return null;
-  return date.toISOString();
-}
-
-function parseBoolean(value: unknown): boolean {
-  return value === true;
-}
 
 /**
  * Extract the first meaningful paragraph from markdown content for use as summary.
@@ -69,9 +57,8 @@ function extractFirstParagraph(markdown: string): string {
 }
 
 /** Short one-liner for cards: from frontmatter `summary`, or first paragraph. */
-function descriptionSource(front: any, fallbackMarkdown: string): string {
-  const viaFront = typeof front.summary === 'string' ? front.summary.trim() : '';
-  if (viaFront.length > 0) return viaFront;
+function descriptionSource(summary: string | null, fallbackMarkdown: string): string {
+  if (summary) return summary;
   return extractFirstParagraph(fallbackMarkdown);
 }
 
@@ -95,20 +82,20 @@ export async function buildArticleFromFolder({
     throw new Error(`Article missing index.md at ${folderAbs}`);
   }
 
-  const { data: front, content } = loadMarkdown(indexPath);
-  const status = parseStatus(front.status, indexPath);
+  const { data, content } = loadMarkdown(indexPath);
+  const frontmatter = parseArticleFrontmatter(data, indexPath);
   const title = titleFromFolder(path.basename(folderAbs));
   const slug = slugPieces.join('/');
 
   // Short description for cards (from frontmatter summary or first paragraph)
-  const descriptionRaw = descriptionSource(front, content);
+  const descriptionRaw = descriptionSource(frontmatter.summary, content);
 
   // Rich summary for article summary view (from summary.md or first paragraph)
   const summaryRaw = summarySource(folderAbs, content);
 
-  const cover = deriveCover(front);
-  const fileStats = fs.statSync(indexPath);
-  const publishedAt = parseOptionalDate(front.date) ?? fileStats.mtime.toISOString();
+  // Drafts may omit a date while being authored. Published and archived articles
+  // are rejected by parseArticleFrontmatter before reaching this fallback.
+  const publishedAt = frontmatter.date ?? fs.statSync(indexPath).mtime.toISOString();
 
   const html = await markdownToHtml(content, { slug, parentCollectionSlug });
   const headings = extractHeadings(content);
@@ -121,12 +108,12 @@ export async function buildArticleFromFolder({
   return {
     slug,
     title,
-    status,
+    status: frontmatter.status,
     date: publishedAt,
-    featured: parseBoolean(front.featured),
+    featured: frontmatter.featured,
     description: descriptionRaw,
     summary: { text: summaryText, html: summaryHtml },
-    cover,
+    cover: frontmatter.cover,
     html,
     headings,
     readingTime: { text: rt.text, minutes: rt.minutes, words: rt.words },
@@ -146,13 +133,12 @@ export async function buildCollectionFromFolder({
     throw new Error(`Collection missing index.md at ${folderAbs}`);
   }
 
-  const { data: front, content } = loadMarkdown(indexPath);
-  const status = parseStatus(front.status, indexPath);
+  const { data, content } = loadMarkdown(indexPath);
+  const frontmatter = parseCollectionFrontmatter(data, indexPath);
   const title = titleFromFolder(path.basename(folderAbs));
   const slug = slugPieces.join('/');
 
-  const cover = deriveCover(front);
-  const summaryRaw = descriptionSource(front, content);
+  const summaryRaw = descriptionSource(frontmatter.summary, content);
   const summaryHtml = await markdownToHtml(summaryRaw, { slug, isCollection: true });
   const summaryText = await markdownToPlainText(summaryRaw);
   const html = await markdownToHtml(content, { slug, isCollection: true });
@@ -160,8 +146,8 @@ export async function buildCollectionFromFolder({
   return {
     slug,
     title,
-    status,
-    cover,
+    status: frontmatter.status,
+    cover: frontmatter.cover,
     summary: { text: summaryText, html: summaryHtml },
     html,
     articles: childArticles,

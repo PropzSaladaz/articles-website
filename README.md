@@ -103,7 +103,7 @@ My-Article/
 ```yaml
 ---
 status: "published"      # draft | published | archived
-date: "2026-01-15"       # ISO date string
+date: "2026-01-15"       # required ISO date for published/archived articles
 summary: "One-line description shown on article cards and in SEO metadata."
 coverImage: "./images/cover.png"   # optional
 featured: true            # optional: display this article in the home-page Featured slot
@@ -151,6 +151,9 @@ date: "2026-01-15"
 summary: "One-liner for this chapter's card."
 ---
 ```
+
+Published and archived articles require a real `YYYY-MM-DD` date. Drafts may omit
+it while they are being written.
 
 ---
 
