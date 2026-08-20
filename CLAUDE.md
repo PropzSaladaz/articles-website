@@ -51,9 +51,10 @@ in a collection page pointed at nothing. A second copy in `worker/index.ts` hard
 It decides where files are actually *copied*, and it is plain `.mjs` running on
 `prebuild`, so it cannot import the TypeScript helper. These two must be kept in
 agreement by hand — that constraint is the same one that keeps the content walk
-duplicated between `lib/content/tree.ts` and that script. Note the walks are not pure
-copies: `prepare-content.mjs` never reads frontmatter, so it has no notion of `status`
-and copies draft assets too.
+duplicated between `lib/content/tree.ts` and that script. The script parses only
+`status` frontmatter so it can mirror the production draft cascade when copying assets;
+`predev`/the watcher pass `--include-drafts` so authors can preview drafts locally. All
+other frontmatter remains the content loader's responsibility.
 
 **`lib/format.ts` pins locale and time zone deliberately.** `formatDate` is called from
 `'use client'` components, so an unpinned `toLocaleDateString` formats with Node's locale

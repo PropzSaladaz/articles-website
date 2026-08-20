@@ -23,7 +23,7 @@ function runPrepareContent() {
     console.log('\n🔄 Content changed, updating...');
 
     const start = Date.now();
-    const proc = spawn('node', [prepareScript], {
+    const proc = spawn('node', [prepareScript, '--include-drafts'], {
         stdio: 'inherit',
         cwd: path.join(__dirname, '..')
     });

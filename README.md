@@ -31,21 +31,15 @@ A static knowledge-publishing platform built with **Next.js 14** (App Router, st
 | **Next.js 14 App Router** | Static export (`output: "export"`) — produces a fully static `out/` directory at build time. |
 | **Content loader** (`lib/content/`) | Walks `content/`, classifies folders as standalone articles or collections, and converts Markdown to HTML. |
 | **Markdown pipeline** (`lib/markdown/`) | unified/remark/rehype pipeline: GFM, math (KaTeX), directives, GitHub alerts, spoilers, code highlighting (Shiki), heading anchors, image handling, iframe wrapping. |
-| **Prebuild script** (`scripts/prepare-content.mjs`) | Runs before every build and dev start. Copies `images/` and `simulations/` from `content/` into `public/`, rewrites in-article relative paths, generates `sitemap.xml` and `rss.xml`. |
+| **Prebuild script** (`scripts/prepare-content.mjs`) | Runs before every build and dev start. Production copies assets only from publicly reachable content; development includes drafts for preview. |
 | **Content watcher** (`scripts/watch-content.mjs`) | File watcher process (runs alongside `next dev`) that keeps `public/` in sync as you edit content. |
 | **UI shell** (`components/`, `app/`) | Resizable sidebar, tree navigation, article reading shell, table of contents, reading progress bar, dark/light theme. |
 
 ### Build output
 
 ```
-.cache/
-  content-tree.json   ← hierarchical subject tree
-  articles.json       ← flat list of all articles
-  collections.json    ← flat list of all collections
 out/                  ← static HTML/CSS/JS (deploy target)
 public/
-  sitemap.xml
-  rss.xml
   articles/{slug}/images/
   collections/{slug}/images/
 ```
@@ -236,8 +230,8 @@ npm run build
 ```
 
 This runs:
-1. `scripts/prepare-content.mjs` (prebuild hook) — copies assets, rewrites paths, generates sitemap/RSS
-2. `next build` — compiles the app and generates the static `out/` directory
+1. `scripts/prepare-content.mjs` (prebuild hook) — copies assets for publicly reachable content
+2. `next build` — compiles the app and generates the static `out/` directory, including sitemap and RSS
 
 ---
 

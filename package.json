@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "prebuild": "node scripts/prepare-content.mjs",
-    "predev": "node scripts/prepare-content.mjs",
+    "predev": "node scripts/prepare-content.mjs --include-drafts",
     "dev": "concurrently --kill-others \"next dev\" \"node scripts/watch-content.mjs\"",
     "dev:next": "next dev",
     "watch": "node scripts/watch-content.mjs",

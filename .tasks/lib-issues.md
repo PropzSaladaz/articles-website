@@ -99,13 +99,13 @@ Generate these artifacts in a dedicated build phase, or expose them through dete
 accessors, so drafts are filtered at the API boundary. `feeds.ts` now contains only
 pure URL/RSS serialization; it safely escapes XML text and splits `]]>` inside CDATA
 values. The tracked generated files were removed from `public/`. A production build
-produces valid `out/sitemap.xml` and `out/rss.xml` (21 URLs and 16 RSS items) without
-writing to `public/`.
+produces valid `out/sitemap.xml` and `out/rss.xml` without writing to `public/`.
 
-## 3. Make draft visibility one coherent content projection
+## 3. ✅ Make draft visibility one coherent content projection
 
+- **Status:** ✅ Complete
 - **Severity:** High
-- **Files:** `lib/content/content.ts`, `lib/content/types.ts`
+- **Files:** `lib/content/content.ts`, `lib/content/tree.ts`, `lib/content/types.ts`, `components/TreeNavigation.tsx`, `scripts/prepare-content.mjs`
 
 ### Problem
 
@@ -132,29 +132,24 @@ the navigation tree preserves the published descendant, but `visibleCollection()
 
 Routes, navigation, collection listings, breadcrumbs, metadata, and sibling navigation can disagree about which content exists. Callers must also know whether a lookup is raw or visibility-filtered.
 
-### Fix direction
+### Resolution
 
-Keep the raw corpus private and expose purpose-specific projections, for example:
+The content cache now creates one production projection when it loads the raw corpus.
+Every public accessor, including single-item lookups and knowledge paths, reads from
+that projection. A draft collection excludes its whole slug prefix from articles,
+collections, tree navigation, static parameters, RSS, and sitemap output. The asset
+prebuild script mirrors the rule and removes copied files for hidden entries.
 
-- `getVisibleArticleBySlug()`
-- `getVisibleCollectionBySlug()`
-- `getParentCollectionContext()`
-- `getNavigationTree()`
-
-Choose and document one rule for descendants beneath a hidden collection:
-
-- preserve the hidden collection as a non-linking group; or
-- promote surviving descendants to the nearest visible ancestor.
-
-Apply the selected rule to both the tree and collection-page read models.
+`predev` and the content watcher explicitly pass `--include-drafts`, so local authoring
+continues to show draft pages and assets. The `hasPage` non-linking-branch mechanism
+was removed because draft collections no longer appear in the production tree.
 
 ### Acceptance criteria
 
-- A published descendant beneath one or more draft ancestors remains reachable.
-- No link points to a draft page in production.
-- Published collection pages do not silently lose published descendants.
-- Public single-item lookups cannot accidentally render drafts.
-- Parent/sibling context has an explicit API rather than relying on a raw public lookup.
+- [x] No descendant beneath a draft collection is reachable in production.
+- [x] No page, navigation entry, feed URL, or copied asset is reachable below a draft collection in production.
+- [x] Public single-item lookups cannot accidentally return drafts or their descendants.
+- [x] Development continues to expose drafts for authoring.
 
 ## 4. Centralize public URL construction, including `basePath`
 
@@ -333,7 +328,7 @@ Add a small test harness and prioritize behavior-level fixtures over implementat
 
 Minimum useful coverage:
 
-- published descendants under draft ancestors
+- descendants hidden by draft collection ancestors
 - draft children embedded in published collections
 - duplicate and empty slugs
 - article versus collection URL routing

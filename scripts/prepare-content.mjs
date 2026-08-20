@@ -4,6 +4,7 @@ import fs from 'fs';
 import fsp from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import matter from 'gray-matter';
 import 'dotenv/config';
 
 const PROJECT_ROOT = process.cwd();
@@ -12,6 +13,8 @@ const PUBLIC_ROOT = path.join(PROJECT_ROOT, 'public');
 
 const INDEX_FILENAME = 'index.md';
 const IMAGE_SUFFIX = 'images';
+const CONTENT_STATUSES = new Set(['draft', 'published', 'archived']);
+const INCLUDE_DRAFTS = process.argv.includes('--include-drafts');
 
 // Shared hand-drawn renderer kit. Committed at sim-lib/ (public/ is generated),
 // copied verbatim into public/sim-lib/ so simulations can load it, and its
@@ -58,6 +61,18 @@ function hasIndex(dirAbs) {
   return fs.existsSync(path.join(dirAbs, INDEX_FILENAME));
 }
 
+/** Keep asset visibility aligned with lib/content/utilities.ts's parseStatus(). */
+function readStatus(indexPath) {
+  const { data } = matter(fs.readFileSync(indexPath, 'utf8'));
+  if (data.status === undefined) return 'draft';
+  if (typeof data.status === 'string' && CONTENT_STATUSES.has(data.status)) {
+    return data.status;
+  }
+  throw new Error(
+    `Invalid frontmatter in ${indexPath}: "status" must be one of ${Array.from(CONTENT_STATUSES).join(', ')}.`
+  );
+}
+
 function ensureContentRoot() {
   if (!fs.existsSync(CONTENT_ROOT)) {
     throw new Error(`Content directory not found: ${CONTENT_ROOT}`);
@@ -72,7 +87,7 @@ function canonicalPathForEntry(slug, type, parentCollectionSlug) {
   return `${base}/${slug}`;
 }
 
-async function walkContent(dirAbs, slugPieces, parentCollectionSlug) {
+async function walkContent(dirAbs, slugPieces, parentCollectionSlug, hasDraftCollectionAncestor = false) {
   const results = [];
   // get direct child entries for current directory and sort them
   const dirents = sortDirents(await fsp.readdir(dirAbs, { withFileTypes: true }));
@@ -85,22 +100,29 @@ async function walkContent(dirAbs, slugPieces, parentCollectionSlug) {
   const slug = slugPieces.join('/');
 
   let type = null;
+  let status = null;
   if (currentHasIndex) {
     // if has index & has 0 directories -> is article
     // if has index & has 1 or many directories -> is collection
     type = contentChildDirs.length > 0 ? 'collection' : 'article';
+    status = readStatus(path.join(dirAbs, INDEX_FILENAME));
     const canonicalPath = canonicalPathForEntry(slug, type, parentCollectionSlug);
     const entry = {
       slug,
       folderAbs: dirAbs,
       indexPath: path.join(dirAbs, INDEX_FILENAME),
       type,
+      status,
+      isPublic: INCLUDE_DRAFTS || (status !== 'draft' && !hasDraftCollectionAncestor),
       canonicalPath,
       canonicalUrl: `${canonicalPath}/`,
       parentCollectionSlug: parentCollectionSlug ?? null,
     };
     results.push(entry);
   }
+
+  const childHasDraftCollectionAncestor =
+    hasDraftCollectionAncestor || (type === 'collection' && status === 'draft');
 
   if (type === 'collection') {
     // parse all children as part of this collection
@@ -109,7 +131,12 @@ async function walkContent(dirAbs, slugPieces, parentCollectionSlug) {
       const childSlugPieces = slugPieces.length === 0
         ? [slugify(child.name)]
         : [...slugPieces, slugify(child.name)];
-      const childResults = await walkContent(childAbs, childSlugPieces, slug);
+      const childResults = await walkContent(
+        childAbs,
+        childSlugPieces,
+        slug,
+        childHasDraftCollectionAncestor
+      );
       results.push(...childResults);
     }
     return results;
@@ -121,7 +148,12 @@ async function walkContent(dirAbs, slugPieces, parentCollectionSlug) {
     const childSlugPieces = slugPieces.length === 0
       ? [slugify(child.name)]
       : [...slugPieces, slugify(child.name)];
-    const childResults = await walkContent(childAbs, childSlugPieces, parentCollectionSlug);
+    const childResults = await walkContent(
+      childAbs,
+      childSlugPieces,
+      parentCollectionSlug,
+      childHasDraftCollectionAncestor
+    );
     results.push(...childResults);
   }
 
@@ -130,10 +162,6 @@ async function walkContent(dirAbs, slugPieces, parentCollectionSlug) {
 
 async function collectEntries() {
   return walkContent(CONTENT_ROOT, [], null);
-}
-
-function normalizePath(p) {
-  return path.normalize(p);
 }
 
 /**
@@ -299,7 +327,12 @@ async function copyAssets(entry) {
       entry.canonicalPath.replace(/^\//, ''),
       relativeDir
     );
+    // Always clear the old destination first. Production removes assets when a
+    // collection becomes draft, then copies only the public projection below.
     await fsp.rm(destBase, { recursive: true, force: true });
+    if (!entry.isPublic) {
+      continue;
+    }
     const injectSim = path.basename(srcDir) === 'simulations';
     await copyDirectory(srcDir, destBase, { injectSim });
     copied.push({ from: srcDir, to: destBase });
@@ -309,10 +342,8 @@ async function copyAssets(entry) {
 
 async function main() {
   ensureContentRoot();
-  // get all individual articles & collections
+  // Enumerate every entry so hidden entries can have stale public assets removed.
   const entries = await collectEntries();
-  // get the paths normalized for current OS-specific path
-  const indexByPath = new Map(entries.map((entry) => [normalizePath(entry.indexPath), entry]));
 
   const summary = {
     copiedAssets: [],
