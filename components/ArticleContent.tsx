@@ -41,14 +41,9 @@ export function ArticleContent({
 }) {
   const isSummary = useIsSummaryView();
   const showEmptyPlaceholder = isSummary && isSummaryEmpty(article.summary);
-  const [viewTransitionKey, setViewTransitionKey] = useState(0);
   const [revealDurationMs, setRevealDurationMs] = useState(450);
   const transitionRef = useRef<HTMLDivElement | null>(null);
   const collectionSlugSet = new Set(collectionSlugs);
-
-  useEffect(() => {
-    setViewTransitionKey((prev) => prev + 1);
-  }, [isSummary]);
 
   useLayoutEffect(() => {
     const element = transitionRef.current;
@@ -60,7 +55,7 @@ export function ArticleContent({
     const nextDuration = Math.round((contentHeight / pixelsPerSecond) * 1000);
     const clampedDuration = Math.min(1400, Math.max(260, nextDuration));
     setRevealDurationMs(clampedDuration);
-  }, [viewTransitionKey]);
+  }, [isSummary]);
 
   const revealStyle = {
     ['--reveal-duration' as string]: `${revealDurationMs}ms`,
@@ -123,7 +118,7 @@ export function ArticleContent({
             </header>
             <div
               ref={transitionRef}
-              key={`${isSummary ? 'summary' : 'full'}-${viewTransitionKey}`}
+              key={isSummary ? 'summary' : 'full'}
               className="animate-reveal-down motion-reduce:animate-none"
               style={revealStyle}
             >
