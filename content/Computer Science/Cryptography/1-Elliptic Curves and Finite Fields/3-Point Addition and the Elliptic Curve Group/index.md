@@ -22,7 +22,7 @@ Before discussing keys, signatures, or encryption, we first need to understand t
 
 
 
-## Adding Two Different Points
+# Adding Two Different Points
 
 Point addition is defined geometrically.
 
@@ -61,7 +61,7 @@ Feel free to move points `P` and `Q` around in the simulation below to get an in
 
 
 
-## Point Doubling
+# Point Doubling
 
 Point doubling is the special case where we add a point to itself:
 
@@ -98,7 +98,7 @@ Point doubling is important because scalar multiplication is built using repeate
 
 
 
-## Inverse Points
+# Inverse Points
 
 There is one important special case in point addition: adding a point to its opposite.
 
@@ -150,7 +150,7 @@ This is the case where the usual geometric picture needs one extra object.
 That object is the **point at infinity**.
 
 
-## The Point at Infinity
+# The Point at Infinity
 
 To make the addition rule complete, we define the result of adding a point to its inverse as a special point called the **point at infinity**, written as:
 
@@ -223,7 +223,7 @@ These rules are not just separate tricks. Together, they form a consistent algeb
 That structure is called a **group**.
 
 
-## Elliptic Curve as a Group
+# Elliptic Curve as a Group
 
 A **group** is a set of values together with an operation that combines two values and produces another value from the same set.
 
@@ -275,7 +275,7 @@ Elliptic curve points behave in a similar way, except the values are not ordinar
 * Values are **points**.
 * The operation is **point addition**.
 
-## The Elliptic Curve Group
+# The Elliptic Curve Group
 
 For an elliptic curve, the group is made from all valid points on the curve, plus the point at infinity $\mathcal{O}$.
 
@@ -315,7 +315,7 @@ This means the set of points on the elliptic curve over the finite field modulo 
 So when we say that elliptic curve points form a group, we mean that the points can be added together in a complete and consistent way.
 
 
-## Closure, Identity, Inverses, Associativity, and Commutativity
+# Closure, Identity, Inverses, Associativity, and Commutativity
 
 Groups have some rules that we have not discussed directly. You have probably already built intuition for them, but it is useful to name them explicitly:
 
@@ -422,7 +422,7 @@ $$
 Point addition has all five properties above, so the curve points form an **abelian group**. “Abelian” is simply the name for a group whose operation is commutative.
 
 
-## Why the Group Structure Matters
+# Why the Group Structure Matters
 
 You may be asking - why is all this group stuff important? - The group structure matters because ECC is not based only on drawing curves - It is based on doing arithmetic with curve points.
 

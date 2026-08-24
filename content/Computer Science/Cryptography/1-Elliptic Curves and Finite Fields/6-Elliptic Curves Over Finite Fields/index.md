@@ -30,7 +30,7 @@ The choice $p = 11$ keeps the field small enough to visualize while still defini
 Next, we go step by step from the elliptic curve equation we have been seing so far, until we end up with the exact same result as above.
 
 
-## Start with an Elliptic Curve Over the Real Numbers
+# Start with an Elliptic Curve Over the Real Numbers
 
 Consider the equation
 
@@ -65,7 +65,7 @@ The result is the familiar smooth elliptic-curve shape.
 <iframe src="simulations/real_curve_branches.html" width="100%" height="520px" title="Animated real-number elliptic curve with continuous upper and lower branches"></iframe>
 
 
-## Replace the Infinite Coordinate Plane with a Finite Coordinate Set
+# Replace the Infinite Coordinate Plane with a Finite Coordinate Set
 
 Since we are primarily interested in elliptic curves over a finite field, we will want to convert the real number curve into a finite set of points.
 
@@ -107,7 +107,7 @@ The real curve may remain visible in the background as a reference, but the squa
 
 <iframe src="simulations/finite_coordinate_window.html" width="100%" height="520px" title="Animation showing the finite F11 coordinate window over a faint real elliptic curve"></iframe>
 
-## Restrict the Input $x$ to Field Elements
+# Restrict the Input $x$ to Field Elements
 
 Over the real numbers, $x$ can vary continuously.
 
@@ -143,7 +143,7 @@ The important transition is that the continuous input axis has become a finite c
 
 <iframe src="simulations/ordinary_polynomial_outputs.html" width="100%" height="500px" title="Animation showing ordinary polynomial outputs for discrete F11 input values"></iframe>
 
-## Reduce the Right-Hand Side Modulo $p$
+# Reduce the Right-Hand Side Modulo $p$
 
 The coordinates and arithmetic now belong to $\mathbb{F}_{11}$, so every polynomial result must be reduced modulo $11$.
 
@@ -187,7 +187,7 @@ They are not yet the elliptic-curve points.
 
 <iframe src="simulations/modular_rhs_reduction.html" width="100%" height="520px" title="Animation reducing ordinary polynomial outputs modulo 11 into finite-field right-hand-side values"></iframe>
 
-## Compute the Possible Values of $y^2$
+# Compute the Possible Values of $y^2$
 
 The left-hand side of the elliptic-curve equation is
 
@@ -257,7 +257,7 @@ Not every field element is a quadratic residue. Therefore, not every right-hand-
 
 <iframe src="simulations/quadratic_residue_map.html" width="100%" height="520px" title="Animation mapping each y in F11 to its square modulo 11"></iframe>
 
-## Match the Left-Hand Side with the Right-Hand Side
+# Match the Left-Hand Side with the Right-Hand Side
 
 A coordinate pair $(x, y)$ belongs to the finite-field curve exactly when
 
@@ -324,7 +324,7 @@ Right-hand-side residue $r$
 
 <iframe src="simulations/match_lhs_rhs.html" width="100%" height="520px" title="Animation matching square residues with the right-hand-side value for x equals 3"></iframe>
 
-## Repeat the Matching Process for Every $x$
+# Repeat the Matching Process for Every $x$
 
 The construction is now repeated for every possible value
 
@@ -370,7 +370,7 @@ $$
 \#E(\mathbb{F}_{11}) = 13 + 1 = 14.
 $$
 
-## The Final Finite-Field Elliptic Curve
+# The Final Finite-Field Elliptic Curve
 
 After all matches have been collected, the continuous real curve has disappeared. What remains is a finite set of isolated points.
 
@@ -394,7 +394,7 @@ $$
 
 What changes is the number system in which the equation is interpreted.
 
-## Why the Points Appear in Symmetric Pairs
+# Why the Points Appear in Symmetric Pairs
 
 Suppose $(x, y)$ satisfies the curve equation:
 
@@ -449,18 +449,18 @@ form a symmetric pair.
 The visual symmetry lies around the middle of the coordinate range, but its mathematical cause is modular additive inversion—not ordinary reflection geometry.
 
 
-## What Modulo Does—and Does Not Do
+# What Modulo Does—and Does Not Do
 
 It is useful to distinguish three different ideas.
 
-### Modulo does
+## Modulo does
 
 * restrict coordinates to the representatives $0, \ldots, p - 1$;
 * reduce polynomial results into that range;
 * define addition, subtraction, multiplication, and division inside $\mathbb{F}_p$;
 * determine which coordinate pairs satisfy the elliptic-curve equation.
 
-### Modulo does not
+## Modulo does not
 
 * crop the real elliptic curve;
 * round real-valued curve points to integers;
@@ -472,7 +472,7 @@ The real and finite-field plots are two visualizations of the same algebraic equ
 The real curve provides useful geometric intuition, but the finite-field point set must be computed directly using modular arithmetic.
 
 
-## Point Addition Over a Finite Field
+# Point Addition Over a Finite Field
 
 The chord-and-tangent picture from the real-number curve is useful intuition, but it is not a literal construction over $\mathbb{F}_p$. There is no continuous curve or ordinary straight line to draw through the finite point cloud.
 
@@ -546,7 +546,7 @@ These formulas produce the same abstract group operation introduced earlier. Tog
 
 <iframe src="simulations/doubling_over_f11.html" width="100%" height="620px" title="Animated modular calculation of 2(1,5) equals (3,3) over the finite field F11"></iframe>
 
-## Nonsingular Curves
+# Nonsingular Curves
 
 Choosing a prime modulus does not mean that every curve is automatically suitable. The curve must also be nonsingular.
 
@@ -576,7 +576,7 @@ $$
 
 which is nonzero. Therefore, the curve is nonsingular over $\mathbb{F}_{11}$.
 
-## Complete Construction Algorithm
+# Complete Construction Algorithm
 
 The full point set can be computed directly with the following procedure:
 
@@ -593,7 +593,7 @@ for x in 0 .. p-1:
             points.append((x, y))
 ```
 
-## From This Toy Cloud to Production Curves
+# From This Toy Cloud to Production Curves
 
 Our running example uses $p = 11$ so that every calculation and every point fits on the page. It is useful for learning, but it offers no security: anyone can enumerate its tiny field, list its curve points, and try every possible scalar.
 
@@ -641,7 +641,7 @@ The large modulus is not only about making the picture bigger. Together with a c
 
 > A large prime alone is not enough. Real systems use vetted, standardized curve parameters and must validate points and handle scalar arithmetic correctly.
 
-## Summary
+# Summary
 
 The path from the real elliptic curve to the finite-field point cloud is:
 

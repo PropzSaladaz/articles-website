@@ -159,6 +159,8 @@ it while they are being written.
 
 ### Naming & Ordering
 
+- Start article bodies at `#` (h1), use `##` for their subsections, and do not
+  skip heading levels. The page title is rendered separately from the article body.
 - Folder names accept numeric prefixes (`1-`, `01-`, `2-`) to control sort order.
 - Sorting priority: **numeric prefix → alphabetical**.
 - Folder names must produce a non-empty, unique URL slug after their numeric prefix and

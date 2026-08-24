@@ -15,7 +15,7 @@ At the simplest level, an envelope is just a curve. It tells a parameter what to
 That is the key idea: an envelope is not really “about volume.” It is about **change over time**.
 
 
-## 1. The Intuition: Sounds Are Events, Not Static Objects
+# 1. The Intuition: Sounds Are Events, Not Static Objects
 
 Real sounds are rarely constant. A drum hit arrives fast and decays. A piano note starts strong and loses energy. A bowed string can rise more gradually and remain sustained while energy keeps entering the system. A combustion pulse in an engine has a sharp onset followed by a tail.
 
@@ -26,7 +26,7 @@ That release pattern is what the envelope describes.
 A useful way to think about it is this: the oscillator, noise source, or pulse generator gives you the **raw material**. The envelope tells that material how to behave. The same source can sound soft, aggressive, percussive, smooth, or mechanical depending on the envelope you apply.
 
 
-## 2. A First Look at the Shape
+# 2. A First Look at the Shape
 
 The easiest way to understand envelopes is to see and hear them at the same time. In the simulation below, the curve controls the sound. Move the points, change the curve shape, and listen to how the same source starts to feel like a different instrument or event.
 
@@ -36,7 +36,7 @@ I will refer to this simulation throughout the article, so that you can play wit
 
 
 
-## 3. ADSR Is the Famous Version
+# 3. ADSR Is the Famous Version
 
 The most common envelope model in synthesis is **ADSR**: Attack, Decay, Sustain, Release.
 
@@ -70,7 +70,7 @@ Many sounds do not naturally fit ADSR.
 
 The deeper concept is more general than ADSR: an envelope is simply a way to describe how a parameter changes through time.
 
-## 4. Why Curve Shape Matters
+# 4. Why Curve Shape Matters
 
 Beginners often focus on the envelope stages (attack, decay, sustain, release) and ignore the shape *inside* each stage. That detail matters a lot.
 
@@ -80,7 +80,7 @@ This is why two envelopes with the same timing can sound very different. The dur
 
 In practice, this is one of the highest-ROI improvements you can make in a DSP system: keep the same timing, but use better envelope curves.
 
-## 5. Envelopes Are Not Just for Volume
+# 5. Envelopes Are Not Just for Volume
 
 Amplitude is the best place to learn the concept, but envelopes are much more powerful than that.
 
@@ -106,7 +106,7 @@ Simple math, huge perceptual effect.
 
 ---
 
-## 6. Closing Thought
+# 6. Closing Thought
 
 An envelope is one of the simplest tools in DSP, but it controls something fundamental: **how a sound behaves in time**.
 
