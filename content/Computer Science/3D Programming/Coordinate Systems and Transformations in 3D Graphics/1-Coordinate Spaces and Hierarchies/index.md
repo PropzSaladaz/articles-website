@@ -4,7 +4,7 @@ date: "2025-12-15"
 summary: "Coordinate spaces give meaning to vectors. Learn about local, world, view, and screen spaces, and why objects need their own coordinate systems for animation and reuse."
 ---
 
-# 1. Coordinate Spaces
+# Coordinate Spaces
 
 In mathematics and computer graphics, a **coordinate space** defines a frame of reference for describing positions and directions. Each coordinate space has a specific purpose:
 
@@ -16,7 +16,7 @@ Any vector only has meaning given the **space** which it belongs to.
 The same vector may refer to different physical locations depending on the space, as we will see next.
 
 
-## 1.1 Local/Object Space
+## Local/Object Space
 
 Local space is the object's own coordinate system. It moves and rotates with the object. Think of it as a localized view of everything that may alter the object.
 
@@ -43,7 +43,7 @@ Because they are stored in local space, rotating the hand means rotating its loc
 ![](./images/img2.svg)
 
 
-## 1.2 World Space
+## World Space
 
 World space is the **global coordinate system** in which all objects are positioned, oriented, and interact within a scene.\
 Every object’s local coordinates are transformed into world coordinates so they can coexist in a shared space.
@@ -83,11 +83,11 @@ The image below shows the difference:
 
 \===
 
-# 2. Scene Hierarchies & Parent–Child Transforms
+# Scene Hierarchies & Parent–Child Transforms
 
 Real scenes are made of objects that depend on each other. A character is not a single mesh; it is a body holding an arm, an arm holding a hand, and a hand holding an object. To manage these relationships, graphics systems organize objects into **hierarchies**, often called a *scene graph*. Each object in the hierarchy defines its own **local transform**, describing where it is relative to its parent.
 
-## 2.1 Why Use Hierarchies?
+## Why Use Hierarchies?
 
 The core idea is simple: **children inherit the transformations of their parents**.\
 If the parent moves, rotates, or scales, the child follows automatically.
@@ -106,7 +106,7 @@ A character’s skeleton illustrates this well:
 
 Animating the arm (e.g., waving) should move the hand and sword, even though their own local transforms never changed. The sword only needs to know where it sits in the hand’s local space; the rest is inherited through the hierarchy.
 
-## 2.2 Local Space in a Hierarchy
+## Local Space in a Hierarchy
 
 In this context, *local space* gains a more practical meaning: it is not just the object’s internal coordinate system — it is the coordinate system **in which the object is placed relative to its parent**.
 
@@ -119,7 +119,7 @@ Key observations:
 
 This is why tools like 3D modeling software and game engines expose pivot settings and parent–child linking as core features.
 
-## 2.3 Where Hierarchies Appear
+## Where Hierarchies Appear
 
 This pattern is universal across multiple domains:
 
@@ -132,7 +132,7 @@ This pattern is universal across multiple domains:
 
 Each level defines a new coordinate space. Children are expressed relative to that space rather than to the world.
 
-## 2.4 Key Mental Model (Before the Math)
+## Key Mental Model (Before the Math)
 
 Before introducing matrix multiplication, the fundamental concept to internalize is:
 

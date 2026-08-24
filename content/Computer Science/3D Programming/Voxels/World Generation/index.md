@@ -12,7 +12,7 @@ This article outlines a practical optimization pipeline that transforms a naive 
 
 ---
 
-## 1. Why Naive Voxel Rendering Fails
+## Why Naive Voxel Rendering Fails
 
 Voxel worlds are typically divided into fixed-size chunks to make streaming and updates manageable. A common chunk size is  
 $32 \times 32 \times 32$, which already contains **32,768 voxels**.
@@ -26,7 +26,7 @@ If each solid voxel is rendered as a cube, the numbers escalate rapidly:
 Most of this geometry is completely invisible. Voxels buried underground or enclosed by other voxels still generate triangles, consume memory, and occupy GPU bandwidth. The fundamental mistake is treating voxel data as something that should be rendered volumetrically, when **rendering only ever needs the surface**.
 
 
-## 2. Surface Extraction: Rendering Only What Can Be Seen
+## Surface Extraction: Rendering Only What Can Be Seen
 
 
 <iframe src="simulations/face_culling.html" width="100%" height="600px"></iframe>
@@ -42,7 +42,7 @@ During mesh generation, each voxel checks its six neighbors. A face is emitted o
 This step alone typically removes **80–95% of potential geometry** in dense terrain. GPU vertex processing drops dramatically, while visual output remains unchanged. Conceptually, the world shifts from a solid block of matter to a thin skin that wraps around empty space.
 
 
-## 3. Chunk Sampling & Culling: Avoiding Unnecessary Work and Memory Allocation
+## Chunk Sampling & Culling: Avoiding Unnecessary Work and Memory Allocation
 
 Surface extraction reduces rendering cost, and decreases memory usage since we use less vertices. Still, to have a nice render distance, we require thousands of chunks to be **generated** and **rendered**. 
 
@@ -74,7 +74,7 @@ Here a few examples:
     - CONS: More costly than the approach above, but less than doing the entire chunk.
 
 
-## 4. Greedy Meshing: Collapsing Redundant Faces
+## Greedy Meshing: Collapsing Redundant Faces
 
 After surface extraction, the terrain surface may still consist of thousands of small, adjacent faces. For example, a flat \(10 \times 10\) floor produces 100 individual quads, even though they all lie on the same plane.
 
@@ -88,7 +88,7 @@ The effect is dramatic:
 Greedy meshing preserves exact geometry while significantly improving rendering efficiency.
 
 
-## 5. Level of Detail: Scaling with Distance
+## Level of Detail: Scaling with Distance
 
 Even an optimized mesh is unnecessarily detailed at long distances. Voxels far from the camera occupy only a fraction of a pixel, making high-resolution geometry wasteful.
 

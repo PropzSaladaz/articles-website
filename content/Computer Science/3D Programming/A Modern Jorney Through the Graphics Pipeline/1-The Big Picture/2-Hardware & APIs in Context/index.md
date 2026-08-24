@@ -10,7 +10,7 @@ A real-time renderer operates across **two very different types of processors** 
 
 ---
 
-## 1. The Dynamic Duo
+## The Dynamic Duo
 
 If you imagine the computer as a film production set, the differentiation between these two processors becomes clear. They aren't just redundant copies of each other; they are colleagues with completely different personalities and skill sets.
 
@@ -26,25 +26,25 @@ In rendering, this is perfect. A 4K screen has over 8 million pixels. To draw a 
 
 ---
 
-## 2. The Journey of a Draw Call
+## The Journey of a Draw Call
 
 Understanding rendering isn't just about knowing what the chips do; it's about understanding the *flow* of data. This flow is managed by **Graphics APIs** (Application Programming Interfaces) like **DirectX**, **Vulkan**, **Metal**, or **OpenGL**. These APIs provide the standardized language your code uses to talk to the hardware.
 
 When you tell your code to "Draw this character," the GPU doesn't start drawing immediately. The command travels through a complex pipeline of layers.
 
-### Step 1: The Application (Recording)
+### The Application (Recording)
 It starts in your game engine or application. When you issue a command like `DrawIndexed`, the CPU **records** this intent. In modern low-level APIs like Vulkan or DirectX 12, you explicitly record these into a **Command Buffer**.
 
 Think of a Command Buffer as a shopping list for the GPU. You aren't buying the groceries yet; you're just writing down "Pick up milk, then eggs, then bread." The CPU is fast at writing this list because it's just writing data to memory, not talking to the GPU yet.
 
-### Step 2: The User-Mode Driver (Translation & Validation)
+### The User-Mode Driver (Translation & Validation)
 The command buffer is handed to the **User-Mode Driver (UMD)**. This driver is a DLL/library provided by the GPU vendor (NVIDIA, AMD, Intel) that lives in your application's memory space.
 
 Its job is **translation and validation**:
 *   **Translation:** It converts your generic API calls (e.g., "Set Blend Mode to Additive") into the specific binary instructions that your particular GPU architecture (e.g., NVIDIA Ada Lovelace or AMD RDNA3) understands.
 *   **Validation:** It checks if your commands make sense. Are you trying to draw without a shader? Are you accessing a texture that doesn't exist? (Note: Modern APIs often skip this validation for speed, assuming you know what you're doing).
 
-### Step 3: The Kernel-Mode Driver (Scheduling)
+### The Kernel-Mode Driver (Scheduling)
 Next, the work is passed to the **Kernel-Mode Driver (KMD)**. This part of the driver runs with high privileges (Ring 0) deep in the Operating System. It is the gatekeeper of the physical hardware.
 
 The KMD handles the gritty details:
@@ -58,14 +58,14 @@ The KMD handles the gritty details:
 >
 > Consoles (PlayStation, Xbox) run in a closed, fixed environment where the game is king. Developers can bypass much of this "safety" overhead, talking more directly to the hardware. This is why a console often outperforms a PC with similar raw specs—there are fewer middle-managers standing between the game code and the silicon.
 
-### Step 4: The GPU Front-End (Execution)
+### The GPU Front-End (Execution)
 Finally, the commands reach the GPU itself. The **Command Processor** (a dedicated unit on the GPU) pulls instructions from the ring buffer and begins distributing work to the thousands of cores.
 
 It configures the fixed-function hardware (rasterizers, depth testers) and launches waves of threads on the programmable shader cores. Only now, at the very end of this journey, does the silicon heat up and the pixels actually get painted.
 
 ---
 
-## 3. The Synchronization Dance
+## The Synchronization Dance
 
 A common misconception is that the CPU calls the GPU like a function `gpu.Draw()` and waits for it to return. If that were true, our games would run at a crawl.
 
@@ -89,7 +89,7 @@ To manage this, developers use synchronization tools provided by the API:
 
 ---
 
-## 4. Why This Mental Model Matters
+## Why This Mental Model Matters
 
 Before writing a single line of shader code, this mental model is crucial. You aren't just writing a sequential program; you are coordinating a massive distributed system.
 

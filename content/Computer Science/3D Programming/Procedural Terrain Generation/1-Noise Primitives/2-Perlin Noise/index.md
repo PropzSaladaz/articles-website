@@ -69,7 +69,7 @@ The later sections derive every part of this readout. For now, follow the moving
 
 The gradients provide variation. The smooth blending prevents visible seams between cells.
 
-# 1. Locate the lattice cell
+# Locate the lattice cell
 
 Perlin noise is built over a regular integer grid, also called a **lattice**.
 
@@ -139,7 +139,7 @@ $$
 v=7.6-7=0.6
 $$
 
-Therefore, the sample is $25%$ of the way across the cell horizontally and $60%$ of the way vertically.
+Therefore, the sample is $25\%$ of the way across the cell horizontally and $60\%$ of the way vertically.
 
 Because the cell has unit size:
 
@@ -147,7 +147,7 @@ $$
 u,v\in[0,1)
 $$
 
-# 2. Assign a gradient to each corner
+# Assign a gradient to each corner
 
 Each lattice point is assigned a small gradient vector.
 
@@ -189,7 +189,7 @@ Conceptually, we can imagine that every lattice point stores an arrow. In practi
 
 Adjacent cells refer to the same gradient when they share a corner. This is essential: the cells are not generated as independent patches.
 
-# 3. Compute displacement vectors
+# Compute displacement vectors
 
 For each corner, compute the vector pointing from that corner to the sample position.
 
@@ -239,7 +239,7 @@ $$
 
 The first vector points upward and to the right. The second points downward and to the left.
 
-# 4. Compute each corner's contribution
+# Compute each corner's contribution
 
 Each corner contributes a value through a dot product:
 
@@ -354,7 +354,7 @@ $$
 
 The variation appears between lattice points.
 
-# 5. Smooth the interpolation coordinates
+# Smooth the interpolation coordinates
 
 We now have four corner contributions, but we still need to combine them.
 
@@ -411,7 +411,7 @@ $$
 
 These faded values become the interpolation weights.
 
-# 6. Interpolate the four contributions
+# Interpolate the four contributions
 
 Linear interpolation between two values $a$ and $b$ is defined as:
 

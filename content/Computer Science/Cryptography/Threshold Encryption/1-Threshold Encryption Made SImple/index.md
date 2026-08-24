@@ -4,7 +4,7 @@ date: "2025-12-15"
 summary: "From Caesar's cipher to threshold cryptography. Explore how encryption evolved from simple shifts to distributed systems where multiple parties must collaborate to decrypt secrets."
 ---
 
-# 1.  Caesar Salad of Secrets: A Recipe for the First Cipher
+# Caesar Salad of Secrets: A Recipe for the First Cipher
 
 Since ancient times, people have needed to keep important information hidden from prying eyes. Whether it was a king's secret orders or a merchant's trade routes, secrecy was often the difference between safety and disaster.
 
@@ -42,7 +42,7 @@ And as a warning: today's ciphers will eventually become obsolete too.
 
 ![](./images/medium2.png)
 
-# 2. One Key to Rule Them All (Symmetric Ciphers)
+# One Key to Rule Them All (Symmetric Ciphers)
 
 After Caesar's cipher, people kept improving the same basic idea: **one key to encrypt, the same key to decrypt**. That's why they're called *symmetric* ciphers - encryption and decryption are mirror images of each other.
 
@@ -57,7 +57,7 @@ Over the centuries, symmetric ciphers evolved from Caesar's simple letter shifts
 
 Because if an enemy intercepts the key… game over.
 
-# 3. I know, You Don't! (Asymmetric Ciphers)
+# I know, You Don't! (Asymmetric Ciphers)
 
 This key-sharing nightmare set the stage for a revolution. In the 1970s, mathematicians invented **asymmetric cryptography**, flipping the entire script.
 
@@ -105,7 +105,7 @@ Clearly, solution (2) is better than (1), since the power of showing a coordinat
 
 This is what Threshold Encryption is all about - encryption controlled by the group.
 
-# 4. Threshold Encryption - No One Knows Until We All Do
+# Threshold Encryption - No One Knows Until We All Do
 
 The base idea is simple:
 

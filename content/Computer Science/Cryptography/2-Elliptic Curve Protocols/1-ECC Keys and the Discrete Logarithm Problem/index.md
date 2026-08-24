@@ -4,11 +4,11 @@ date: "2026-06-11"
 summary: "Use the finite-field base-point subgroup to introduce ECC keypairs, the Elliptic Curve Discrete Logarithm Problem, and the protocol families built from it."
 ---
 
-# 1. ECC Keys and the Discrete Logarithm Problem
+# ECC Keys and the Discrete Logarithm Problem
 
 The preceding [Elliptic Curves and Finite Fields](/collections/computer-science/cryptography/elliptic-curves-and-finite-fields/) collection built the mathematical machinery: finite-field curve points, scalar multiplication, and the public base point $G$ with its large subgroup. This chapter starts using that machinery as cryptography.
 
-## 2. Public and Private Keys in ECC
+## Public and Private Keys in ECC
 
 ECC keypairs are based on scalar multiplication.
 
@@ -44,7 +44,7 @@ But only the private key owner knows `k`.
 
 The security comes from the fact that recovering $k$ from $G$ and $Q$ is hard.
 
-## 3. The Elliptic Curve Discrete Logarithm Problem
+## The Elliptic Curve Discrete Logarithm Problem
 
 The classical Discrete Logarithm Problem, or DLP, is usually written like this:
 
@@ -100,7 +100,7 @@ there is no known efficient classical algorithm that recovers $k$ for properly c
 Cryptographic hardness comes from the finite-field curve group—not from the smooth real-number curve used for geometric intuition in the foundation collection.
 
 
-## 4. Why ECC Is Useful for Cryptography
+## Why ECC Is Useful for Cryptography
 
 ECC is useful because scalar multiplication is easy in one direction and hard in the reverse direction.
 
@@ -142,7 +142,7 @@ for around 128 bits of classical security. This is not because ECC is magically 
 Smaller key material can mean smaller signatures, less bandwidth and storage, and better performance on constrained devices.
 
 
-## 5. Why This Matters for Threshold Cryptography
+## Why This Matters for Threshold Cryptography
 
 Threshold cryptography builds on the same ECC foundation.
 
@@ -187,7 +187,7 @@ Before understanding DKG or threshold encryption, the most important ECC ideas a
 6. Finite-field elliptic curves give us a discrete, computer-friendly structure.
 
 
-## 6. Summary
+## Summary
 
 Elliptic Curve Cryptography is based on a simple but powerful idea:
 

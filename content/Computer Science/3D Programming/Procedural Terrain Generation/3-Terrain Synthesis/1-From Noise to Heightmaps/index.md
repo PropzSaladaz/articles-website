@@ -14,7 +14,7 @@ $$
 
 It is deliberately simpler than a full volumetric density field. That makes it a good first practical target: we can see the signal directly, inspect its parameters, and understand which parts belong to noise and which parts belong to terrain policy.
 
-## 1. Sample in world coordinates
+## Sample in world coordinates
 
 The generator should evaluate noise at world coordinates, not at coordinates local to the current screen or chunk. For a base feature length $L$:
 
@@ -26,7 +26,7 @@ Sampling the same world position again—perhaps after unloading and reloading a
 
 The feature length controls horizontal scale. Increasing it spreads the same broad pattern over more world units; it does not directly increase the elevation range.
 
-## 2. Turn fBm into elevation
+## Turn fBm into elevation
 
 The simulation uses normalized fractal Brownian motion as its signal, then maps it into a height value:
 
@@ -40,7 +40,7 @@ $$
 
 The clamping step is a practical guard for a noise implementation whose exact extrema may not be known. In a production generator, you may calibrate the range or use a remapping curve instead.
 
-## 3. Add a terrain policy
+## Add a terrain policy
 
 Noise does not know what water or grass means. The heightmap becomes a world only after we choose thresholds:
 
