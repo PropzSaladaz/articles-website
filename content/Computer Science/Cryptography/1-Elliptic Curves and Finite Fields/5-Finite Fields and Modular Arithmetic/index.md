@@ -59,7 +59,7 @@ A finite field gives us:
 >
 > Finite-field curves are used in real cryptography.
 
-## Modular Arithmetic
+# Modular Arithmetic
 
 The most common finite fields used in ECC are based on arithmetic modulo a prime number `p`. Instead of allowing all possible numbers, we restrict ourselves to the finite set:
 
@@ -147,7 +147,7 @@ So, modulo arithmetic keeps all values inside a fixed finite set.
 <iframe src="simulations/modular_clock.html" width="100%" height="560px" title="Animated clock showing modular arithmetic wrapping around modulo 12"></iframe>
 
 
-## Addition, Subtraction, Multiplication Modulo $p$
+# Addition, Subtraction, Multiplication Modulo $p$
 
 In a finite field modulo `p`, normal arithmetic is replaced by modular arithmetic.
 
@@ -241,7 +241,7 @@ $$
 That means the left side and right side only need to be equal after reducing modulo `p`.
 
 
-## Division as a Modular Inverse
+# Division as a Modular Inverse
 
 Division modulo `p` is the part that usually feels least intuitive.
 
@@ -346,7 +346,7 @@ This creates an elliptic curve over a finite field. Unlike the real-number versi
 
 Instead, it looks like a set of scattered points. In the next article, we use this same field, $\mathbb{F}_{11}$, to construct every point of the curve $y^2 \equiv x^3 + x + 1 \pmod{11}$.
 
-## Why the Modulus Is Prime
+# Why the Modulus Is Prime
 
 ECC commonly uses a **prime field**, written $\mathbb{F}_p$, where $p$ is prime. Primality is what makes every non-zero field element invertible.
 

@@ -24,7 +24,7 @@ The camera does not need to point at each vertex individually. It has one positi
 > [!IMPORTANT]
 > The view matrix does **not** move the camera through a fixed world. It re-expresses the world as if the camera were at the origin, aligned with the view-space axes.
 
-## 1. What Enters and Leaves This Stage
+## What Enters and Leaves This Stage
 
 The view transform receives a world-space position and produces the same geometric point written in view space:
 
@@ -49,7 +49,7 @@ We will use a right-handed convention in which the camera sits at the view-space
 <iframe src="simulations/view_transform.html" width="100%" height="600px"></iframe>
 
 
-## 2. A Camera Is a Coordinate Frame
+## A Camera Is a Coordinate Frame
 
 The world has its own origin and axes. A camera needs its own origin and axes:
 
@@ -80,7 +80,7 @@ The three axes $r$, $u$, and $b$ must be perpendicular and have unit length. Suc
 > [!TIP]
 > Think of view space as a tripod bolted to the camera. Instead of asking for a vertex's world coordinates, ask how far it lies along the tripod's right, up, and backward legs.
 
-## 3. From a Target Point to Camera Axes
+## From a Target Point to Camera Axes
 
 Most camera APIs offer a **lookAt** operation. It usually takes:
 
@@ -130,7 +130,7 @@ The first cross product produces a direction perpendicular to both the view dire
 >
 > You should obtain a camera whose right and up axes agree with the world axes, whose forward direction is $(0, 0, -1)$, and whose backward direction is $(0, 0, 1)$.
 
-## 4. Change of Basis: Expressing a Vertex Relative to the Camera
+## Change of Basis: Expressing a Vertex Relative to the Camera
 
 Let $p_{world}$ be a world-space vertex. Before we can describe it using the camera's axes, we must put the camera at the origin:
 
@@ -168,7 +168,7 @@ This is the essential derivation of the view transform:
 > [!EXAMPLE]
 > A vertex can be far from the world's origin yet close to the camera, or close to the world's origin yet behind the camera. World-space coordinates alone cannot tell us either fact. View space can.
 
-## 5. Turning the Derivation into a View Matrix
+## Turning the Derivation into a View Matrix
 
 Homogeneous coordinates let us combine the translation and change of basis in one matrix multiplication. With column vectors, the view matrix is:
 
@@ -246,7 +246,7 @@ This is exactly what we want. A direction has an orientation but no location: mo
 > [!IMPORTANT]
 > Use the point form for vertex positions and the direction form for direction vectors. Treating a direction as a point makes it incorrectly respond to camera translation.
 
-## 6. The Same Result as an Inverse Camera Transform
+## The Same Result as an Inverse Camera Transform
 
 There is another powerful way to understand the view matrix. A camera has a pose in the world: it has a position $E$ and an orientation given by its local right, up, and backward axes.
 
@@ -301,7 +301,7 @@ This shortcut is specific to pure rotation. A general transform with non-uniform
 > [!TIP]
 > If you already have a camera's world transform, do not use it directly as the view matrix. Invert it first. This is the source of the classic “my camera moves backward” bug.
 
-## 7. A Complete lookAt Construction
+## A Complete lookAt Construction
 
 Here is the full construction in pseudocode. It follows the right-handed, negative-Z-forward convention used throughout this article.
 
@@ -323,7 +323,7 @@ The first three rows change the basis from world axes to camera axes. The last c
 > [!NOTE]
 > This notation describes how the matrix acts on column vectors. A library may store its numbers in row-major or column-major memory order, and may expose a lookAt function with a different convention. Memory layout and multiplication convention are related in code, but they are not the same mathematical idea.
 
-## 8. Worked Example
+## Worked Example
 
 Place the camera at:
 
@@ -385,7 +385,7 @@ The vertex is five units in front of the camera, so its view-space Z coordinate 
 >
 > The first point is the camera itself and should become the view-space origin. The second point is behind the camera and should have a positive Z value.
 
-## 9. Debugging the View Transform
+## Debugging the View Transform
 
 When a scene looks wrong, inspect a known point in both world and view space. The following symptoms narrow down the likely cause:
 

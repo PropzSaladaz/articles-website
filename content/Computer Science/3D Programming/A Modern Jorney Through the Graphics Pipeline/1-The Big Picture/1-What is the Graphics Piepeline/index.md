@@ -10,7 +10,7 @@ The graphics pipeline is a staged factory that **turns 3D scene descriptions** (
 
 It basically converts 3D objects into a 2D image.
 
-# 1. What the Piepline Is (and Isn't)
+# What the Piepline Is (and Isn't)
 
 ## What It Is
 

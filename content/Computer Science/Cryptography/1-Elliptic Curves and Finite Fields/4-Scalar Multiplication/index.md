@@ -188,7 +188,7 @@ where each `+` is elliptic curve point addition.
 > 
 > Efficient scalar multiplication makes it practical to work with large scalars even though they represent many repeated point additions.
 
-## From Repeated Addition to Finite Arithmetic
+# From Repeated Addition to Finite Arithmetic
 
 The smooth real-number curve gives us a useful way to see point addition and doubling. The next step is to change the number system beneath the same ideas.
 

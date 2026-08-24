@@ -24,7 +24,7 @@ By the end of the collection, the goal is for elliptic-curve cryptography to fee
 
 a curve, points on that curve, and a rule for combining them.
 
-## Where this collection stops
+# Where this collection stops
 
 This collection focuses on the mathematical foundation behind elliptic-curve cryptography. It explains how curves, finite fields, point addition, scalar multiplication, base points, and groups fit together.
 

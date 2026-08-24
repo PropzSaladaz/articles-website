@@ -6,9 +6,9 @@ summary: "What are the differences between noise and jitter"
 
 If you have worked with DSP, or music production, you probably have seen the terms "noise" and "jitter" thrown around. But what are they exactly? And how do they differ from each other?
 
-# 1. Noise
+# Noise
 
-## 1.1. What is Noise?
+## What is Noise?
 
 The simplest way to explain it is the own definition of 'noise' - **unwanted sound**.
 When you record a sound, you want it to be as perfect as possible. But in reality, whatever you're trying to record is usually surrounded by other sounds that you don't want to record. These sounds are **noise**.
@@ -17,7 +17,7 @@ Why is noise so important though? Why does it appear so much in so many areas?
 
 The fact of it being so common is what makes it so important. Conceptually every sound we hear has some noise mixed in it. And if we want to produce any type of artifical sound that sounds realistic, we need to add some noise to it. There's no way around it. Without random fluctuations, it sounds unnatural.
 
-## 1.2. So, how is noise defined?
+## So, how is noise defined?
 
 We can define noise as:
 
@@ -41,7 +41,7 @@ Where $y[s]$ is the noisy signal, $x[s]$ is the original signal, and $n[s]$ is t
 
 But a spoiler - white noise is what you are most familiar with - it's the sound of static on an untuned radio.
 
-## 1.3. White Noise - The Sound of Static
+## White Noise - The Sound of Static
 
 The color of noise refers to its **Power Spectral Density (PSD)** — essentially, how its energy is distributed across the frequency spectrum.
 
@@ -70,7 +70,7 @@ It is basically the same as tossing a coin for each new sample. The result of cu
 Because human ears are more sensitive to high frequencies, and because there are mathematically way more high frequencies than low ones (there are 10,000 Hz between 10kHz and 20kHz, but only 20 Hz between 20Hz and 40Hz), white noise sounds incredibly harsh, bright, and hissy. Think of old TV static or a steam leak.
 
 
-## 1.4. Brown Noise - The Sound of a Waterfall
+## Brown Noise - The Sound of a Waterfall
 
 **The Math** 
 
@@ -93,7 +93,7 @@ The following animation shows how this coefficient affects the noise. You can se
 You may have noticed the lower frequencies come out more as you make the persistence factor near $$1$$. And if you make it $$0$$, you get simple white noise (as expected by the formula).
 
 
-## 1.5. Pink Noise
+## Pink Noise
 
 **The Math**
 
@@ -182,7 +182,7 @@ The following simulation lets you play with the number of stages used to generat
 
 ===
 
-# 2. Jitter
+# Jitter
 
 If noise is an error in value (the vertical Y-axis), **jitter is an error in time** (the horizontal X-axis).
 
@@ -190,7 +190,7 @@ When you send a signal through a pipe—whether that is an analog audio cable, a
 
 The data itself is perfectly intact, but its arrival schedule has been corrupted.
 
-## 2.1. The Conveyor Belt Analogy
+## The Conveyor Belt Analogy
 
 Imagine a pristine factory conveyor belt delivering identical boxes (your data samples) to a worker at exactly one box per second.
 
@@ -199,7 +199,7 @@ Imagine a pristine factory conveyor belt delivering identical boxes (your data s
 
 None of the boxes are damaged (there is no noise), but the unpredictable delivery creates chaos for the worker trying to process them. In real-time DSP, if a sample arrives too late, the system might have nothing to play, causing an audio dropout or video stutter. If a sample arrives too early, it might get discarded because the system isn't ready for it.
 
-## 2.2. Modeling Jitter Mathematically
+## Modeling Jitter Mathematically
 
 To model jitter in your DSP code, you don't touch the amplitude of the signal $$x[n]$$ at all. Instead, you manipulate the delay line.
 

@@ -41,14 +41,9 @@ export function ArticleContent({
 }) {
   const isSummary = useIsSummaryView();
   const showEmptyPlaceholder = isSummary && isSummaryEmpty(article.summary);
-  const [viewTransitionKey, setViewTransitionKey] = useState(0);
   const [revealDurationMs, setRevealDurationMs] = useState(450);
   const transitionRef = useRef<HTMLDivElement | null>(null);
   const collectionSlugSet = new Set(collectionSlugs);
-
-  useEffect(() => {
-    setViewTransitionKey((prev) => prev + 1);
-  }, [isSummary]);
 
   useLayoutEffect(() => {
     const element = transitionRef.current;
@@ -60,7 +55,7 @@ export function ArticleContent({
     const nextDuration = Math.round((contentHeight / pixelsPerSecond) * 1000);
     const clampedDuration = Math.min(1400, Math.max(260, nextDuration));
     setRevealDurationMs(clampedDuration);
-  }, [viewTransitionKey]);
+  }, [isSummary]);
 
   const revealStyle = {
     ['--reveal-duration' as string]: `${revealDurationMs}ms`,
@@ -72,8 +67,8 @@ export function ArticleContent({
       {!isSummary && <ReadingProgressBar contentSelector="article" />}
 
       <div className="grid gap-6 sm:gap-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-16">
-        <div className="reading-shell min-w-0 rounded-2xl border border-slate-200 bg-white px-4 py-6 shadow-md dark:border-slate-700/30 dark:bg-slate-900/50 dark:shadow-[0_4px_16px_rgba(0,0,0,0.25)] sm:px-8 sm:py-10 lg:px-10 lg:py-12">
-          <article className="prose prose-base sm:prose-lg prose-slate min-w-0 max-w-none dark:prose-invert">
+        <div className="reading-shell min-w-0 rounded-2xl border border-border bg-card px-4 py-6 text-card-foreground shadow-md sm:px-8 sm:py-10 lg:px-10 lg:py-12">
+          <article className="prose prose-semantic prose-base min-w-0 max-w-none text-foreground sm:prose-lg">
             <header className="not-prose mb-8 flex flex-col gap-4">
               {knowledgePath.length > 0 && (
                 <nav aria-label="Knowledge path" className="mb-2">
@@ -107,14 +102,14 @@ export function ArticleContent({
               )}
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
-                  <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">{article.title}</h1>
+                  <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">{article.title}</h1>
                   {article.status === 'draft' && (
                     <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
                       Draft
                     </span>
                   )}
                 </div>
-                <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
+                <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                   <time dateTime={article.date}>{formatDate(article.date)}</time>
                   <span aria-hidden="true">•</span>
                   <span>{article.readingTime.text}</span>
@@ -123,31 +118,31 @@ export function ArticleContent({
             </header>
             <div
               ref={transitionRef}
-              key={`${isSummary ? 'summary' : 'full'}-${viewTransitionKey}`}
+              key={isSummary ? 'summary' : 'full'}
               className="animate-reveal-down motion-reduce:animate-none"
               style={revealStyle}
             >
               {isSummary ? (
                 showEmptyPlaceholder ? (
-                  <div className="not-prose rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-8 text-center dark:border-slate-700 dark:bg-slate-800/50">
+                  <div className="not-prose rounded-2xl border-2 border-dashed border-border bg-muted/50 p-8 text-center">
                     <div className="mb-3 text-4xl">📝</div>
-                    <p className="text-lg font-medium text-slate-600 dark:text-slate-300">
+                    <p className="text-lg font-medium text-foreground">
                       Summary coming soon...
                     </p>
-                    <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                    <p className="mt-2 text-sm text-muted-foreground">
                       This article is still being written. Check back later for a summary!
                     </p>
                   </div>
                 ) : (
                   <MarkdownRenderer
                     html={article.summary.html}
-                    className="prose-base sm:prose-lg text-slate-600 dark:text-slate-300"
+                    className="prose-base text-muted-foreground sm:prose-lg"
                   />
                 )
               ) : (
                 <>
                   {article.cover && (
-                    <figure className="not-prose overflow-hidden rounded-3xl border border-slate-200 shadow-sm dark:border-slate-800">
+                    <figure className="not-prose overflow-hidden rounded-3xl border border-border shadow-sm">
                       <Image
                         src={article.cover}
                         alt={article.title}
@@ -165,7 +160,7 @@ export function ArticleContent({
                     collectionSlug={article.collectionSlug}
                   />
                   <section className="not-prose mt-12 space-y-6">
-                    <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Comments</h2>
+                    <h2 className="text-2xl font-semibold text-foreground">Comments</h2>
                     <GiscusComments discussionIdentifier={article.slug} />
                   </section>
                 </>
@@ -175,8 +170,8 @@ export function ArticleContent({
         </div>
         <aside className="hidden lg:block sticky top-[88px] self-start max-h-[calc(100vh-104px)] overflow-y-auto lg:pr-4">
           <div className="space-y-4">
-            <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 text-sm shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+            <div className="rounded-2xl border border-border bg-card/80 p-4 text-sm text-card-foreground shadow-sm">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                 Article view
               </p>
               <div className="mt-3">

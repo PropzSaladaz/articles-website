@@ -1,4 +1,4 @@
-## 1. Noise
+## Noise
 
 Noise is random fluctuation added to a signal. The main difference between noise “colors” is how their energy is distributed across frequencies.
 

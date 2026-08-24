@@ -7,7 +7,7 @@ summary: "Build visual intuition for elliptic curves using real-number curves, W
 This is the first real introductory article on elliptic curves - In this article, we focus only on a smooth curve over the real numbers: which coordinate pairs belong to it, why it is symmetric, and why smoothness matters.
 
 
-## What Is an Elliptic Curve?
+# What Is an Elliptic Curve?
 
 <iframe src="simulations/ec_introduction.html" width="100%" height="600px"></iframe>
 
@@ -101,7 +101,7 @@ An elliptic curve is the set of all points that satisfy the curve equation.
 :::
 
 
-## Weierstrass Form
+# Weierstrass Form
 
 The equation:
 
@@ -120,7 +120,7 @@ The most important operation will be **point addition**, which we will introduce
 - Points that do not satisfy the equation are not part of the curve.
 
 
-## Why the Curve Is Symmetric
+# Why the Curve Is Symmetric
 
 You may already have noticed from the curve's graph that the curve is symmetric across the x-axis.
 
@@ -159,7 +159,7 @@ For elliptic curves in Weierstrass form, points usually come in mirrored pairs: 
 :::
 
 
-## Curve Parameters: `a` and `b`
+# Curve Parameters: `a` and `b`
 
 In the Weierstrass equation, the values `a` and `b` control the shape of the curve. Changing `a` and `b` changes how the curve bends and how its branches appear.
 
@@ -177,7 +177,7 @@ Watch the animation for a few seconds. You may notice some useful patterns:
 > Not every choice of a and b gives a valid elliptic curve, as we will see later.
 
 
-## Smooth vs. Singular Curves
+# Smooth vs. Singular Curves
 
 A valid elliptic curve must be **smooth**. This means the curve must not have:
 
@@ -220,7 +220,7 @@ The animation below shows examples of valid and invalid curves. Feel free to go 
 This distinction matters because ECC is not based only on the curve shape. It is based on the ability to perform reliable algebraic operations over the points of the curve.
 So, as you can imagine, if the operations are not well defined for some curve, then ECC is also not well defined, which means we cannot use it for cryptography.
 
-## Points on an Elliptic Curve
+# Points on an Elliptic Curve
 
 ECC does not work directly with arbitrary numbers. It works with **points on a curve**. So let's define what a point is. A point is written as:
 
@@ -262,7 +262,7 @@ Once we understand these points, we can define operations over them. That is whe
 
 
 
-## Curves Over Real Numbers
+# Curves Over Real Numbers
 
 All the elliptic curves we have seen so far are drawn over the real numbers. That means `x` and `y` can be:
 

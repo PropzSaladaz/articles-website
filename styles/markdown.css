@@ -69,6 +69,11 @@
   color: var(--muted);
 }
 
+.md .md-section-number {
+  margin-right: 0.35em;
+  font-variant-numeric: tabular-nums;
+}
+
 /* Remove underlines added by autolink wrapper */
 .md .md-heading a:not(.anchor-link) {
   color: inherit;

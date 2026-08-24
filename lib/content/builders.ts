@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { extractHeadings, markdownToHtml } from "../markdown";
+import { markdownToHtml, renderMarkdown } from "../markdown";
 import { markdownToPlainText } from "../summaries";
 import { isFile, loadMarkdown } from "./files";
 import { parseArticleFrontmatter, parseCollectionFrontmatter } from "./frontmatter";
@@ -97,8 +97,11 @@ export async function buildArticleFromFolder({
   // are rejected by parseArticleFrontmatter before reaching this fallback.
   const publishedAt = frontmatter.date ?? fs.statSync(indexPath).mtime.toISOString();
 
-  const html = await markdownToHtml(content, { slug, parentCollectionSlug });
-  const headings = extractHeadings(content);
+  const { html, headings } = await renderMarkdown(content, {
+    slug,
+    parentCollectionSlug,
+    numberHeadings: true,
+  });
 
   const summaryHtml = await markdownToHtml(summaryRaw);
   const summaryText = await markdownToPlainText(summaryRaw);
