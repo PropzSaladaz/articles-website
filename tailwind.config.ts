@@ -84,18 +84,38 @@ const config: Config = {
 				'fade-up': 'fade-up 0.6s ease-out both',
 				'fade-in': 'fade-in 0.6s ease-out both'
 			},
-			typography: {
-				DEFAULT: {
-					css: {
+				typography: {
+					DEFAULT: {
+						css: {
 						'code::before': {
 							content: 'none'
 						},
 						'code::after': {
 							content: 'none'
+							}
+						}
+					},
+					semantic: {
+						css: {
+							'--tw-prose-body': 'hsl(var(--foreground))',
+							'--tw-prose-headings': 'hsl(var(--foreground))',
+							'--tw-prose-lead': 'hsl(var(--muted-foreground))',
+							'--tw-prose-links': 'hsl(var(--primary))',
+							'--tw-prose-bold': 'hsl(var(--foreground))',
+							'--tw-prose-counters': 'hsl(var(--muted-foreground))',
+							'--tw-prose-bullets': 'hsl(var(--muted-foreground))',
+							'--tw-prose-hr': 'hsl(var(--input))',
+							'--tw-prose-quotes': 'hsl(var(--foreground))',
+							'--tw-prose-quote-borders': 'hsl(var(--input))',
+							'--tw-prose-captions': 'hsl(var(--muted-foreground))',
+							'--tw-prose-code': 'hsl(var(--foreground))',
+							'--tw-prose-pre-code': 'hsl(var(--foreground))',
+							'--tw-prose-pre-bg': 'hsl(var(--card))',
+							'--tw-prose-th-borders': 'hsl(var(--input))',
+							'--tw-prose-td-borders': 'hsl(var(--input))'
 						}
 					}
 				}
-			}
 		}
 	},
 	plugins: [require('@tailwindcss/typography'), require("tailwindcss-animate")],
