@@ -59,6 +59,7 @@ interface MarkdownOptions {
   slug?: string;
   parentCollectionSlug?: string | null;
   isCollection?: boolean;
+  numberHeadings?: boolean;
 }
 
 export type MarkdownRender = {
@@ -113,7 +114,7 @@ export async function renderMarkdown(
     .use(rehypeIframeWindow)
     // Assign heading ids and capture the matching TOC entries before KaTeX expands
     // each expression into MathML plus visual HTML. The plugin owns both outputs.
-    .use(rehypeCollectHeadings)
+    .use(rehypeCollectHeadings, { numberHeadings: options?.numberHeadings })
     // render inlineMath/math nodes into KaTeX MathML + HTML
     .use(rehypeKatexPlugin)
     // syntax-highlight <pre><code> into themed spans

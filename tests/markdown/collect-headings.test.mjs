@@ -9,13 +9,13 @@ import remarkRehype from 'remark-rehype';
 import { unified } from 'unified';
 import rehypeCollectHeadings from '../../lib/markdown/rehype/collect-headings.ts';
 
-async function render(markdown) {
+async function render(markdown, options) {
   const file = await unified()
     .use(remarkParse)
     .use(remarkMath)
     .use(remarkRehype, { allowDangerousHtml: true })
     .use(rehypeRaw)
-    .use(rehypeCollectHeadings)
+    .use(rehypeCollectHeadings, options)
     .use(rehypeKatex)
     .use(rehypeStringify)
     .process(markdown);
@@ -73,4 +73,27 @@ test('collects raw HTML headings and preserves authored ids', async () => {
     { id: 'authored', text: 'Raw heading', level: 2 },
   ]);
   assert.match(result.html, /<h2 id="authored">Raw <em>heading<\/em><\/h2>/);
+});
+
+test('numbers rendered headings and TOC entries without changing ids', async () => {
+  const result = await render(
+    '# First\n\n## Child\n\n### Detail\n\n## Next child\n\n# Second',
+    { numberHeadings: true }
+  );
+
+  assert.deepEqual(result.headings, [
+    { id: 'first', text: 'First', level: 1, number: '1' },
+    { id: 'child', text: 'Child', level: 2, number: '1.1' },
+    { id: 'next-child', text: 'Next child', level: 2, number: '1.2' },
+    { id: 'second', text: 'Second', level: 1, number: '2' },
+  ]);
+  assert.match(
+    result.html,
+    /<h1 id="first"><span class="md-section-number">1<\/span> First<\/h1>/
+  );
+  assert.match(
+    result.html,
+    /<h3 id="detail"><span class="md-section-number">1\.1\.1<\/span> Detail<\/h3>/
+  );
+  assert.doesNotMatch(result.html, /id="1-first"/);
 });

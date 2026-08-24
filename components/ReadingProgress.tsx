@@ -2,12 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef, useSyncExternalStore } from 'react';
 import { cn } from '../lib/utils';
-
-type Heading = {
-    id: string;
-    text: string;
-    level: number;
-};
+import type { Heading } from '../lib/content/types';
 
 // Store for scroll state - avoids re-rendering parent components
 let scrollListeners: Set<() => void> = new Set();
@@ -172,6 +167,9 @@ export function TableOfContents({ headings }: { headings: Heading[] }) {
                                             : 'text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400'
                                     )}
                                 >
+                                    {heading.number && (
+                                        <span className="mr-1.5 tabular-nums">{heading.number}</span>
+                                    )}
                                     {heading.text}
                                 </a>
                             </li>

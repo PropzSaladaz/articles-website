@@ -97,7 +97,11 @@ export async function buildArticleFromFolder({
   // are rejected by parseArticleFrontmatter before reaching this fallback.
   const publishedAt = frontmatter.date ?? fs.statSync(indexPath).mtime.toISOString();
 
-  const { html, headings } = await renderMarkdown(content, { slug, parentCollectionSlug });
+  const { html, headings } = await renderMarkdown(content, {
+    slug,
+    parentCollectionSlug,
+    numberHeadings: true,
+  });
 
   const summaryHtml = await markdownToHtml(summaryRaw);
   const summaryText = await markdownToPlainText(summaryRaw);
