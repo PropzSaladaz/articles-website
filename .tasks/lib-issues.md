@@ -244,8 +244,9 @@ and indexed content reached through a non-index directory. `isFile()` treats onl
 `ENOENT` as absent and rethrows real filesystem failures. The production build and
 direct TypeScript check pass with the existing content corpus.
 
-## 6. Derive rendered HTML and TOC headings in one Markdown pass
+## 6. ✅ Derive rendered HTML and TOC headings in one Markdown pass
 
+- **Status:** ✅ Complete
 - **Severity:** Medium
 - **Files:** `lib/markdown/index.ts`, `lib/content/builders.ts`
 
@@ -285,9 +286,20 @@ Return `{ html, headings }` from the same compilation and remove `extractHeading
 
 ### Acceptance criteria
 
-- Rendered IDs and TOC IDs always come from the same pass.
-- Tests cover inline math, multiple math expressions, same-level duplicates, h3/h2 collisions, raw headings, and math-only headings.
-- Math remains understandable in TOC labels.
+- [x] Rendered IDs and TOC IDs always come from the same pass.
+- [x] Tests cover inline math, multiple math expressions, same-level duplicates, h3/h2 collisions, raw headings, and math-only headings.
+- [x] Math remains understandable in TOC labels.
+
+### Resolution
+
+`rehypeCollectHeadings` now assigns every rendered h1–h6 ID and records h1/h2
+TOC entries from the same HAST traversal before KaTeX expands math. The entries
+travel through the current `VFile`, and `renderMarkdown()` returns them alongside
+the generated HTML. Article building no longer performs a second Remark parse.
+
+Focused tests exercise the real Markdown libraries for inline and multiple math
+expressions, math-only headings, duplicate headings, h3/h2 collisions, raw HTML
+headings, and authored IDs. The obsolete `rehype-slug` dependency was removed.
 
 ## 7. Produce valid image markup and remove inline handlers
 

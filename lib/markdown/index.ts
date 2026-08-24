@@ -1,34 +1,32 @@
-import { unified } from 'unified';
-import type { Plugin } from 'unified';
+import { unified, type Plugin } from 'unified';
 import type { Root } from 'hast';
 import remarkParse from 'remark-parse';
 import remarkGfm from 'remark-gfm';
 import remarkRehype from 'remark-rehype';
 import remarkDirective from 'remark-directive';
 import remarkMath from 'remark-math';
-import remarkSpoiler from './remark/spoiler';
-import remarkDefinition from './remark/definition';
-import remarkDiagram from './remark/diagram';
-import remarkGithubAlerts from './remark/github-alerts';
-import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import rehypeStringify from 'rehype-stringify';
-import { remark } from 'remark';
-import { visit } from 'unist-util-visit';
-import { toString } from 'mdast-util-to-string';
-import GithubSlugger from 'github-slugger';
-import rehypeScopeClasses from './rehype/scope-classes';
-import { Heading } from '../content/types';
 import rehypeShiki, { type RehypeShikiOptions } from '@shikijs/rehype';
-import rehypeCodeBlockCopy from './rehype/code-block-copy';
-import remarkStrongHr from './remark/strong-hr';
-import rehypeDevImages from './rehype/dev-images';
-
-import rehypeProductionImages from './rehype/production-images';
-import rehypeIframeWindow from './rehype/iframe-window';
-import rehypeImageWrapper from './rehype/image-wrapper';
+import {
+  remarkSpoiler,
+  remarkDefinition,
+  remarkDiagram,
+  remarkGithubAlerts,
+  remarkStrongHr,
+} from './remark';
+import {
+  rehypeIframeWindow,
+  rehypeScopeClasses,
+  rehypeCodeBlockCopy,
+  rehypeImageWrapper,
+  rehypeDevImages,
+  rehypeProductionImages,
+  rehypeCollectHeadings,
+} from './rehype';
+import type { Heading } from '../content/types';
 
 // rehype-katex and the rest of this pipeline operate on the same HAST root.
 // Its exported transformer signature is not inferred as a Unified plugin by
@@ -63,58 +61,72 @@ interface MarkdownOptions {
   isCollection?: boolean;
 }
 
+export type MarkdownRender = {
+  html: string;
+  headings: Heading[];
+};
+
 function normalizeDefinitionDirectives(markdown: string): string {
   return markdown.replace(/^([ \t]*):::[ \t]+definition(?=\[|[ \t]*$)/gim, '$1:::definition');
 }
 
-export async function markdownToHtml(markdown: string, options?: MarkdownOptions): Promise<string> {
+export async function renderMarkdown(
+  markdown: string,
+  options?: MarkdownOptions
+): Promise<MarkdownRender> {
   const isDev = process.env.NODE_ENV === 'development';
   const slug = options?.slug || '';
   const normalizedMarkdown = normalizeDefinitionDirectives(markdown);
 
   let processor = unified()
+    // =========================
+    // Markdown AST parsing
+    // =========================
+    // markdown source → mdast; the parser every remark plugin below transforms
     .use(remarkParse)
     // support github flavored markdown
     .use(remarkGfm)
     // enables $…$ and $$…$$
     .use(remarkMath)
-    // 2) Enable directives and convert :::spoiler → <details><summary>…</summary>…</details>
+    // parse ::: fences into generic directive nodes for the three plugins below
     .use(remarkDirective)
+    // :::spoiler[Title] → <details><summary>Title</summary>…</details>
     .use(remarkSpoiler)
+    // :::definition[Term] → <aside class="md-definition"> with a generated title
     .use(remarkDefinition)
+    // :::flow / :::branch / :::compare → .content-diagram block layouts
     .use(remarkDiagram)
     // GitHub-style alerts: > [!NOTE], > [!TIP], etc.
     .use(remarkGithubAlerts)
-
-    // stronger horizontal rules using '==='
+    // a lone '===' or '...' paragraph → styled section separator
     .use(remarkStrongHr)
 
     // transform to HTML AST
     .use(remarkRehype, { allowDangerousHtml: true })
-    // support raw HTML in markdown
+
+    // =========================
+    // HTML AST processing
+    // =========================
+    // re-parse the raw HTML remarkRehype passed through into real elements
     .use(rehypeRaw)
-    // wrap iframes in styled window
+    // wrap each <iframe> in div.md-iframe-window (needs rehypeRaw's elements)
     .use(rehypeIframeWindow)
-    // Add ids to headings, so section links and the table of contents can target them.
-    //
-    // This MUST stay ahead of rehypeKatex. KaTeX expands `$p$` into three text-bearing
-    // pieces — a MathML annotation holding the TeX source, the MathML render, and the
-    // visual katex-html span — so `hast-util-to-string` reads "ppp" and rehype-slug
-    // minted `...modulo-ppp`. extractHeadings() below slugs the *markdown* text and
-    // gets `...modulo-p`, so every table-of-contents entry for a heading containing
-    // math pointed at an id that did not exist on the page. Running before KaTeX makes
-    // both sides read the same text.
-    .use(rehypeSlug)
-    // render math equations
+    // Assign heading ids and capture the matching TOC entries before KaTeX expands
+    // each expression into MathML plus visual HTML. The plugin owns both outputs.
+    .use(rehypeCollectHeadings)
+    // render inlineMath/math nodes into KaTeX MathML + HTML
     .use(rehypeKatexPlugin)
-    // code highlighting
+    // syntax-highlight <pre><code> into themed spans
     .use(rehypeShiki, rehypeShikiOptions)
+    // prepend a clickable anchor to each heading, using the ids above
     .use(rehypeAutolinkHeadings, {
       behavior: 'prepend',
       properties: { className: ['anchor-link'], ariaHidden: 'true', tabIndex: -1 },
       content: [],
     })
+    // stamp md-* classes on every element — the hook styles/markdown.css targets
     .use(rehypeScopeClasses, { prefix: 'md-' })
+    // wrap <pre> in .code-block with a header + copy button carrying the raw source
     .use(rehypeCodeBlockCopy)
     // wrap images with skeleton placeholders (after scope classes to avoid double-prefixing)
     .use(rehypeImageWrapper);
@@ -135,41 +147,13 @@ export async function markdownToHtml(markdown: string, options?: MarkdownOptions
     .use(rehypeStringify, { allowDangerousHtml: true })
     .process(normalizedMarkdown);
 
-  return String(file);
+  return {
+    html: String(file),
+    headings: (file.data.headings as Heading[] | undefined) ?? [],
+  };
 }
 
-export function extractHeadings(markdown: string): Heading[] {
-  // Use remarkMath to properly parse math expressions in the AST
-  const tree = remark().use(remarkParse).use(remarkMath).parse(markdown);
-  const headings: Heading[] = [];
-  const slugger = new GithubSlugger();
-
-  visit(tree, 'heading', (node: any) => {
-    // only headings of level 1-2
-    if (!node.depth || node.depth < 1 || node.depth > 2) {
-      return;
-    }
-
-    // Extract text excluding math nodes
-    const textParts: string[] = [];
-    visit(node, (child: any) => {
-      if (child.type === 'text') {
-        textParts.push(child.value);
-      }
-      // Skip inlineMath and math nodes - they'll be excluded from text
-    });
-
-    const rawText = toString(node).trim();
-    const cleanText = textParts.join('').replace(/\s+/g, ' ').trim();
-
-    if (!cleanText) return;
-
-    headings.push({
-      id: slugger.slug(rawText), // Use original text for slug to match rendered IDs
-      text: cleanText,           // Use clean text (no math) for display
-      level: node.depth,
-    });
-  });
-
-  return headings;
+/** Render Markdown when callers only need HTML. */
+export async function markdownToHtml(markdown: string, options?: MarkdownOptions): Promise<string> {
+  return (await renderMarkdown(markdown, options)).html;
 }
