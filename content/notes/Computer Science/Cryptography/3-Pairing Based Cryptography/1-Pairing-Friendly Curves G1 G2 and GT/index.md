@@ -6,7 +6,7 @@ summary: "A planned bridge from ordinary ECC groups to pairing-friendly groups G
 
 # Pairing-Friendly Curves, G1, G2, and GT
 
-This chapter is a planned bridge from ordinary ECC groups to the groups used in pairing-based cryptography. It builds directly on the base-point, subgroup, order, and cofactor ideas from [Elliptic Curves and Finite Fields](/collections/computer-science/cryptography/elliptic-curves-and-finite-fields/).
+This chapter is a planned bridge from ordinary ECC groups to the groups used in pairing-based cryptography. It builds directly on the base-point, subgroup, order, and cofactor ideas from [Elliptic Curves and Finite Fields](/notes/computer-science/cryptography/elliptic-curves-and-finite-fields/).
 
 ## Why Ordinary ECC Is Not Enough for Pairings
 

@@ -10,12 +10,14 @@ export function middleware(request: NextRequest) {
 
     console.log('[middleware] pathname:', pathname);
 
-    // Match /articles/.../images/... OR /collections/.../images/...
-    const imagesMatch = pathname.match(/\/(articles|collections)\/(.+)\/(images\/.+)$/);
+    // Match /<slug>/images/... — a slug is the URL path (see lib/content/urls.ts). The
+    // leading segment is required so a bare /images/... never matches; dev-images
+    // answers 404 for any path that is not real content.
+    const imagesMatch = pathname.match(/^\/(.+)\/(images\/.+)$/);
 
     if (imagesMatch) {
-        const slug = imagesMatch[2];
-        const imagePath = imagesMatch[3];
+        const slug = imagesMatch[1];
+        const imagePath = imagesMatch[2];
 
         console.log('[middleware] Matched! slug:', slug, '| imagePath:', imagePath);
 

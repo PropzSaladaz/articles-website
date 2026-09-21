@@ -4,7 +4,7 @@ date: "2026-06-11"
 summary: "Understand scalar multiplication as repeated point addition and the efficient doubling methods that make large finite-field calculations practical."
 ---
 
-In [Point Addition and the Elliptic Curve Group](/collections/computer-science/cryptography/elliptic-curves-and-finite-fields/point-addition-and-the-elliptic-curve-group/), we defined a reliable addition rule for curve points. The most important operation built from that rule is **scalar multiplication**.
+In [Point Addition and the Elliptic Curve Group](/notes/computer-science/cryptography/elliptic-curves-and-finite-fields/point-addition-and-the-elliptic-curve-group/), we defined a reliable addition rule for curve points. The most important operation built from that rule is **scalar multiplication**.
 
 ::: definition[**Scalar Multiplication:**]
 Scalar multiplication means adding the same point to itself repeatedly.
@@ -194,4 +194,4 @@ The smooth real-number curve gives us a useful way to see point addition and dou
 
 Cryptographic curves are interpreted over finite fields, where coordinates and arithmetic are discrete and exact. There, scalar multiplication still means repeated point addition, but the possible points form a finite set rather than a continuous curve.
 
-Next, [Finite Fields and Modular Arithmetic](/collections/computer-science/cryptography/elliptic-curves-and-finite-fields/finite-fields-and-modular-arithmetic/) establishes the exact arithmetic that replaces the real-number geometry. The following article then constructs the resulting finite point set.
+Next, [Finite Fields and Modular Arithmetic](/notes/computer-science/cryptography/elliptic-curves-and-finite-fields/finite-fields-and-modular-arithmetic/) establishes the exact arithmetic that replaces the real-number geometry. The following article then constructs the resulting finite point set.

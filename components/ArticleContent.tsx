@@ -154,11 +154,7 @@ export function ArticleContent({
                     </figure>
                   )}
                   <MarkdownRenderer html={article.html} />
-                  <ArticleNavigation
-                    previous={previousArticle}
-                    next={nextArticle}
-                    collectionSlug={article.collectionSlug}
-                  />
+                  <ArticleNavigation previous={previousArticle} next={nextArticle} />
                   <section className="not-prose mt-12 space-y-6">
                     <h2 className="text-2xl font-semibold text-foreground">Comments</h2>
                     <GiscusComments discussionIdentifier={article.slug} />

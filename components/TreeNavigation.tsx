@@ -260,8 +260,7 @@ function CollectionBranch({ node, depth, active, expandedKeys, onToggle }: TreeN
 
 function StandaloneLeaf({ node, depth, active }: { node: StandaloneArticle; depth: number; active: ActiveState }) {
   const slug = normalizeSlug(node.articleSlug);
-  const isCollectionArticle = Boolean(node.collectionSlug);
-  const href = contentPath(slug, { isCollection: isCollectionArticle });
+  const href = contentPath(slug);
   const isActive = active.articleSlug === slug;
 
   return (
@@ -362,38 +361,28 @@ function collectCollectionSlugs(node: SubjectNode, slugs = new Set<string>()): S
   return slugs;
 }
 
+/**
+ * The pathname is the slug (see `contentPath`), so the active article is the whole path
+ * and the active collection is its deepest prefix that is a known collection.
+ */
 function deriveActiveState(pathname: string, collectionSlugs: Set<string>): ActiveState {
   const segments = pathname.split('/').filter(Boolean);
   if (segments.length === 0) {
     return {};
   }
 
-  const [root, ...rest] = segments;
-
-  if (root === 'articles') {
-    if (rest.length === 0) return {};
-    return { articleSlug: rest.join('/') };
+  let matchedCollection: string | undefined;
+  let current = '';
+  for (const segment of segments) {
+    current = current ? `${current}/${segment}` : segment;
+    if (collectionSlugs.has(current)) {
+      matchedCollection = current;
+    }
   }
 
-  if (root === 'collections') {
-    if (rest.length === 0) return {};
-    let matchedCollection: string | undefined;
-    let current = '';
-    for (const segment of rest) {
-      current = current ? `${current}/${segment}` : segment;
-      if (collectionSlugs.has(current)) {
-        matchedCollection = current;
-      }
-    }
-    const joined = rest.join('/');
-    if (matchedCollection) {
-      if (matchedCollection === joined) {
-        return { collectionSlug: matchedCollection };
-      }
-      return { collectionSlug: matchedCollection, articleSlug: joined };
-    }
-    return { collectionSlug: rest[0], articleSlug: joined };
+  const joined = segments.join('/');
+  if (matchedCollection === joined) {
+    return { collectionSlug: matchedCollection };
   }
-
-  return {};
+  return { collectionSlug: matchedCollection, articleSlug: joined };
 }

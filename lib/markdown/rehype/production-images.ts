@@ -6,25 +6,15 @@ import { contentPath } from '../../content/urls';
 interface Options {
     slug: string;
     isDev: boolean;
-    parentCollectionSlug?: string | null;
-    isCollection?: boolean;
 }
 
 /**
  * Rewrite relative image URLs to the locations `scripts/prepare-content.mjs` copies them to.
  *
- * The prefix rule mirrors that script's `canonicalPathForEntry`: content lands under
- * /articles only when it is a standalone article with no parent collection. A collection's
- * own index.md, and every chapter inside one, land under /collections. Deciding this from
- * `parentCollectionSlug` alone used to send a collection index's images to /articles/...,
- * where nothing was ever copied.
+ * Assets land at the content's own URL (`contentPath(slug)`), which that script's
+ * `canonicalPathForEntry` mirrors — keep the two in agreement.
  */
-const rehypeProductionImages: Plugin<[Options], Root> = ({
-    slug,
-    isDev,
-    parentCollectionSlug,
-    isCollection,
-}) => {
+const rehypeProductionImages: Plugin<[Options], Root> = ({ slug, isDev }) => {
     return (tree) => {
         if (isDev) return;
 
@@ -36,8 +26,7 @@ const rehypeProductionImages: Plugin<[Options], Root> = ({
 
             const imagePath = src.startsWith('./') ? src.slice(2) : src;
 
-            node.properties.src =
-                `${contentPath(slug, { collectionSlug: parentCollectionSlug, isCollection })}${imagePath}`;
+            node.properties.src = `${contentPath(slug)}${imagePath}`;
         });
     };
 };

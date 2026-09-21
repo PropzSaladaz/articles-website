@@ -29,7 +29,7 @@ A static knowledge-publishing platform built with **Next.js 14** (App Router, st
 | Layer | Description |
 |-------|-------------|
 | **Next.js 14 App Router** | Static export (`output: "export"`) — produces a fully static `out/` directory at build time. |
-| **Content loader** (`lib/content/`) | Walks `content/`, classifies folders as standalone articles or collections, and converts Markdown to HTML. |
+| **Content loader** (`lib/content/`) | Walks `content/`, classifies folders as sections, articles or collections, and converts Markdown to HTML. |
 | **Markdown pipeline** (`lib/markdown/`) | unified/remark/rehype pipeline: GFM, math (KaTeX), directives, GitHub alerts, spoilers, code highlighting (Shiki), heading anchors, image handling, iframe wrapping. |
 | **Prebuild script** (`scripts/prepare-content.mjs`) | Runs before every build and dev start. Production copies assets only from publicly reachable content; development includes drafts for preview. |
 | **Content watcher** (`scripts/watch-content.mjs`) | File watcher process (runs alongside `next dev`) that keeps `public/` in sync as you edit content. |
@@ -40,8 +40,8 @@ A static knowledge-publishing platform built with **Next.js 14** (App Router, st
 ```
 out/                  ← static HTML/CSS/JS (deploy target)
 public/
-  articles/{slug}/images/
-  collections/{slug}/images/
+  notes/{slug}/images/         ← one tree per section, mirroring the URL
+  _redirects                   ← 301s from the old /articles and /collections URLs
 ```
 
 ---
@@ -50,22 +50,23 @@ public/
 
 ```
 content/
-  Subject/
-    Sub-Subject/
-      My-Article/                    # Standalone article
-        index.md
-        summary.md                   # Rich summary (shown in Summary view)
-        images/
-        simulations/
-
-      My-Collection/                 # Collection (multi-chapter)
-        index.md                     # Collection overview
-        1-Chapter-One/
+  notes/                             # A section — never give it an index.md
+    Subject/
+      Sub-Subject/
+        My-Article/                  # Standalone article
           index.md
-          summary.md
+          summary.md                 # Rich summary (shown in Summary view)
           images/
-        2-Chapter-Two/
-          index.md
+          simulations/
+
+        My-Collection/               # Collection (multi-chapter)
+          index.md                   # Collection overview
+          1-Chapter-One/
+            index.md
+            summary.md
+            images/
+          2-Chapter-Two/
+            index.md
 
 lib/
   md.ts                              # Markdown → HTML pipeline
@@ -172,10 +173,15 @@ it while they are being written.
 - The article/chapter title is automatically derived from the folder name (prefix stripped, hyphens → spaces, title-cased).
 - Slugs are generated from the full filesystem path, so uniqueness is guaranteed by directory structure.
 
-**URL patterns:**
-- Standalone: `/articles/{slug}/`
-- Collection overview: `/collections/{slug}/`
-- Collection chapter: `/collections/{collection-slug}/{chapter-slug}/`
+**URL patterns:** a page's URL is its slug, and the slug is its folder path with numeric
+prefixes and punctuation removed — so `content/notes/Computer Science/Cryptography/…`
+is served at `/notes/computer-science/cryptography/…/`. The top-level folder is the
+*section* (`notes`; `writing` and `devlog` are planned). A folder's shape (article vs.
+collection) never changes its URL. Do not give a section folder its own `index.md` —
+that would make it a collection and break the build.
+
+Pages published before the section restructure lived under `/articles/…` and
+`/collections/…`; `public/_redirects` sends both to `/notes/…`.
 
 ---
 

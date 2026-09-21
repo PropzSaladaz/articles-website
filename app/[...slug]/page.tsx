@@ -2,9 +2,11 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
-import { ArticleViewToggle } from '../../../components/ArticleViewToggle';
-import { ArticleContent } from '../../../components/ArticleContent';
-import { MarkdownRenderer } from '../../../components/MarkdownRenderer';
+import { ArticleViewToggle } from '../../components/ArticleViewToggle';
+import { ArticleContent } from '../../components/ArticleContent';
+import { ArticleViewTracker } from '../../components/ArticleViewTracker';
+import { CopyCodeButtons } from '../../components/CopyCodeButtons';
+import { MarkdownRenderer } from '../../components/MarkdownRenderer';
 import {
   getAllArticles,
   getArticleBySlug,
@@ -13,9 +15,9 @@ import {
   getCollectionCanonicalUrl,
   getCollections,
   getKnowledgePathForSlug,
-} from '../../../lib/content/content';
-import { formatDate } from '../../../lib/format';
-import { articlePath, collectionPath } from '../../../lib/content/urls';
+} from '../../lib/content/content';
+import { formatDate } from '../../lib/format';
+import { articlePath, collectionPath } from '../../lib/content/urls';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-static';
@@ -30,7 +32,6 @@ export async function generateStaticParams() {
     params.set(collection.slug, collection.slug.split('/').filter(Boolean));
   }
   for (const article of articles) {
-    if (!article.collectionSlug) continue;
     params.set(article.slug, article.slug.split('/').filter(Boolean));
   }
 
@@ -71,7 +72,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default async function CollectionSlugPage({ params }: PageProps) {
+export default async function ContentPage({ params }: PageProps) {
   const slugSegments = Array.isArray(params.slug) ? params.slug : [];
   const slug = slugSegments.join('/');
   if (!slug) {
@@ -84,12 +85,12 @@ export default async function CollectionSlugPage({ params }: PageProps) {
   }
 
   const article = await getArticleBySlug(slug);
-  if (!article || !article.collectionSlug) {
+  if (!article) {
     notFound();
   }
 
   const [parentCollection, knowledgePath, collections] = await Promise.all([
-    getCollectionBySlug(article.collectionSlug),
+    article.collectionSlug ? getCollectionBySlug(article.collectionSlug) : undefined,
     getKnowledgePathForSlug(slug),
     getCollections(),
   ]);
@@ -112,10 +113,12 @@ export default async function CollectionSlugPage({ params }: PageProps) {
 
   return (
     <div className="flex flex-col gap-6">
+      <ArticleViewTracker slug={article.slug} />
+
       <div className="space-y-2">
         {parentCollection && (
           <Link
-            href={collectionPath(article.collectionSlug)}
+            href={collectionPath(parentCollection.slug)}
             className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground transition-colors hover:text-primary"
           >
             ← Back to {parentCollection.title}
@@ -138,6 +141,8 @@ export default async function CollectionSlugPage({ params }: PageProps) {
           collectionSlugs={collections.map((collection) => collection.slug)}
         />
       </Suspense>
+
+      <CopyCodeButtons />
     </div>
   );
 }

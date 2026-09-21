@@ -1,30 +1,30 @@
 import type { Article, Slug } from './types';
 
 /**
- * The single source of truth for whether a slug lives under /articles or /collections.
+ * The single source of truth for where a slug lives in the exported site.
  *
- * This rule is mirrored by `scripts/prepare-content.mjs`'s `canonicalPathForEntry`,
- * which decides where the prebuild step actually *copies* files. That script is plain
- * `.mjs` and cannot import this module, so the two must be kept in agreement by hand —
- * they are the only two copies left, and when they drifted apart before, images in
- * collection pages pointed at paths nothing had been copied to.
+ * A slug is the content folder path, and its first segment is the section
+ * (`notes`, `writing`, `devlog`), so the URL is just the slug — nothing about
+ * the folder's shape (leaf vs. collection) decides it, and re-organizing a
+ * folder never moves a URL.
  *
- * Deliberately dependency-free (types only) so client components can import it.
+ * `scripts/prepare-content.mjs`'s `canonicalPathForEntry` decides where assets
+ * are *copied* and cannot import this module (plain `.mjs`), so it repeats this
+ * one-line rule. Keep the two in agreement by hand.
+ *
+ * Deliberately dependency-free (types only) so client components and the
+ * esbuild-bundled Worker can both import it.
  */
-export function contentPath(
-  slug: Slug,
-  { collectionSlug, isCollection }: { collectionSlug?: Slug | null; isCollection?: boolean } = {}
-): string {
-  const base = isCollection || collectionSlug ? '/collections' : '/articles';
-  return slug ? `${base}/${slug}/` : `${base}/`;
+export function contentPath(slug: Slug): string {
+  return slug ? `/${slug}/` : '/';
 }
 
-/** Path to an article page — under /collections when it belongs to one, else /articles. */
-export function articlePath(article: Pick<Article, 'slug' | 'collectionSlug'>): string {
-  return contentPath(article.slug, { collectionSlug: article.collectionSlug });
+/** Path to an article page. */
+export function articlePath(article: Pick<Article, 'slug'>): string {
+  return contentPath(article.slug);
 }
 
-/** Path to a collection's own page. Always under /collections. */
+/** Path to a collection's own page. */
 export function collectionPath(slug: Slug): string {
-  return contentPath(slug, { isCollection: true });
+  return contentPath(slug);
 }

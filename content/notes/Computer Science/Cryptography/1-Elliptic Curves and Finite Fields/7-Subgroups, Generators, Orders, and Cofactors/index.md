@@ -4,7 +4,7 @@ date: "2026-07-22"
 summary: "Follow scalar multiples around a finite curve to distinguish curve order, point order, subgroups, base points, cofactors, and the base and scalar fields."
 ---
 
-[Elliptic Curves Over Finite Fields](/collections/computer-science/cryptography/elliptic-curves-and-finite-fields/elliptic-curves-over-finite-fields/) constructed the finite group
+[Elliptic Curves Over Finite Fields](/notes/computer-science/cryptography/elliptic-curves-and-finite-fields/elliptic-curves-over-finite-fields/) constructed the finite group
 
 $$
 E(\mathbb{F}_{11}):
@@ -28,7 +28,7 @@ $$
 
 We will now continue those exact scalar multiplications around the point cloud. The resulting cycles give concrete meanings to **curve order**, **point order**, **subgroup**, **generator**, **base point**, and **cofactor**.
 
-The main idea resembles the modular clock from [Finite Fields and Modular Arithmetic](/collections/computer-science/cryptography/elliptic-curves-and-finite-fields/finite-fields-and-modular-arithmetic/). Repeatedly adding a fixed number moves around a finite clock; repeatedly adding a fixed curve point moves around a finite set of curve points. In both cases, the chosen step determines which positions we visit before returning to the start.
+The main idea resembles the modular clock from [Finite Fields and Modular Arithmetic](/notes/computer-science/cryptography/elliptic-curves-and-finite-fields/finite-fields-and-modular-arithmetic/). Repeatedly adding a fixed number moves around a finite clock; repeatedly adding a fixed curve point moves around a finite set of curve points. In both cases, the chosen step determines which positions we visit before returning to the start.
 
 ## Curve Order: The Size of the Complete Group
 
@@ -51,7 +51,7 @@ This number describes the whole curve group. It is not the field modulus and it 
 
 ## Point Order: The Length of One Scalar Cycle
 
-[Scalar multiplication](/collections/computer-science/cryptography/elliptic-curves-and-finite-fields/scalar-multiplication/) repeatedly adds the same point:
+[Scalar multiplication](/notes/computer-science/cryptography/elliptic-curves-and-finite-fields/scalar-multiplication/) repeatedly adds the same point:
 
 $$
 kP=\underbrace{P+P+\cdots+P}_{k\text{ copies of }P}.
@@ -507,7 +507,7 @@ There is no requirement that $r$ divide $p$, and the scalar field is not general
 
 The subgroup $\langle G\rangle$ in this chapter is a general elliptic-curve subgroup. We do not call it $G_1$ yet, because the names $G_1$ and $G_2$ describe specific roles inside a pairing construction.
 
-Later, [Pairing-Based Cryptography](/collections/computer-science/cryptography/pairing-based-cryptography/) will build on the same pattern. A pairing setup has a group called $G_1$ whose points commonly have coordinates in $\mathbb{F}_p$, another group called $G_2$ whose points are commonly represented using an extension field, and scalars for both groups in $\mathbb{F}_r$. This chapter supplies the base-field, scalar-field, subgroup, order, and generator concepts needed to distinguish those objects.
+Later, [Pairing-Based Cryptography](/notes/computer-science/cryptography/pairing-based-cryptography/) will build on the same pattern. A pairing setup has a group called $G_1$ whose points commonly have coordinates in $\mathbb{F}_p$, another group called $G_2$ whose points are commonly represented using an extension field, and scalars for both groups in $\mathbb{F}_r$. This chapter supplies the base-field, scalar-field, subgroup, order, and generator concepts needed to distinguish those objects.
 
 ## From a Public Point to Protocols
 
@@ -535,4 +535,4 @@ The complete scalar field includes $0$, but a private key must be nonzero: $0G=\
 - Distinguish the base field $\mathbb{F}_p$ from the scalar field $\mathbb{F}_r$
 :::
 
-This completes the mathematical foundation. Continue with [Elliptic-Curve Protocols](/collections/computer-science/cryptography/elliptic-curve-protocols/) to use these objects to build keys, signatures, key agreement, encryption, and threshold protocols.
+This completes the mathematical foundation. Continue with [Elliptic-Curve Protocols](/notes/computer-science/cryptography/elliptic-curve-protocols/) to use these objects to build keys, signatures, key agreement, encryption, and threshold protocols.

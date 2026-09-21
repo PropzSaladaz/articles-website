@@ -42,27 +42,20 @@ async function readSlug(request: Request): Promise<string | null> {
 }
 
 async function articleExists(request: Request, env: Env, slug: string) {
-  // The tracker posts a bare slug and cannot say whether the article belongs to a
-  // collection, so probe both export locations. Assuming /articles silently failed
-  // the check for any chapter inside a collection, which is exported under
-  // /collections — the view would then never be recorded, with no error surfaced.
-  for (const pathname of [contentPath(slug), contentPath(slug, { isCollection: true })]) {
-    const assetUrl = new URL(request.url);
-    assetUrl.pathname = pathname;
-    assetUrl.search = '';
-    assetUrl.hash = '';
+  // The slug is the URL (see contentPath), so a single probe of the exported page is enough.
+  const assetUrl = new URL(request.url);
+  assetUrl.pathname = contentPath(slug);
+  assetUrl.search = '';
+  assetUrl.hash = '';
 
-    const response = await env.ASSETS.fetch(
-      new Request(assetUrl, {
-        method: 'HEAD',
-        headers: { Accept: 'text/html' },
-      })
-    );
+  const response = await env.ASSETS.fetch(
+    new Request(assetUrl, {
+      method: 'HEAD',
+      headers: { Accept: 'text/html' },
+    })
+  );
 
-    if (response.ok) return true;
-  }
-
-  return false;
+  return response.ok;
 }
 
 async function recordView(env: Env, slug: string) {

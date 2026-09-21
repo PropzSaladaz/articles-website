@@ -33,8 +33,9 @@ export function ViewPreferenceProvider({ children }: { children: React.ReactNode
     }
   }, []);
 
-  // default to 'full' for article pages, 'summary' otherwise
-  const fallbackView = pathname?.includes('/articles/') ? 'full' : 'summary';
+  // Summary is the review mode of the notes section. Essays and devlog entries have no
+  // summary to show, so everything outside /notes/ opens in full.
+  const fallbackView = pathname?.startsWith('/notes/') ? 'summary' : 'full';
   // set paramView as: search param 'view' > stored value > fallback
   const paramView = normalizeView(searchParams?.get('view'), stored ?? fallbackView);
 

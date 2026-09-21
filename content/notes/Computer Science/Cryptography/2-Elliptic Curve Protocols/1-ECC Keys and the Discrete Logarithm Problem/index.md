@@ -6,7 +6,7 @@ summary: "Use the finite-field base-point subgroup to introduce ECC keypairs, th
 
 # ECC Keys and the Discrete Logarithm Problem
 
-The preceding [Elliptic Curves and Finite Fields](/collections/computer-science/cryptography/elliptic-curves-and-finite-fields/) collection built the mathematical machinery: finite-field curve points, scalar multiplication, and the public base point $G$ with its large subgroup. This chapter starts using that machinery as cryptography.
+The preceding [Elliptic Curves and Finite Fields](/notes/computer-science/cryptography/elliptic-curves-and-finite-fields/) collection built the mathematical machinery: finite-field curve points, scalar multiplication, and the public base point $G$ with its large subgroup. This chapter starts using that machinery as cryptography.
 
 ## Public and Private Keys in ECC
 
@@ -212,4 +212,4 @@ Elliptic curves also define a group structure, where points can be added, double
 
 For cryptography, these curves are not used over normal real numbers. They are used over finite fields, where the curve becomes a discrete set of points and all arithmetic is performed modulo a large prime.
 
-This chapter is the entry point to standard ECC protocols such as ECDH and ECDSA. For BLS signatures, aggregation, and threshold BLS signatures, continue with [Pairing-Based Cryptography](/collections/computer-science/cryptography/pairing-based-cryptography/). For the distinct problem of protecting a ciphertext until a quorum can decrypt it, see the [Threshold Encryption primer](/articles/computer-science/cryptography/threshold-encryption/threshold-encryption-made-simple/).
+This chapter is the entry point to standard ECC protocols such as ECDH and ECDSA. For BLS signatures, aggregation, and threshold BLS signatures, continue with [Pairing-Based Cryptography](/notes/computer-science/cryptography/pairing-based-cryptography/). For the distinct problem of protecting a ciphertext until a quorum can decrypt it, see the [Threshold Encryption primer](/notes/computer-science/cryptography/threshold-encryption/threshold-encryption-made-simple/).

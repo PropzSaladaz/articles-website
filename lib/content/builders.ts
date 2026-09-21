@@ -99,7 +99,6 @@ export async function buildArticleFromFolder({
 
   const { html, headings } = await renderMarkdown(content, {
     slug,
-    parentCollectionSlug,
     numberHeadings: true,
   });
 
@@ -142,9 +141,9 @@ export async function buildCollectionFromFolder({
   const slug = slugPieces.join('/');
 
   const summaryRaw = descriptionSource(frontmatter.summary, content);
-  const summaryHtml = await markdownToHtml(summaryRaw, { slug, isCollection: true });
+  const summaryHtml = await markdownToHtml(summaryRaw, { slug });
   const summaryText = await markdownToPlainText(summaryRaw);
-  const html = await markdownToHtml(content, { slug, isCollection: true });
+  const html = await markdownToHtml(content, { slug });
 
   return {
     slug,

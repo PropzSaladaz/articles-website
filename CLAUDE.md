@@ -33,28 +33,40 @@ was named `cache.ts` because of it.
 layer, and only `lib/content/builders.ts` imports the markdown pipeline — the
 dependency runs one way, content → markdown, and should stay that way.
 
-**`lib/content/urls.ts` owns the `/articles` vs `/collections` rule.** `contentPath()`
-(plus the `articlePath` / `collectionPath` wrappers) is the single source of truth for
-where a slug lives: `/articles` *only* for a standalone article with no parent
-collection; a collection's own `index.md` and every chapter inside one go to
-`/collections`. Everything builds its URLs through it — canonical URLs, sitemap, RSS,
-image `src` rewriting, every component href, and the Worker's asset probe. It is
+**The top-level folder under `content/` is the *section*, and a page's URL is its slug.**
+`notes/` is the knowledge base; `writing/` and `devlog/` are planned. A slug's first
+segment is therefore its section, and `lib/content/urls.ts`'s `contentPath()` (plus the
+`articlePath` / `collectionPath` wrappers) is the single source of truth for turning a slug
+into a URL: `/${slug}/`. Everything builds its URLs through it — canonical URLs, sitemap,
+RSS, image `src` rewriting, every component href, and the Worker's asset probe. It is
 deliberately dependency-free (type-only imports) so client components and the
-esbuild-bundled Worker can both import it. **Don't hand-roll the ternary again.**
+esbuild-bundled Worker can both import it. Nothing about a folder's *shape* (leaf vs.
+collection) affects its URL, so adding a chapter to an article never moves it. One route,
+`app/[...slug]/page.tsx`, serves every article and collection.
 
-This rule was previously written out in nine places, and two of them drifted: the image
-plugin said `/articles` while `prepare-content.mjs` copied to `/collections`, so images
-in a collection page pointed at nothing. A second copy in `worker/index.ts` hardcoded
-`/articles`, which would have silently stopped recording views for collection chapters.
+This used to be a `/articles` vs `/collections` split keyed off folder shape, written out in
+nine places, and it drifted (images in collection pages pointed at nothing; the Worker
+stopped recording collection views). `prepare-content.mjs` now writes `public/_redirects`
+so links published under the old prefixes 301 to `/notes/…`.
 
-**The one remaining copy is `scripts/prepare-content.mjs`'s `canonicalPathForEntry`.**
-It decides where files are actually *copied*, and it is plain `.mjs` running on
-`prebuild`, so it cannot import the TypeScript helper. These two must be kept in
-agreement by hand — that constraint is the same one that keeps the content walk
-duplicated between `lib/content/tree.ts` and that script. The script parses only
-`status` frontmatter so it can mirror the production draft cascade when copying assets;
+**Never give a section folder an `index.md`.** A folder with one is a *collection*, and
+`assertNoIndirectContentChildren` in `lib/content/tree.ts` throws on any child folder that
+lacks its own `index.md` — so `content/notes/index.md` would take the whole knowledge base
+out of the build. Sections are structural nodes; their landing pages are hand-written
+`app/<section>/page.tsx`. Don't create empty section folders ahead of content either: a
+childless node still renders as an empty entry in the sidebar tree.
+
+**The one remaining copy of the URL rule is `scripts/prepare-content.mjs`'s
+`canonicalPathForEntry`.** It decides where files are actually *copied*, and it is plain
+`.mjs` running on `prebuild`, so it cannot import the TypeScript helper. These two must be
+kept in agreement by hand — that constraint is the same one that keeps the content walk
+duplicated between `lib/content/tree.ts` and that script. The script parses only `status`
+frontmatter so it can mirror the production draft cascade when copying assets;
 `predev`/the watcher pass `--include-drafts` so authors can preview drafts locally. All
 other frontmatter remains the content loader's responsibility.
+
+**Summary vs. Full view defaults by section.** `ViewPreferenceContext` opens `/notes/…` in
+Summary (the review mode) and everything else in Full; a visitor's stored choice wins.
 
 **`lib/format.ts` pins locale and time zone deliberately.** `formatDate` is called from
 `'use client'` components, so an unpinned `toLocaleDateString` formats with Node's locale

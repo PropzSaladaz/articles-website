@@ -58,8 +58,6 @@ const rehypeShikiOptions = {
 
 interface MarkdownOptions {
   slug?: string;
-  parentCollectionSlug?: string | null;
-  isCollection?: boolean;
   numberHeadings?: boolean;
 }
 
@@ -142,12 +140,7 @@ export async function renderMarkdown(
   if (isDev && slug) {
     processor = processor.use(rehypeDevImages, { slug, isDev });
   } else if (!isDev && slug) {
-    processor = processor.use(rehypeProductionImages, {
-      slug,
-      isDev,
-      parentCollectionSlug: options?.parentCollectionSlug,
-      isCollection: options?.isCollection,
-    });
+    processor = processor.use(rehypeProductionImages, { slug, isDev });
   }
 
   const file = await processor

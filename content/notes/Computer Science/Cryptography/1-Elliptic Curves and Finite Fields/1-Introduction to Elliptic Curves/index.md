@@ -34,4 +34,4 @@ This collection focuses on the mathematical foundation behind elliptic-curve cry
 
 It does not yet explain complete cryptographic protocols or their security in detail. A later collection will use this foundation to explore public and private keys, digital signatures, key agreement, encryption, and threshold cryptography.
 
-For now, we will temporarily put cryptography aside and begin with the curve itself in [Elliptic Curves Over Real Numbers](/collections/computer-science/cryptography/elliptic-curves-and-finite-fields/elliptic-curves-over-real-numbers/).
+For now, we will temporarily put cryptography aside and begin with the curve itself in [Elliptic Curves Over Real Numbers](/notes/computer-science/cryptography/elliptic-curves-and-finite-fields/elliptic-curves-over-real-numbers/).

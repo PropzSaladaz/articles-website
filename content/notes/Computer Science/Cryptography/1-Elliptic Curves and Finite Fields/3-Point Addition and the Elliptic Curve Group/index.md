@@ -473,4 +473,4 @@ where:
 * `G` is a base point
 * `Q` is another point in the same elliptic curve group
 
-Next, [Scalar Multiplication](/collections/computer-science/cryptography/elliptic-curves-and-finite-fields/scalar-multiplication/) turns repeated point addition into the operation used throughout ECC.
+Next, [Scalar Multiplication](/notes/computer-science/cryptography/elliptic-curves-and-finite-fields/scalar-multiplication/) turns repeated point addition into the operation used throughout ECC.

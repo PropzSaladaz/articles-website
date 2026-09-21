@@ -24,6 +24,12 @@ const SIM_LIB_SRC = path.join(PROJECT_ROOT, 'sim-lib');
 const SIM_LIB_DEST = path.join(PUBLIC_ROOT, 'sim-lib');
 const SIM_LIB_VERSION = 'v1';
 
+// Before the section restructure every page lived under /articles or /collections. All of
+// that content became the `notes` section with its slug unchanged, so both legacy prefixes
+// map onto /notes. Cloudflare Workers Assets reads _redirects from the assets directory root.
+const LEGACY_URL_PREFIXES = ['/articles', '/collections'];
+const LEGACY_REDIRECT_TARGET = '/notes';
+
 function slugify(value) {
   return value
     .trim()
@@ -79,12 +85,14 @@ function ensureContentRoot() {
   }
 }
 
-function canonicalPathForEntry(slug, type, parentCollectionSlug) {
-  const base = type === 'article' && !parentCollectionSlug ? '/articles' : '/collections';
-  if (!slug) {
-    return base;
-  }
-  return `${base}/${slug}`;
+/**
+ * Where an entry's assets are copied, and so its URL. A slug's first segment is its
+ * section (`notes`, `writing`, `devlog`) and the URL is just the slug. This repeats
+ * lib/content/urls.ts's `contentPath()` — this file is plain `.mjs` and cannot import
+ * it — so keep the two in agreement by hand.
+ */
+function canonicalPathForEntry(slug) {
+  return slug ? `/${slug}` : '';
 }
 
 async function walkContent(dirAbs, slugPieces, parentCollectionSlug, hasDraftCollectionAncestor = false) {
@@ -106,7 +114,7 @@ async function walkContent(dirAbs, slugPieces, parentCollectionSlug, hasDraftCol
     // if has index & has 1 or many directories -> is collection
     type = contentChildDirs.length > 0 ? 'collection' : 'article';
     status = readStatus(path.join(dirAbs, INDEX_FILENAME));
-    const canonicalPath = canonicalPathForEntry(slug, type, parentCollectionSlug);
+    const canonicalPath = canonicalPathForEntry(slug);
     const entry = {
       slug,
       folderAbs: dirAbs,
@@ -303,6 +311,17 @@ async function copyDirectory(src, dest, opts = {}) {
   }
 }
 
+/** Write public/_redirects so links published before the section restructure keep working. */
+async function writeLegacyRedirects() {
+  const rules = LEGACY_URL_PREFIXES.map(
+    (prefix) => `${prefix}/*  ${LEGACY_REDIRECT_TARGET}/:splat  301`
+  );
+  const dest = path.join(PUBLIC_ROOT, '_redirects');
+  await fsp.mkdir(PUBLIC_ROOT, { recursive: true });
+  await fsp.writeFile(dest, `${rules.join('\n')}\n`);
+  return dest;
+}
+
 /** Copy the committed sim-lib/ kit into public/sim-lib/ (verbatim, no injection). */
 async function copySimLib() {
   if (!fs.existsSync(SIM_LIB_SRC)) return null;
@@ -353,6 +372,8 @@ async function main() {
   if (simLib) {
     console.log(`Copied sim-lib from ${simLib.from} to ${simLib.to}`);
   }
+
+  console.log(`Wrote legacy redirects to ${await writeLegacyRedirects()}`);
 
   for (const entry of entries) {
     const copied = await copyAssets(entry);

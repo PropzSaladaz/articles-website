@@ -161,7 +161,7 @@ is also on the curve.
 
 Visually, this means the top and bottom halves of the curve mirror each other.
 
-This symmetry becomes the inverse-point rule in [Point Addition and the Elliptic Curve Group](/collections/computer-science/cryptography/elliptic-curves-and-finite-fields/point-addition-and-the-elliptic-curve-group/). For now, the useful thing to remember is simple:
+This symmetry becomes the inverse-point rule in [Point Addition and the Elliptic Curve Group](/notes/computer-science/cryptography/elliptic-curves-and-finite-fields/point-addition-and-the-elliptic-curve-group/). For now, the useful thing to remember is simple:
 
 ::: definition[Mirrored points]
 For elliptic curves in Weierstrass form, points usually come in mirrored pairs: `(x, y)` and `(x, -y)`.
@@ -287,4 +287,4 @@ Real numbers are continuous and include infinitely many possible values. Compute
 
 At this point, we know what the curve is, what a valid point is, why the curve has mirrored points, and why the curve must be smooth.
 
-The next question is: can we do arithmetic with these points? The answer is yes — [Point Addition and the Elliptic Curve Group](/collections/computer-science/cryptography/elliptic-curves-and-finite-fields/point-addition-and-the-elliptic-curve-group/) turns this geometric picture into a complete addition rule.
+The next question is: can we do arithmetic with these points? The answer is yes — [Point Addition and the Elliptic Curve Group](/notes/computer-science/cryptography/elliptic-curves-and-finite-fields/point-addition-and-the-elliptic-curve-group/) turns this geometric picture into a complete addition rule.
