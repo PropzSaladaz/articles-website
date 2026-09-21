@@ -25,7 +25,7 @@ function nextSectionNumber(counters: number[], level: number): string {
   const currentIndex = level - 1;
   counters[currentIndex] += 1;
   counters.fill(0, currentIndex + 1);
-  return counters.slice(0, level).join('.');
+  return `${counters.slice(0, level).join('.')}.`;
 }
 
 /**

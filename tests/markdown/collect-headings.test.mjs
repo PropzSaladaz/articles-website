@@ -82,18 +82,18 @@ test('numbers rendered headings and TOC entries without changing ids', async () 
   );
 
   assert.deepEqual(result.headings, [
-    { id: 'first', text: 'First', level: 1, number: '1' },
-    { id: 'child', text: 'Child', level: 2, number: '1.1' },
-    { id: 'next-child', text: 'Next child', level: 2, number: '1.2' },
-    { id: 'second', text: 'Second', level: 1, number: '2' },
+    { id: 'first', text: 'First', level: 1, number: '1.' },
+    { id: 'child', text: 'Child', level: 2, number: '1.1.' },
+    { id: 'next-child', text: 'Next child', level: 2, number: '1.2.' },
+    { id: 'second', text: 'Second', level: 1, number: '2.' },
   ]);
   assert.match(
     result.html,
-    /<h1 id="first"><span class="md-section-number">1<\/span> First<\/h1>/
+    /<h1 id="first"><span class="md-section-number">1\.<\/span> First<\/h1>/
   );
   assert.match(
     result.html,
-    /<h3 id="detail"><span class="md-section-number">1\.1\.1<\/span> Detail<\/h3>/
+    /<h3 id="detail"><span class="md-section-number">1\.1\.1\.<\/span> Detail<\/h3>/
   );
   assert.doesNotMatch(result.html, /id="1-first"/);
 });
