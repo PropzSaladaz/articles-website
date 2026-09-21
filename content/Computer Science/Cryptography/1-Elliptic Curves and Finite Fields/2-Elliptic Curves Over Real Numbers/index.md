@@ -13,7 +13,9 @@ This is the first real introductory article on elliptic curves - In this article
 
 An elliptic curve is an algebraic curve: a set of coordinate pairs that satisfy a particular equation. It is not a function of $x$ in the usual sense, because one $x$ value can correspond to two $y$ values.
 
-::: definition[The most common form used to introduce elliptic curves is the **Weierstrass form**:]
+The most common form used to introduce elliptic curves is the **Weierstrass form**:
+
+::: definition[Weierstrass form]
 $$
 y^2 = x^3 + ax + b
 $$
@@ -40,63 +42,66 @@ So an elliptic curve is not just a drawing. It is a set of valid points defined 
 
 Let's make that concrete.
 
-Suppose we use the curve:
-
-$$
-y^2 = x^3 - x + 1
-$$
-
-Now test the point:
-
-$$
-P = (0, 1)
-$$
-
-To check whether `P` is on the curve, we substitute `x = 0` and `y = 1` into the equation.
-
-The left side is:
-
-$$
-y^2 = 1^2 = 1
-$$
-
-The right side is:
-
-$$
-x^3 - x + 1 = 0^3 - 0 + 1 = 1
-$$
-
-Both sides are equal, so:
-
-$$
-(0, 1)
-$$
-
-is a point on the curve.
-
-But now test:
-
-$$
-(0, 2)
-$$
-
-The left side is:
-
-$$
-2^2 = 4
-$$
-
-while the right side is still:
-
-$$
-0^3 - 0 + 1 = 1
-$$
-
-The two sides are not equal, so `(0, 2)` is not on the curve.
+> [!EXAMPLE]
+> **Checking whether a point lies on the curve**
+>
+> Suppose we use the curve:
+>
+> $$
+> y^2 = x^3 - x + 1
+> $$
+>
+> Now test the point:
+>
+> $$
+> P = (0, 1)
+> $$
+>
+> To check whether `P` is on the curve, we substitute `x = 0` and `y = 1` into the equation.
+>
+> The left side is:
+>
+> $$
+> y^2 = 1^2 = 1
+> $$
+>
+> The right side is:
+>
+> $$
+> x^3 - x + 1 = 0^3 - 0 + 1 = 1
+> $$
+>
+> Both sides are equal, so:
+>
+> $$
+> (0, 1)
+> $$
+>
+> is a point on the curve.
+>
+> But now test:
+>
+> $$
+> (0, 2)
+> $$
+>
+> The left side is:
+>
+> $$
+> 2^2 = 4
+> $$
+>
+> while the right side is still:
+>
+> $$
+> 0^3 - 0 + 1 = 1
+> $$
+>
+> The two sides are not equal, so `(0, 2)` is not on the curve.
 
 This is the first important mental model:
 
-::: definition[]
+::: definition[Elliptic curve]
 An elliptic curve is the set of all points that satisfy the curve equation.
 :::
 
@@ -113,11 +118,15 @@ is useful because it gives us a curve with a very special structure. This struct
 
 The most important operation will be **point addition**, which we will introduce later. For now, the important idea is:
 
-> ECC works with points that satisfy a specific curve equation.
+:::takeaway
+ECC works with points that satisfy a specific curve equation.
+:::
 
-- The curve equation defines which points are valid.
-- Points that satisfy the equation are on the curve.
-- Points that do not satisfy the equation are not part of the curve.
+Meaning:
+- The curve equation defines which points are valid
+- Points that satisfy the equation are on the curve
+- Points that do not satisfy the equation are not part of the curve
+- We can perform some **operations** on points that are on the curve
 
 
 # Why the Curve Is Symmetric
@@ -154,7 +163,7 @@ Visually, this means the top and bottom halves of the curve mirror each other.
 
 This symmetry becomes the inverse-point rule in [Point Addition and the Elliptic Curve Group](/collections/computer-science/cryptography/elliptic-curves-and-finite-fields/point-addition-and-the-elliptic-curve-group/). For now, the useful thing to remember is simple:
 
-::: definition[]
+::: definition[Mirrored points]
 For elliptic curves in Weierstrass form, points usually come in mirrored pairs: `(x, y)` and `(x, -y)`.
 :::
 
@@ -201,9 +210,7 @@ $$
 - If this **value is not zero**, the **curve is smooth**.
 - If this **value is zero**, the **curve is singular**.
 
-A singular curve may still be drawable, but it is not suitable for elliptic curve cryptography. Why? - You may ask:
-
-> The reason is that ECC needs point operations to behave consistently. If the curve has a cusp, a crossing, or a sharp singular point, the geometric rules behind point addition break down.
+A singular curve may still be drawable, but it is not suitable for elliptic curve cryptography. The reason is that ECC needs point operations to behave consistently: if the curve has a cusp, a crossing, or a sharp singular point, the geometric rules behind point addition break down.
 
 At a cusp or crossing, the idea of drawing a tangent line or finding a clean third intersection can stop behaving predictably. Since point addition will depend on these geometric rules, we only want curves where those rules behave reliably.
 
@@ -250,9 +257,11 @@ $$
 
 is true.
 
-This means the curve defines the set of valid points. A point that satisfies the equation is part of the curve. A point that does not satisfy the equation is not part of the curve. This is important because ECC operations are only defined over valid curve points. So: 
+This means the curve defines the set of valid points. A point that satisfies the equation is part of the curve. A point that does not satisfy the equation is not part of the curve. This is important because ECC operations are only defined over valid curve points.
 
-::: definition[The basic object in ECC is not just a number. The basic object is a **point**:]
+The basic object in ECC is not just a number. The basic object is a **point**:
+
+::: definition[Point]
 $$
 P = (x, y)
 $$
@@ -278,8 +287,4 @@ Real numbers are continuous and include infinitely many possible values. Compute
 
 At this point, we know what the curve is, what a valid point is, why the curve has mirrored points, and why the curve must be smooth.
 
-The next question is:
-
-> Can we do arithmetic with these points?
-
-The answer is yes. [Point Addition and the Elliptic Curve Group](/collections/computer-science/cryptography/elliptic-curves-and-finite-fields/point-addition-and-the-elliptic-curve-group/) turns this geometric picture into a complete addition rule.
+The next question is: can we do arithmetic with these points? The answer is yes — [Point Addition and the Elliptic Curve Group](/collections/computer-science/cryptography/elliptic-curves-and-finite-fields/point-addition-and-the-elliptic-curve-group/) turns this geometric picture into a complete addition rule.

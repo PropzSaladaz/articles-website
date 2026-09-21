@@ -80,19 +80,19 @@ The rule for point doubling is:
 3. Reflect that point across the x-axis.
 4. The reflected point is defined as `2P`.
 
-So:
-
-$$
-2P = P + P
-$$
-
-If $P=(x,0)$, its inverse is itself: $-P=P$. Therefore this special doubling case is:
-
-$$
-2P=\mathcal{O}.
-$$
+An easy and intuitive way to understand why we use the tangent line is to start with a fixed point $$P$$ and set another point $$Q$$ close to $$P$$. Then we move $$Q$$ closer and closer to $$P$$.
+As you can see from the simulation below, that ends up producing the tangent line once $$Q = P$$.
 
 <iframe src="simulations/ec_point_doubling.html" width="100%" height="600px"></iframe>
+
+> [!EXERCISE]
+> **A special case worth thinking about**
+>
+> Try setting `P` in the simulation above to a point where the curve crosses the x-axis (`y = 0`), then double it.
+>
+> What does the tangent line look like at that point? What do you think `2P` should be?
+>
+> Hold onto your guess — we will come back to this once inverse points and the point at infinity have been introduced.
 
 Point doubling is important because scalar multiplication is built using repeated point addition and point doubling.
 
@@ -104,7 +104,7 @@ There is one important special case in point addition: adding a point to its opp
 
 For every point `P` on the curve, there is another point called its **inverse point**, written as `-P`.
 
-::: definition[**Inverse Point**]
+::: definition[Inverse Point]
 
 The inverse point of `P` is the point that cancels `P` under elliptic curve addition.
 
@@ -164,7 +164,7 @@ $$
 P + (-P) = \mathcal{O}
 $$
 
-::: definition[**Point at Infinity**]
+::: definition[Point at Infinity]
 
 The point at infinity, written $\mathcal{O}$, is the special point that acts like zero in elliptic curve addition.
 
@@ -191,6 +191,19 @@ $$
 $$
 
 So $\mathcal{O}$ is the identity element of elliptic curve addition.
+
+> [!EXAMPLE]
+> **Revisiting the special case from Point Doubling**
+>
+> Earlier, we asked what happens when doubling a point $P=(x,0)$ that sits exactly on the x-axis.
+>
+> Its inverse is itself, since $-P=(x,-0)=(x,0)=P$. Doubling `P` is therefore the same as adding `P` to its own inverse:
+>
+> $$
+> 2P = P + (-P) = \mathcal{O}.
+> $$
+>
+> This matches the geometry too: the tangent line at a point on the x-axis is vertical, exactly like the line through `P` and `-P` — the same case we defined above as producing $\mathcal{O}$.
 
 At this point, we have the full basic point addition rule.
 
@@ -309,8 +322,9 @@ $$
 
 This means the set of points on the elliptic curve over the finite field modulo `p`.
 
-> [!IMPORTANT]
-> An elliptic curve group is the set of all valid points on an elliptic curve, together with the point at infinity, using point addition as the group operation.
+:::takeaway
+An elliptic curve group is the set of all valid points on an elliptic curve, together with the point at infinity, using point addition as the group operation.
+:::
 
 So when we say that elliptic curve points form a group, we mean that the points can be added together in a complete and consistent way.
 
@@ -319,7 +333,7 @@ So when we say that elliptic curve points form a group, we mean that the points 
 
 Groups have some rules that we have not discussed directly. You have probably already built intuition for them, but it is useful to name them explicitly:
 
-::: definition[**Group Rules**]
+::: definition[Group Rules]
 | Rule          | Meaning in elliptic curve addition                                  |
 | ------------- | ------------------------------------------------------------------- |
 | Closure       | If `P` and `Q` are valid points, then `P + Q` is also a valid point |
@@ -424,7 +438,7 @@ Point addition has all five properties above, so the curve points form an **abel
 
 # Why the Group Structure Matters
 
-You may be asking - why is all this group stuff important? - The group structure matters because ECC is not based only on drawing curves - It is based on doing arithmetic with curve points.
+You may be asking why all this group structure matters. It matters because ECC is not based only on drawing curves — it is based on doing arithmetic with curve points.
 
 Without the group structure, point addition would just be a geometric trick. With the group structure, point addition becomes a reliable algebraic operation. This lets us build more complex operations from simple ones.
 
@@ -443,8 +457,9 @@ The group structure guarantees that:
 - Every point has an inverse
 - Repeated addition always gives the same result, regardless of how the additions are grouped
 
-> [!IMPORTANT]
-> Elliptic curve points form a group because point addition behaves like a complete and consistent addition system.
+:::takeaway
+Elliptic curve points form a group because point addition behaves like a complete and consistent addition system.
+:::
 
 This group structure is what allows ECC to build public keys from repeated point addition:
 

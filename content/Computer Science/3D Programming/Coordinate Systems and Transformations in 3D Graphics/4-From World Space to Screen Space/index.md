@@ -22,31 +22,31 @@ This series follows that journey. Each chapter explains one conversion and the r
 
 ## The Journey at a Glance
 
-### 1. World Space → View Space
+### World Space → View Space
 
 World space is the shared coordinate system of the scene. The view transform re-expresses every vertex relative to the camera: the camera becomes the origin, and its orientation becomes the reference for “right,” “up,” and “forward.”
 
 This is necessary because a renderer cannot decide what the camera sees from a world-space position alone. It needs to know where that position is **from the camera's point of view**.
 
-### 2. View Space → Clip Space
+### View Space → Clip Space
 
 The camera sees a pyramid-like region called a **view frustum**. Perspective projection turns that camera-relative volume into a standard representation that encodes the camera's field of view, aspect ratio, and near and far limits.
 
 This is the stage that prepares distant geometry to appear smaller than nearby geometry.
 
-### 3. Clip Space → Clipped Primitives
+### Clip Space → Clipped Primitives
 
 Some triangles lie completely outside the view; others cross its boundary. The renderer discards invisible primitives and trims triangles that are only partly visible.
 
 This must happen before the perspective effect is finalized, otherwise geometry crossing the camera boundary can be distorted or disappear incorrectly.
 
-### 4. Clip Space → Normalized Device Coordinates
+### Clip Space → Normalized Device Coordinates
 
 The renderer then converts the surviving positions into a standard, normalized region. At this point, every visible position is described in a device-independent coordinate system rather than in camera units.
 
 This common representation lets the rest of the graphics pipeline work consistently regardless of the scene's size or the target resolution.
 
-### 5. Normalized Device Coordinates → Window Space
+### Normalized Device Coordinates → Window Space
 
 Finally, the viewport transform maps the normalized result onto a specific rectangle of the render target: its pixel width, height, origin, and depth-buffer range.
 

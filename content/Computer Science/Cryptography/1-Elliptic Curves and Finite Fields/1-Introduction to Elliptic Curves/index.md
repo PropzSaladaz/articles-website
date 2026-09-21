@@ -10,7 +10,9 @@ Imagine placing a few points on that curve. At first, they are just coordinates 
 
 This may sound strange at first. We normally add numbers, not points on a curve. Do not worry if it is not yet clear what “adding points” means. We will build that idea visually and step by step in the following articles.
 
-Once this arithmetic is in place, we can begin repeating operations on the curve. **Some calculations are easy** to perform, even when repeated many times, **but extremely difficult to reverse**. This difference between going forward and going backward is what eventually makes elliptic curves useful for cryptography.
+Once this arithmetic is in place, we can begin repeating operations on the curve. Some calculations are **easy to perform**, even when repeated many times, **but extremely difficult to reverse**. This property of being easy going forward but hard going backward is what eventually makes elliptic curves useful for cryptography.
+
+This asymmetry — being easy to compute in one direction but computationally difficult to reverse—is a highly desirable property used throughout asymmetric cryptography. Elliptic-curve systems rely on the discrete logarithm problem, while RSA relies on the difficulty of factoring large composite integers
 
 However, we will not begin with cryptographic protocols, private keys, or signatures. Starting there would hide the most interesting part: where the underlying mathematical structure comes from.
 
@@ -22,7 +24,9 @@ Finally, we will look at how cryptographic systems choose particular points and 
 
 By the end of the collection, the goal is for elliptic-curve cryptography to feel less like a collection of mysterious formulas and more like the natural result of a few ideas built on top of one another:
 
-a curve, points on that curve, and a rule for combining them.
+:::takeaway
+A curve, points on that curve, and a rule for combining them.
+:::
 
 # Where this collection stops
 
