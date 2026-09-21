@@ -13,6 +13,7 @@ import rehypeShiki, { type RehypeShikiOptions } from '@shikijs/rehype';
 import {
   remarkSpoiler,
   remarkDefinition,
+  remarkTakeaway,
   remarkDiagram,
   remarkGithubAlerts,
   remarkStrongHr,
@@ -67,8 +68,11 @@ export type MarkdownRender = {
   headings: Heading[];
 };
 
-function normalizeDefinitionDirectives(markdown: string): string {
-  return markdown.replace(/^([ \t]*):::[ \t]+definition(?=\[|[ \t]*$)/gim, '$1:::definition');
+function normalizeDirectiveSpacing(markdown: string): string {
+  return markdown.replace(
+    /^([ \t]*):::[ \t]+(definition|takeaway)(?=\[|[ \t]*$)/gim,
+    '$1:::$2'
+  );
 }
 
 export async function renderMarkdown(
@@ -77,7 +81,7 @@ export async function renderMarkdown(
 ): Promise<MarkdownRender> {
   const isDev = process.env.NODE_ENV === 'development';
   const slug = options?.slug || '';
-  const normalizedMarkdown = normalizeDefinitionDirectives(markdown);
+  const normalizedMarkdown = normalizeDirectiveSpacing(markdown);
 
   let processor = unified()
     // =========================
@@ -95,6 +99,8 @@ export async function renderMarkdown(
     .use(remarkSpoiler)
     // :::definition[Term] → <aside class="md-definition"> with a generated title
     .use(remarkDefinition)
+    // :::takeaway → <aside class="md-takeaway">, a prominent non-collapsible pull-quote
+    .use(remarkTakeaway)
     // :::flow / :::branch / :::compare → .content-diagram block layouts
     .use(remarkDiagram)
     // GitHub-style alerts: > [!NOTE], > [!TIP], etc.
