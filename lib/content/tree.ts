@@ -19,6 +19,19 @@ type WalkContext = {
 
 const INDEX_FILENAME = "index.md";
 
+// Full slugs (never a prefix, since nested slugs always carry a parent segment) that
+// would shadow a real route if a content folder produced them: the section landing
+// pages, API routes, generated feeds/robots files, and the sim-lib/_next asset roots.
+const RESERVED_SLUGS = new Set([
+  "about",
+  "api",
+  "rss",
+  "sitemap.xml",
+  "robots.txt",
+  "sim-lib",
+  "_next",
+]);
+
 function hasIndex(fileAbs: string) {
   return isFile(path.join(fileAbs, INDEX_FILENAME));
 }
@@ -50,6 +63,12 @@ function slugPieceForFolder(folderName: string, folderAbs: string): string {
 
 function registerSlug(slug: string, dirAbs: string, context: WalkContext) {
   if (!slug) return;
+
+  if (RESERVED_SLUGS.has(slug)) {
+    throw new Error(
+      `Content folder ${dirAbs} produces reserved URL slug "${slug}", which would shadow a real route.`
+    );
+  }
 
   const firstSource = context.slugSources.get(slug);
   if (firstSource) {

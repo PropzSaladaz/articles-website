@@ -1,9 +1,10 @@
 import 'server-only'; // prevent accidental client-side usage
 
-import { SubjectNode, Article, Collection, KnowledgePathItem } from './types';
+import { SubjectNode, Article, ArticlePreview, Collection, KnowledgePathItem } from './types';
 import { getCanonicalUrl } from '../site';
 import { loadAllFromDisk } from './tree';
 import { articlePath, collectionPath } from './urls';
+import { sectionOf, type SectionId } from './sections';
 import { watch, type FSWatcher } from 'fs';
 import { CONTENT_ROOT } from './files';
 import { createPublicSnapshot, type ContentSnapshot } from './visibility';
@@ -137,6 +138,33 @@ export async function getArticleBySlug(slug: string): Promise<Article | undefine
 export async function getCollectionBySlug(slug: string): Promise<Collection | undefined> {
   const { collections } = contentForCurrentEnvironment(await ensureLoaded());
   return collections.find((collection) => collection.slug === slug);
+}
+
+function toArticlePreview(article: Article): ArticlePreview {
+  return {
+    slug: article.slug,
+    title: article.title,
+    date: article.date,
+    featured: article.featured,
+    description: article.description,
+    cover: article.cover,
+    readingTime: article.readingTime,
+    collectionSlug: article.collectionSlug,
+  };
+}
+
+/**
+ * Articles in one section, newest first, capped at `limit` when given.
+ *
+ * Sourced from `getAllArticles()`, which is already sorted date-desc — a collection's
+ * `.articles` is folder order (numeric prefix, then name) and would misorder a
+ * chronological section like writing or devlog.
+ */
+export async function getLatestBySection(sectionId: SectionId, limit?: number): Promise<ArticlePreview[]> {
+  const articles = await getAllArticles();
+  const inSection = articles.filter((article) => sectionOf(article.slug) === sectionId);
+  const bounded = typeof limit === 'number' ? inSection.slice(0, limit) : inSection;
+  return bounded.map(toArticlePreview);
 }
 
 /**

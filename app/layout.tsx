@@ -4,7 +4,7 @@ import '../styles/content-diagrams.css';
 import Script from 'next/script';
 import { AppProviders } from '../components/AppProviders';
 import { SiteShell } from '../components/SiteShell';
-import { getSubjectTree } from '../lib/content/content';
+import { getLatestBySection, getSubjectTree } from '../lib/content/content';
 import 'katex/dist/katex.min.css';
 
 
@@ -13,14 +13,18 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const tree = await getSubjectTree();
+  const [tree, writingArticles, devlogArticles] = await Promise.all([
+    getSubjectTree(),
+    getLatestBySection('writing'),
+    getLatestBySection('devlog'),
+  ]);
 
   return (
     <html lang="en" suppressHydrationWarning>
       <head />
       <body className="min-h-screen bg-background text-foreground antialiased">
         <AppProviders>
-          <SiteShell tree={tree}>
+          <SiteShell tree={tree} sectionArticles={{ writing: writingArticles, devlog: devlogArticles }}>
             {children}
           </SiteShell>
         </AppProviders>
