@@ -346,8 +346,9 @@ async function copyAssets(entry) {
       entry.canonicalPath.replace(/^\//, ''),
       relativeDir
     );
-    // Always clear the old destination first. Production removes assets when a
-    // collection becomes draft, then copies only the public projection below.
+    // main() already wiped public/, so destBase cannot exist yet — this only guards
+    // against two entries in the same run writing the same destBase, which would
+    // otherwise merge an old copy's leftover files into the new one's.
     await fsp.rm(destBase, { recursive: true, force: true });
     if (!entry.isPublic) {
       continue;
@@ -359,8 +360,24 @@ async function copyAssets(entry) {
   return copied;
 }
 
+/**
+ * public/ is fully generated (see CLAUDE.md) and fully gitignored, so nothing of value can
+ * live there between runs. copyAssets() only clears the destination path it is about to
+ * write, never a path a *previous* run wrote and this run no longer would — those go stale
+ * silently, since nothing is tracked to notice them missing. That was invisible while the
+ * URL scheme was stable (same slug, same destination, overwritten every run); the section
+ * restructure changed every destination at once and left the old /articles and /collections
+ * trees sitting in public/ (and from there, in the exported out/) indefinitely. Wiping the
+ * whole directory up front is the only rule that can't drift.
+ */
+async function clearPublicRoot() {
+  await fsp.rm(PUBLIC_ROOT, { recursive: true, force: true });
+  await fsp.mkdir(PUBLIC_ROOT, { recursive: true });
+}
+
 async function main() {
   ensureContentRoot();
+  await clearPublicRoot();
   // Enumerate every entry so hidden entries can have stale public assets removed.
   const entries = await collectEntries();
 
