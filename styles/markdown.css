@@ -32,22 +32,14 @@
   font-weight: 700;
   margin-top: 1.8em;
   padding-bottom: 0.3em;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+  border-bottom: 1px solid hsl(var(--border));
 }
 
+/* Only h1 gets a rule; underlining h2 as well put a line under every
+   subsection and made the page read as a stack of bars. */
 .md .md-h2 {
   font-size: clamp(1.4rem, 1.8vw, 1.65rem);
   margin-top: 2.7em;
-  padding-bottom: 0.3em;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.15);
-}
-
-.dark .md .md-h2 {
-  border-bottom-color: rgba(255, 255, 255, 0.12);
-}
-
-.dark .md .md-h1 {
-  border-bottom-color: rgba(255, 255, 255, 0.12);
 }
 
 .md .md-h3 {
@@ -70,7 +62,7 @@
 .md .md-h6 {
   font-size: 0.9rem;
   font-weight: 600;
-  color: var(--muted);
+  color: hsl(var(--muted-foreground));
 }
 
 .md .md-section-number {
@@ -97,7 +89,7 @@
   transform: translateY(-50%);
   opacity: 0;
   font-size: 0.85em;
-  color: var(--link, #93c5fd);
+  color: hsl(var(--link));
   text-decoration: none;
   transition: opacity 0.15s ease;
   user-select: none;
@@ -126,12 +118,16 @@
 }
 
 .md .md-a {
-  color: var(--link);
-  text-underline-offset: .15em;
+  color: hsl(var(--link));
+  text-decoration: underline;
+  text-decoration-color: hsl(var(--link) / 0.35);
+  text-decoration-thickness: 1px;
+  text-underline-offset: .18em;
+  transition: text-decoration-color .15s ease;
 }
 
 .md .md-a:hover {
-  color: var(--link-hover);
+  text-decoration-color: currentColor;
 }
 
 /* ==============================
@@ -141,7 +137,7 @@
 .md .md-ul {
   padding-left: 3rem;
   margin: .8rem 0;
-  list-style-type: "▸ ";
+  list-style-type: disc;
 
   li::marker {
     color: var(--muted-foreground);
@@ -177,30 +173,13 @@
   /* smaller nested indent */
 }
 
-/* Blockquote - Modern style with decorative quote */
+/* Blockquote - a plain rule and muted italic text; no fill or ornament. */
 .md .md-blockquote {
-  position: relative;
   margin: 1.5rem 0;
-  padding: 1.25rem 1.5rem 1.25rem 2.5rem;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.03) 100%);
-  border-left: 3px solid;
-  border-image: linear-gradient(to bottom, #6366f1, #8b5cf6) 1;
-  border-radius: 0 0.75rem 0.75rem 0;
+  padding: 0.1rem 0 0.1rem 1.25rem;
+  border-left: 2px solid hsl(var(--border));
   font-style: italic;
-  color: var(--foreground);
-}
-
-/* Large decorative quote mark */
-.md .md-blockquote::before {
-  content: '"';
-  position: absolute;
-  top: -0.25rem;
-  left: 0.5rem;
-  font-size: 3rem;
-  font-family: Georgia, serif;
-  font-style: normal;
-  color: rgba(99, 102, 241, 0.25);
-  line-height: 1;
+  color: hsl(var(--muted-foreground));
 }
 
 .md .md-blockquote .md-p {
@@ -333,10 +312,8 @@
 .md .md-thead .md-th {
   background: rgba(0, 0, 0, 0.03);
   font-weight: 600;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--muted-foreground, #64748b);
+  font-size: 0.875rem;
+  color: hsl(var(--foreground));
   padding: 0.5rem 0.85rem;
   border-bottom: 2px solid rgba(0, 0, 0, 0.1);
   white-space: nowrap;
@@ -388,8 +365,8 @@
   font-size: .92em;
   padding: .15em .35em;
   border-radius: .35rem;
-  background: #f1f5f9;
-  color: #0b1220;
+  background: hsl(var(--muted));
+  color: hsl(var(--foreground));
 }
 
 /* Fenced code blocks */
@@ -566,20 +543,15 @@
   }
 }
 
-/* Dark mode (opt-in via .dark ancestor) */
+/* Dark mode (opt-in via .dark ancestor). Don't redeclare the theme's own
+   tokens (--muted, --border, …) here: they are HSL triplets used as
+   hsl(var(--x)), and a hex value shadowing them inside .md makes every such
+   rule invalid in dark mode. */
 .dark .md {
-  --fg: #e5e7eb;
-  --muted: #a3a3a3;
-  --border: #374151;
-  --bg: #0b0f19;
-
-  --link: #93c5fd;
-  --link-hover: #bfdbfe;
-
   --strong: #ffffff;
   --code-fg: #e6edf3;
-  --code-bg: #0b1020;
-  --code-border: #1f2937;
+  --code-bg: #0f0f0f;
+  --code-border: #383838;
   --table-header-bg: #111827;
   --table-row-alt-bg: #0f172a;
 }
