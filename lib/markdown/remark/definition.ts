@@ -18,23 +18,33 @@ const remarkDefinition: Plugin<[], Root> = () => {
           label = toString(first).trim();
           node.children = node.children.slice(1);
         }
-        const title = label ? `Definition: ${label}` : 'Definition';
+        // Labels are sometimes written as `[**Term:**]`; the bold is
+        // flattened by toString, the trailing colon is dropped here.
+        label = label.replace(/[:.]\s*$/, '');
+        const title = label ? `Definition (${label}).` : 'Definition.';
 
         const titleNode = {
-          type: 'paragraph',
-          data: {
-            hName: 'p',
-            hProperties: { className: ['md-definition-title'] },
-          },
+          type: 'strong',
+          data: { hProperties: { className: ['md-definition-title'] } },
           children: [{ type: 'text', value: title }],
         };
+
+        // Textbook-style run-in label: "Definition (Term). Body text…".
+        // Bodies that open with display math or a table get the label on
+        // its own line instead.
+        const body = node.children ?? [];
+        if (body[0]?.type === 'paragraph') {
+          body[0].children = [titleNode, { type: 'text', value: ' ' }, ...body[0].children];
+        } else {
+          body.unshift({ type: 'paragraph', children: [titleNode] });
+        }
+        node.children = body;
 
         node.data ||= {};
         node.data.hName = 'aside';
         node.data.hProperties = {
           className: ['md-definition'],
         };
-        node.children = [titleNode, ...(node.children ?? [])];
       }
     );
   };
