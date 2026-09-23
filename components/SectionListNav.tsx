@@ -38,15 +38,14 @@ export function SectionListNav({ label, articles }: SectionListNavProps) {
           <Link
             key={article.slug}
             href={href}
+            aria-current={isActive ? 'page' : undefined}
             className={cn(
               'flex flex-col gap-0.5 rounded-md px-2 py-1.5 text-sm transition-colors',
-              isActive
-                ? 'bg-primary/[0.08] font-semibold text-primary/80 border-l-2 border-primary/70'
-                : 'text-muted-foreground/70 hover:text-foreground'
+              isActive ? 'bg-muted font-medium text-foreground' : 'text-muted-foreground hover:text-foreground'
             )}
           >
             <span className="truncate">{article.title}</span>
-            <span className="text-xs text-muted-foreground/60">{formatDate(article.date)}</span>
+            <span className="text-xs font-normal text-muted-foreground">{formatDate(article.date)}</span>
           </Link>
         );
       })}

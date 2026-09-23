@@ -3,13 +3,28 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { ChevronRight, FolderOpen, FileText } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { collectionPath, contentPath } from '../lib/content/urls';
 import { cn } from '../lib/utils';
 import { SubjectNode, NodeKind, StandaloneArticle } from '../lib/content/types';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
+import { subjectIcon } from './subjectIcons';
 
-const TOGGLE_SIZE = 24;
+// Leaves have no disclosure toggle; this indent lines their titles up with
+// sibling branch titles (4px row padding + 20px toggle + 6px gap).
+const LEAF_INDENT = 'pl-[30px]';
+
+// Row states, shared by every row kind. Deliberately neutral (no accent color):
+// the current page gets a quiet fill, and the rows on the path down to it are
+// only darkened, so exactly one row is ever "selected".
+const ROW_BASE = 'flex items-center gap-1.5 rounded-md py-1 text-sm transition-colors';
+const ROW_CURRENT = 'bg-muted font-medium text-foreground';
+const ROW_ON_PATH = 'text-foreground';
+const ROW_IDLE = 'text-muted-foreground hover:text-foreground';
+
+function rowState(isCurrent: boolean, isOnPath: boolean) {
+  return isCurrent ? ROW_CURRENT : isOnPath ? ROW_ON_PATH : ROW_IDLE;
+}
 
 type TreeNavigationProps = {
   tree: SubjectNode;
@@ -58,12 +73,11 @@ export function TreeNavigation({ tree }: TreeNavigationProps) {
   };
 
   return (
-    <nav aria-label="Content navigation" className="space-y-2">
+    <nav aria-label="Content navigation" className="space-y-0.5">
       {tree.children?.map((child) => (
         <TreeNodeItem
           key={child.id}
           node={child}
-          depth={0}
           active={active}
           expandedKeys={expandedKeys}
           onToggle={handleToggle}
@@ -75,18 +89,16 @@ export function TreeNavigation({ tree }: TreeNavigationProps) {
 
 type TreeNodeItemProps = {
   node: SubjectNode;
-  depth: number;
   active: ActiveState;
   expandedKeys: Set<string>;
   onToggle: (key: string, value?: boolean) => void;
 };
 
-function TreeNodeItem({ node, depth, active, expandedKeys, onToggle }: TreeNodeItemProps) {
+function TreeNodeItem({ node, active, expandedKeys, onToggle }: TreeNodeItemProps) {
   if (node.kind === NodeKind.Node) {
     return (
       <SubjectBranch
         node={node}
-        depth={depth}
         active={active}
         expandedKeys={expandedKeys}
         onToggle={onToggle}
@@ -98,7 +110,6 @@ function TreeNodeItem({ node, depth, active, expandedKeys, onToggle }: TreeNodeI
     return (
       <CollectionBranch
         node={node}
-        depth={depth}
         active={active}
         expandedKeys={expandedKeys}
         onToggle={onToggle}
@@ -106,13 +117,13 @@ function TreeNodeItem({ node, depth, active, expandedKeys, onToggle }: TreeNodeI
     );
   }
 
-  return <StandaloneLeaf node={node as StandaloneArticle} depth={depth} active={active} />;
+  return <StandaloneLeaf node={node as StandaloneArticle} active={active} />;
 }
 
 type BranchShellProps = {
   branchKey: string;
-  depth: number;
-  isActive: boolean;
+  isCurrent: boolean;
+  isOnPath: boolean;
   childNodes: SubjectNode[];
   active: ActiveState;
   expandedKeys: Set<string>;
@@ -121,14 +132,15 @@ type BranchShellProps = {
 };
 
 /**
- * The shell shared by every branch kind: the collapsible wrapper, the indented row, and
- * the recursive child list. Variants supply only the row contents, so the disclosure and
- * indentation behaviour cannot drift between them.
+ * The shell shared by every branch kind: the collapsible wrapper, the row, and the
+ * recursive child list, indented under a thin guide line that hangs from the
+ * chevron. Variants supply only the row contents, so the disclosure and indentation
+ * behaviour cannot drift between them.
  */
 function BranchShell({
   branchKey,
-  depth,
-  isActive,
+  isCurrent,
+  isOnPath,
   childNodes,
   active,
   expandedKeys,
@@ -139,28 +151,17 @@ function BranchShell({
 
   return (
     <Collapsible
-      className="space-y-1"
+      className="space-y-0.5"
       open={expandedKeys.has(branchKey)}
       onOpenChange={(value) => onToggle(branchKey, value)}
     >
-      <div
-        className={cn(
-          'flex items-center gap-2 rounded-md px-2 py-1 text-sm transition-colors',
-          isActive
-            ? 'bg-primary/[0.08] text-primary/80 border-l-2 border-primary/70'
-            : 'text-muted-foreground/70 hover:text-foreground'
-        )}
-        style={{ paddingLeft: depth * 12 }}
-      >
-        {children}
-      </div>
+      <div className={cn(ROW_BASE, 'px-1', rowState(isCurrent, isOnPath))}>{children}</div>
       {hasChildren && (
-        <CollapsibleContent className="space-y-1 pt-1">
+        <CollapsibleContent className="ml-3.5 space-y-0.5 border-l border-border pl-1">
           {childNodes.map((child) => (
             <TreeNodeItem
               key={child.id}
               node={child}
-              depth={depth + 1}
               active={active}
               expandedKeys={expandedKeys}
               onToggle={onToggle}
@@ -179,86 +180,68 @@ function BranchShell({
 function BranchLead({
   hasChildren,
   label,
-  placeholder,
 }: {
   hasChildren: boolean;
   label: string;
-  placeholder?: ReactNode;
 }) {
   if (hasChildren) {
     return <ToggleButton label={label} />;
   }
 
-  return (
-    <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center text-xs text-muted-foreground">
-      {placeholder}
-    </span>
-  );
+  return <span className="inline-flex h-5 w-5 shrink-0" aria-hidden="true" />;
 }
 
-function SubjectBranch({ node, depth, active, expandedKeys, onToggle }: TreeNodeItemProps) {
+function SubjectBranch({ node, active, expandedKeys, onToggle }: TreeNodeItemProps) {
   const slug = normalizeSlug(node.slug);
   const childNodes = node.children ?? [];
+  const Icon = subjectIcon(slug);
 
   return (
     <BranchShell
       branchKey={makeNodeKey(slug)}
-      depth={depth}
-      isActive={branchContainsActive(slug, active)}
-      childNodes={childNodes}
-      active={active}
-      expandedKeys={expandedKeys}
-      onToggle={onToggle}
-    >
-      <BranchLead hasChildren={childNodes.length > 0} label={`Toggle ${node.title}`} placeholder="•" />
-      <span className="truncate font-medium">{node.title}</span>
-    </BranchShell>
-  );
-}
-
-function CollectionBranch({ node, depth, active, expandedKeys, onToggle }: TreeNodeItemProps) {
-  if (node.kind !== NodeKind.CollectionArticle) return null;
-
-  const slug = normalizeSlug(node.slug);
-  const childNodes = node.children ?? [];
-  const isActive =
-    active.collectionSlug === slug ||
-    Boolean(active.articleSlug && active.articleSlug.startsWith(`${slug}/`));
-
-  const collectionCount = node.collectionsCount ?? 0;
-  const articleCount = node.articlesCount ?? 0;
-  const badgeValue = collectionCount > 0 ? collectionCount : articleCount;
-  const badgeLabel =
-    collectionCount > 0
-      ? `${collectionCount} ${collectionCount === 1 ? 'collection' : 'collections'}`
-      : `${articleCount} ${articleCount === 1 ? 'article' : 'articles'}`;
-
-  return (
-    <BranchShell
-      branchKey={makeCollectionKey(slug)}
-      depth={depth}
-      isActive={isActive}
+      isCurrent={false}
+      isOnPath={branchContainsActive(slug, active)}
       childNodes={childNodes}
       active={active}
       expandedKeys={expandedKeys}
       onToggle={onToggle}
     >
       <BranchLead hasChildren={childNodes.length > 0} label={`Toggle ${node.title}`} />
-      <FolderOpen className="h-4 w-4 shrink-0 text-primary/70" />
-      <Link href={collectionPath(slug)} className="flex-1 truncate font-medium">
-        {node.title}
-      </Link>
-      <span
-        className="rounded-full bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground"
-        title={badgeLabel}
-      >
-        {badgeValue}
-      </span>
+      {Icon && <Icon className="h-4 w-4 shrink-0 opacity-70" aria-hidden="true" />}
+      <span className="truncate font-medium">{node.title}</span>
     </BranchShell>
   );
 }
 
-function StandaloneLeaf({ node, depth, active }: { node: StandaloneArticle; depth: number; active: ActiveState }) {
+function CollectionBranch({ node, active, expandedKeys, onToggle }: TreeNodeItemProps) {
+  if (node.kind !== NodeKind.CollectionArticle) return null;
+
+  const slug = normalizeSlug(node.slug);
+  const childNodes = node.children ?? [];
+  const isCurrent = active.collectionSlug === slug && !active.articleSlug;
+  const isOnPath =
+    active.collectionSlug === slug ||
+    Boolean(active.articleSlug && active.articleSlug.startsWith(`${slug}/`));
+
+  return (
+    <BranchShell
+      branchKey={makeCollectionKey(slug)}
+      isCurrent={isCurrent}
+      isOnPath={isOnPath}
+      childNodes={childNodes}
+      active={active}
+      expandedKeys={expandedKeys}
+      onToggle={onToggle}
+    >
+      <BranchLead hasChildren={childNodes.length > 0} label={`Toggle ${node.title}`} />
+      <Link href={collectionPath(slug)} className="flex-1 truncate">
+        {node.title}
+      </Link>
+    </BranchShell>
+  );
+}
+
+function StandaloneLeaf({ node, active }: { node: StandaloneArticle; active: ActiveState }) {
   const slug = normalizeSlug(node.articleSlug);
   const href = contentPath(slug);
   const isActive = active.articleSlug === slug;
@@ -266,15 +249,9 @@ function StandaloneLeaf({ node, depth, active }: { node: StandaloneArticle; dept
   return (
     <Link
       href={href}
-      className={cn(
-        'flex items-center gap-2 rounded-md px-2 py-1 text-sm transition-colors',
-        isActive
-          ? 'bg-primary/[0.08] font-semibold text-primary/80 border-l-2 border-primary/70'
-          : 'text-muted-foreground/70 hover:text-foreground'
-      )}
-      style={{ paddingLeft: depth * 12 + TOGGLE_SIZE }}
+      aria-current={isActive ? 'page' : undefined}
+      className={cn(ROW_BASE, LEAF_INDENT, 'pr-1', rowState(isActive, false))}
     >
-      <FileText className="h-4 w-4 shrink-0 opacity-60" />
       <span className="truncate">{node.title}</span>
     </Link>
   );
@@ -283,10 +260,10 @@ function StandaloneLeaf({ node, depth, active }: { node: StandaloneArticle; dept
 function ToggleButton({ label }: { label: string }) {
   return (
     <CollapsibleTrigger
-      className="group inline-flex h-6 w-6 items-center justify-center rounded-md border border-transparent text-muted-foreground transition-colors hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
+      className="group inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-muted-foreground/70 transition-colors hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       aria-label={label}
     >
-      <ChevronRight className="h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-90" />
+      <ChevronRight className="h-3.5 w-3.5 transition-transform duration-200 group-data-[state=open]:rotate-90" />
     </CollapsibleTrigger>
   );
 }
