@@ -144,27 +144,26 @@ export function TableOfContents({ headings }: { headings: Heading[] }) {
     }, [headings]);
 
     return (
-        <nav>
-            <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 text-sm shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
-                <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">On this page</h2>
-                <ul className="mt-3 space-y-2">
+        <nav aria-label="On this page">
+            <div className="text-sm">
+                <h2 className="text-sm font-semibold text-foreground">On this page</h2>
+                <ul className="mt-3 space-y-2 border-l border-border">
                     {headings.map((heading) => {
                         const isActive = activeHeadingId === heading.id;
                         return (
                             <li
                                 key={heading.id}
-                                className={cn(
-                                    heading.level > 1 ? 'ml-4' : undefined,
-                                    'transition-all duration-200'
-                                )}
+                                className="transition-all duration-200"
                             >
                                 <a
                                     href={`#${heading.id}`}
                                     className={cn(
-                                        'block transition-colors duration-200',
+                                        // The active marker overlays the list's left rail.
+                                        '-ml-px block border-l-2 transition-colors duration-200',
+                                        heading.level > 1 ? 'pl-6' : 'pl-3',
                                         isActive
-                                            ? 'text-primary font-medium border-l-2 border-primary pl-2 -ml-2'
-                                            : 'text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400'
+                                            ? 'border-primary font-medium text-foreground'
+                                            : 'border-transparent text-muted-foreground hover:text-foreground'
                                     )}
                                 >
                                     {heading.number && (

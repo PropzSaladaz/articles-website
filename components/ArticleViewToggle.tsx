@@ -17,7 +17,7 @@ export function ArticleViewToggle({ fullWidth = false }: { fullWidth?: boolean }
       role="group"
       aria-label="Article view mode"
       className={clsx(
-        'inline-grid grid-cols-2 items-center gap-1 rounded-xl border border-slate-200/80 bg-slate-100/80 p-1 text-sm dark:border-slate-700 dark:bg-slate-800/70',
+        'inline-grid grid-cols-2 items-center gap-0.5 rounded-lg border border-border bg-muted p-0.5 text-sm',
         fullWidth ? 'w-full' : 'w-auto'
       )}
     >
@@ -27,10 +27,10 @@ export function ArticleViewToggle({ fullWidth = false }: { fullWidth?: boolean }
           type="button"
           aria-pressed={view === option.value}
           className={clsx(
-            'rounded-lg px-3 py-1.5 font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60',
+            'rounded-md px-2.5 py-0.5 font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60',
             view === option.value
-              ? 'bg-primary text-primary-foreground shadow-sm ring-1 ring-primary/60'
-              : 'text-slate-600 hover:bg-white/80 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700/70 dark:hover:text-slate-100'
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
           )}
           onClick={() => setView(option.value)}
         >

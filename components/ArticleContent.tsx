@@ -9,8 +9,7 @@ import { ArticleViewToggle, useIsSummaryView } from './ArticleViewToggle';
 import { formatDate } from '../lib/format';
 import { collectionPath } from '../lib/content/urls';
 import { GiscusComments } from './GiscusComments';
-import { ArticleNavigation } from './ArticleNavigation';
-import { cn } from '../lib/utils';
+import { ArticleNavigation, type SeriesPosition } from './ArticleNavigation';
 import { ReadingProgressBar, TableOfContents } from './ReadingProgress';
 
 /**
@@ -31,12 +30,14 @@ export function ArticleContent({
   knowledgePath = [],
   previousArticle,
   nextArticle,
+  series,
   collectionSlugs = [],
 }: {
   article: Article;
   knowledgePath?: KnowledgePathItem[];
   previousArticle?: SiblingArticle | null;
   nextArticle?: SiblingArticle | null;
+  series?: SeriesPosition | null;
   collectionSlugs?: string[];
 }) {
   const isSummary = useIsSummaryView();
@@ -44,6 +45,10 @@ export function ArticleContent({
   const [revealDurationMs, setRevealDurationMs] = useState(450);
   const transitionRef = useRef<HTMLDivElement | null>(null);
   const collectionSlugSet = new Set(collectionSlugs);
+  // The path ends at the article itself, which the <h1> right below already
+  // names — show only its ancestors.
+  const breadcrumb =
+    knowledgePath.at(-1)?.slug === article.slug ? knowledgePath.slice(0, -1) : knowledgePath;
 
   useLayoutEffect(() => {
     const element = transitionRef.current;
@@ -66,18 +71,20 @@ export function ArticleContent({
       {/* Reading progress bar - only show in full view */}
       {!isSummary && <ReadingProgressBar contentSelector="article" />}
 
-      <div className="grid gap-6 sm:gap-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-16">
-        <div className="reading-shell min-w-0 rounded-2xl border border-border bg-card px-8 py-6 text-card-foreground shadow-md sm:px-16 sm:py-10 lg:px-20 lg:py-12">
+      {/* The reading column is capped at ~70 characters per line; the TOC only
+          gets its own column on xl screens, where there is real spare margin. */}
+      <div className="grid gap-6 sm:gap-8 xl:grid-cols-[minmax(0,1fr)_200px] xl:gap-12">
+        <div className="reading-shell mx-auto w-full min-w-0 max-w-[720px] py-6 text-foreground sm:py-10 lg:py-12">
           <article className="prose prose-semantic prose-base min-w-0 max-w-none text-foreground sm:prose-lg">
-            <header className="not-prose mb-8 flex flex-col gap-4">
-              {knowledgePath.length > 0 && (
+            <header className="not-prose mb-12 flex flex-col gap-4">
+              {breadcrumb.length > 0 && (
                 <nav aria-label="Knowledge path" className="mb-2">
                   <ol className="flex flex-wrap items-center gap-1.5 text-sm leading-none text-muted-foreground/80">
-                    {knowledgePath.map((node, index) => {
-                      const isLast = index === knowledgePath.length - 1;
+                    {breadcrumb.map((node, index) => {
+                      const isLast = index === breadcrumb.length - 1;
                       return (
                         <li key={node.slug} className="flex items-center gap-1.5">
-                          {!isLast && collectionSlugSet.has(node.slug) ? (
+                          {collectionSlugSet.has(node.slug) ? (
                             <Link
                               href={collectionPath(node.slug)}
                               className="transition-colors hover:text-foreground"
@@ -85,7 +92,7 @@ export function ArticleContent({
                               {node.title}
                             </Link>
                           ) : (
-                            <span className={cn("transition-colors", isLast ? "font-semibold text-foreground" : "hover:text-foreground")}>
+                            <span>
                               {node.title}
                             </span>
                           )}
@@ -102,17 +109,23 @@ export function ArticleContent({
               )}
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
-                  <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">{article.title}</h1>
+                  <h1 className="font-serif text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">{article.title}</h1>
                   {article.status === 'draft' && (
                     <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
                       Draft
                     </span>
                   )}
                 </div>
-                <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                  <time dateTime={article.date}>{formatDate(article.date)}</time>
-                  <span aria-hidden="true">•</span>
-                  <span>{article.readingTime.text}</span>
+                <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <time dateTime={article.date}>{formatDate(article.date)}</time>
+                    <span aria-hidden="true">•</span>
+                    <span>{article.readingTime.text}</span>
+                  </div>
+                  {/* Below xl there is no side column; the toggle lives here instead. */}
+                  <div className="xl:hidden">
+                    <ArticleViewToggle />
+                  </div>
                 </div>
               </div>
             </header>
@@ -124,15 +137,9 @@ export function ArticleContent({
             >
               {isSummary ? (
                 showEmptyPlaceholder ? (
-                  <div className="not-prose rounded-2xl border-2 border-dashed border-border bg-muted/50 p-8 text-center">
-                    <div className="mb-3 text-4xl">📝</div>
-                    <p className="text-lg font-medium text-foreground">
-                      Summary coming soon...
-                    </p>
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      This article is still being written. Check back later for a summary!
-                    </p>
-                  </div>
+                  <p className="not-prose text-muted-foreground">
+                    No summary for this one yet. Switch to Full to read the article.
+                  </p>
                 ) : (
                   <MarkdownRenderer
                     html={article.summary.html}
@@ -154,9 +161,9 @@ export function ArticleContent({
                     </figure>
                   )}
                   <MarkdownRenderer html={article.html} />
-                  <ArticleNavigation previous={previousArticle} next={nextArticle} />
+                  <ArticleNavigation previous={previousArticle} next={nextArticle} series={series} />
                   <section className="not-prose mt-12 space-y-6">
-                    <h2 className="text-2xl font-semibold text-foreground">Comments</h2>
+                    <h2 className="font-serif text-2xl font-semibold text-foreground">Comments</h2>
                     <GiscusComments discussionIdentifier={article.slug} />
                   </section>
                 </>
@@ -164,16 +171,9 @@ export function ArticleContent({
             </div>
           </article>
         </div>
-        <aside className="hidden lg:block sticky top-[88px] self-start max-h-[calc(100vh-104px)] overflow-y-auto lg:pr-4">
-          <div className="space-y-4">
-            <div className="rounded-2xl border border-border bg-card/80 p-4 text-sm text-card-foreground shadow-sm">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                Article view
-              </p>
-              <div className="mt-3">
-                <ArticleViewToggle fullWidth />
-              </div>
-            </div>
+        <aside className="hidden xl:block sticky top-[88px] self-start max-h-[calc(100vh-104px)] overflow-y-auto pt-12">
+          <div className="space-y-8">
+            <ArticleViewToggle fullWidth />
             {!isSummary && article.headings.length > 0 && (
               <TableOfContents headings={article.headings} />
             )}

@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
-import { ArticleViewToggle } from '../../components/ArticleViewToggle';
 import { ArticleContent } from '../../components/ArticleContent';
 import { ArticleViewTracker } from '../../components/ArticleViewTracker';
 import { CopyCodeButtons } from '../../components/CopyCodeButtons';
@@ -98,9 +97,18 @@ export default async function ContentPage({ params }: PageProps) {
   // Find sibling articles for navigation
   let previousArticle: { slug: string; title: string } | null = null;
   let nextArticle: { slug: string; title: string } | null = null;
+  let series: { slug: string; title: string; position: number; total: number } | null = null;
 
   if (parentCollection && parentCollection.articles.length > 1) {
     const currentIndex = parentCollection.articles.findIndex(a => a.slug === article.slug);
+    if (currentIndex >= 0) {
+      series = {
+        slug: parentCollection.slug,
+        title: parentCollection.title,
+        position: currentIndex + 1,
+        total: parentCollection.articles.length,
+      };
+    }
     if (currentIndex > 0) {
       const prev = parentCollection.articles[currentIndex - 1];
       previousArticle = { slug: prev.slug, title: prev.title };
@@ -119,17 +127,11 @@ export default async function ContentPage({ params }: PageProps) {
         {parentCollection && (
           <Link
             href={collectionPath(parentCollection.slug)}
-            className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground transition-colors hover:text-primary"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
             ← Back to {parentCollection.title}
           </Link>
         )}
-        <div className="flex items-center justify-between lg:hidden">
-          <span className="text-sm uppercase tracking-wide text-muted-foreground">Article view</span>
-          <Suspense fallback={null}>
-            <ArticleViewToggle />
-          </Suspense>
-        </div>
       </div>
 
       <Suspense fallback={null}>
@@ -138,6 +140,7 @@ export default async function ContentPage({ params }: PageProps) {
           knowledgePath={knowledgePath}
           previousArticle={previousArticle}
           nextArticle={nextArticle}
+          series={series}
           collectionSlugs={collections.map((collection) => collection.slug)}
         />
       </Suspense>
