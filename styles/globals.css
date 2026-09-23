@@ -9,25 +9,25 @@
 
 @layer base {
 
-  /* LIGHT THEME (default) */
+  /* LIGHT THEME (default) — neutral grey, matching the dark theme */
   :root {
     color-scheme: light;
 
     /* Backgrounds */
     --background: 0 0% 100%;
-    --foreground: 220 35% 12%;
+    --foreground: 0 0% 9%;
 
     /* Card surfaces */
     --card: 0 0% 100%;
-    --card-foreground: 220 35% 12%;
+    --card-foreground: 0 0% 9%;
 
     /* Popover / overlay surfaces */
     --popover: 0 0% 100%;
-    --popover-foreground: 220 35% 12%;
+    --popover-foreground: 0 0% 9%;
 
     /* Muted surfaces (subtle backgrounds) */
-    --muted: 220 25% 94%;
-    --muted-foreground: 220 25% 46%;
+    --muted: 0 0% 95%;
+    --muted-foreground: 0 0% 40%;
 
     /* Primary brand color */
     --primary: 204 100% 55%;
@@ -38,16 +38,16 @@
     --secondary-foreground: 0 0% 100%;
 
     /* Accent (interactive highlights) */
-    --accent: 220 25% 94%;
-    --accent-foreground: 220 35% 12%;
+    --accent: 0 0% 95%;
+    --accent-foreground: 0 0% 9%;
 
     /* Destructive (errors, warnings) */
     --destructive: 0 75% 58%;
     --destructive-foreground: 0 0% 98%;
 
     /* Borders and inputs */
-    --border: 220 20% 90%;
-    --input: 220 20% 90%;
+    --border: 0 0% 89%;
+    --input: 0 0% 89%;
     --ring: 204 100% 55%;
 
     /* Chart colors */
@@ -59,49 +59,62 @@
 
     /* Misc */
     --radius: 0.5rem;
-    --code-border: 220 20% 90%;
+    --code-border: 0 0% 89%;
     --code-bg: 0 0% 22%;
+
+    /* Callouts (note/tip/warning/…). Darker, lower-lightness values than the
+       dark theme's so the colored titles stay readable on white. */
+    --callout-neutral: 0 0% 40%;
+    --callout-info: 204 90% 38%;
+    --callout-success: 150 55% 30%;
+    --callout-violet: 262 45% 50%;
+    --callout-warning: 32 90% 36%;
+    --callout-danger: 0 65% 45%;
+    --callout-fill: 0.06;
+
+    /* Links in article text: the primary hue, darkened so it clears 4.5:1 on white. */
+    --link: 204 90% 36%;
   }
 
-  /* DARK THEME */
+  /* DARK THEME — neutral grey, not blue-tinted navy */
   .dark {
     color-scheme: dark;
 
     /* Backgrounds */
-    --background: 222 70% 12%;
-    --foreground: 215 32% 90%;
+    --background: 0 0% 9%;
+    --foreground: 0 0% 93%;
 
     /* Card surfaces */
-    --card: 222 65% 16%;
-    --card-foreground: 215 32% 90%;
+    --card: 0 0% 13%;
+    --card-foreground: 0 0% 93%;
 
     /* Popover / overlay surfaces */
-    --popover: 222 65% 16%;
-    --popover-foreground: 215 32% 90%;
+    --popover: 0 0% 13%;
+    --popover-foreground: 0 0% 93%;
 
     /* Muted surfaces */
-    --muted: 222 45% 20%;
-    --muted-foreground: 215 32% 70%;
+    --muted: 0 0% 17%;
+    --muted-foreground: 0 0% 64%;
 
     /* Primary brand color */
     --primary: 204 100% 70%;
-    --primary-foreground: 222 70% 12%;
+    --primary-foreground: 0 0% 9%;
 
     /* Secondary accent */
     --secondary: 265 65% 70%;
-    --secondary-foreground: 222 70% 12%;
+    --secondary-foreground: 0 0% 9%;
 
     /* Accent */
-    --accent: 222 45% 20%;
-    --accent-foreground: 215 32% 90%;
+    --accent: 0 0% 17%;
+    --accent-foreground: 0 0% 93%;
 
     /* Destructive */
     --destructive: 0 75% 60%;
     --destructive-foreground: 0 0% 98%;
 
     /* Borders and inputs */
-    --border: 222 48% 28%;
-    --input: 222 48% 28%;
+    --border: 0 0% 22%;
+    --input: 0 0% 22%;
     --ring: 204 100% 70%;
 
     /* Chart colors */
@@ -112,8 +125,20 @@
     --chart-5: 340 75% 55%;
 
     /* Misc */
-    --code-border: 222 48% 28%;
-    --code-bg: 222 70% 8%;
+    --code-border: 0 0% 22%;
+    --code-bg: 0 0% 6%;
+
+    /* Callouts: lighter tints of the same hues for contrast on dark grey. */
+    --callout-neutral: 0 0% 64%;
+    --callout-info: 204 100% 70%;
+    --callout-success: 150 45% 60%;
+    --callout-violet: 262 70% 76%;
+    --callout-warning: 38 85% 62%;
+    --callout-danger: 0 75% 68%;
+    --callout-fill: 0.09;
+
+    /* Links in article text. */
+    --link: 204 100% 72%;
   }
 }
 
