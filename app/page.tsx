@@ -1,12 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getLatestBySection } from '../lib/content/content';
-import { SECTION_LIST } from '../lib/content/sections';
-import { contentPath } from '../lib/content/urls';
-import { ArticlePreviewCard } from '../components/ArticlePreviewCard';
+import { SECTIONS, SECTION_LIST, sectionOf } from '../lib/content/sections';
+import { articlePath, contentPath } from '../lib/content/urls';
+import { formatDate } from '../lib/format';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-static';
+
+const RECENT_LIMIT = 8;
 
 const bio =
   "Hi, I'm Sidnei Teixeira — a software engineer working through graphics, cryptography, " +
@@ -18,41 +20,63 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const [notesLatest, writingLatest, devlogLatest] = await Promise.all([
-    getLatestBySection('notes', 1),
-    getLatestBySection('writing', 1),
-    getLatestBySection('devlog', 1),
-  ]);
-  const featured = [notesLatest[0], writingLatest[0], devlogLatest[0]].filter(Boolean);
+  const perSection = await Promise.all(SECTION_LIST.map((section) => getLatestBySection(section.id)));
+  const recent = perSection
+    .flat()
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, RECENT_LIMIT);
 
   return (
-    <div className="space-y-16">
-      <header className="max-w-2xl space-y-4">
-        <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">Sid Makes Sense</h1>
-        <p className="text-lg text-muted-foreground">{bio}</p>
+    <div className="max-w-2xl space-y-14">
+      <header className="space-y-4">
+        <h1 className="font-serif text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
+          Sid Makes Sense
+        </h1>
+        <p className="font-serif text-lg leading-relaxed text-muted-foreground">{bio}</p>
       </header>
 
-      <section className="grid gap-6 sm:grid-cols-3">
-        {SECTION_LIST.map((section) => (
-          <Link
-            key={section.id}
-            href={contentPath(section.id)}
-            className="flex flex-col gap-2 rounded-2xl border border-border p-6 transition-colors hover:bg-card"
-          >
-            <span className="text-xl font-semibold text-foreground">{section.label}</span>
-            <span className="text-sm text-muted-foreground">{section.tagline}</span>
-          </Link>
-        ))}
+      <section>
+        <dl className="space-y-3">
+          {SECTION_LIST.map((section) => (
+            <div key={section.id} className="sm:flex sm:gap-4">
+              <dt className="shrink-0 sm:w-24">
+                <Link
+                  href={contentPath(section.id)}
+                  className="font-semibold text-foreground underline-offset-4 hover:underline"
+                >
+                  {section.label}
+                </Link>
+              </dt>
+              <dd className="text-muted-foreground">{section.tagline}</dd>
+            </div>
+          ))}
+        </dl>
       </section>
 
-      {featured.length > 0 && (
-        <section className="space-y-6">
-          <h2 className="text-2xl font-semibold text-foreground">Latest</h2>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {featured.map((article) => (
-              <ArticlePreviewCard key={article.slug} article={article} />
-            ))}
-          </div>
+      {recent.length > 0 && (
+        <section className="space-y-4">
+          <h2 className="text-lg font-semibold text-foreground">Recent</h2>
+          <ul className="divide-y divide-border border-y border-border">
+            {recent.map((article) => {
+              const section = sectionOf(article.slug);
+              return (
+                <li key={article.slug} className="flex flex-col gap-1 py-3 sm:flex-row sm:items-baseline sm:gap-4">
+                  <time dateTime={article.date} className="shrink-0 text-sm tabular-nums text-muted-foreground sm:w-28">
+                    {formatDate(article.date)}
+                  </time>
+                  <Link
+                    href={articlePath(article)}
+                    className="flex-1 font-serif text-lg text-foreground underline-offset-4 hover:underline"
+                  >
+                    {article.title}
+                  </Link>
+                  {section && (
+                    <span className="shrink-0 text-sm text-muted-foreground">{SECTIONS[section].label}</span>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
         </section>
       )}
     </div>
