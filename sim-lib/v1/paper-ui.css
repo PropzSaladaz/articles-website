@@ -7,18 +7,33 @@
  * this is a plain <link> stylesheet with no build step to generate one from
  * the other).
  *
- * Typical usage:
+ * Typical usage — a HUD panel (readouts) plus a toolbar (actions), built only
+ * from the shared classes below, no per-sim sizing or Tailwind utilities:
+ *
  *   <body class="sk-page">
- *     <div class="absolute top-4 left-4 z-10 max-w-sm sk-sticky">
- *       <div class="sk-hand text-2xl ink-black">y² = x³ <span class="ink-blue">+ ax</span></div>
- *       <div class="sk-badge"><span class="sk-dot bg-ink-green"></span> 2 components</div>
+ *     <div class="sk-sticky sk-panel">
+ *       <div class="sk-panel-title">y² = x³ − 3x + 3.5</div>
+ *       <div class="sk-legend">
+ *         <span class="sk-dot bg-ink-green"></span>
+ *         <span class="sk-label">P</span>
+ *         <span class="sk-value" id="coordP">–</span>
+ *       </div>
+ *       <div class="sk-panel-section">…</div>
+ *       <div class="sk-hint">drag P or Q</div>
+ *     </div>
+ *     <div class="sk-toolbar">
+ *       <button class="sk-btn ink-green">P = Q <span class="sk-btn-note">doubling</span></button>
  *     </div>
  *   </body>
+ *
+ * The panel sits top-left by default (the page's play/pause pill owns the
+ * top-right corner); the toolbar bottom-left. Modifiers move them:
+ * .sk-panel--tr/--bl/--br and .sk-toolbar--br.
  */
 
 :root {
   --sk-paper-bg: #fbf6ea;
-  --sk-sticky-bg: #fdf9b8;
+  --sk-sticky-bg: #ffffff;
   --sk-ink-blue: #2f4f8f;
   --sk-ink-black: #2d2a26;
   --sk-ink-red: #c34a3d;
@@ -26,6 +41,7 @@
   --sk-ink-purple: #6b4d9e;
   --sk-ink-orange: #c9762b;
   --sk-ink-pink: #b5548f;
+  --sk-ink-amber: #a56d18;
   --sk-ink-pencil: #5f5b56;
   --sk-ink-pencil-light: #a09b93;
 }
@@ -48,8 +64,7 @@ body.sk-page {
 .sk-sticky {
   background: var(--sk-sticky-bg);
   border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 2px;
-  box-shadow: 2px 3px 8px rgba(0, 0, 0, 0.18);
+  border-radius: 12px;
   padding: 14px 18px;
   transform: rotate(var(--sk-tilt, -1deg));
   user-select: none;
@@ -94,6 +109,7 @@ body.sk-page {
 .ink-purple      { color: var(--sk-ink-purple); }
 .ink-orange      { color: var(--sk-ink-orange); }
 .ink-pink        { color: var(--sk-ink-pink); }
+.ink-amber       { color: var(--sk-ink-amber); }
 .ink-pencil      { color: var(--sk-ink-pencil); }
 .ink-pencil-light{ color: var(--sk-ink-pencil-light); }
 
@@ -104,4 +120,361 @@ body.sk-page {
 .bg-ink-purple { background-color: var(--sk-ink-purple); }
 .bg-ink-orange { background-color: var(--sk-ink-orange); }
 .bg-ink-pink   { background-color: var(--sk-ink-pink); }
+.bg-ink-amber  { background-color: var(--sk-ink-amber); }
 .bg-ink-pencil { background-color: var(--sk-ink-pencil); }
+
+/* =====================================================================
+   HUD panel + toolbar — the shared layout for a sim's overlay. Use these
+   instead of hand-building the panel with utility classes, so every sim's
+   HUD has the same compact size scale and a style change lands in one place.
+   ===================================================================== */
+
+/* The panel: pair with .sk-sticky for the card look (background, border,
+   tilt). Compact by design — it sits on top of the drawing, so every pixel
+   it takes is canvas the reader can't see. */
+.sk-panel {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: min(220px, calc(100% - 24px));
+  padding: 8px 11px;
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--sk-ink-black);
+}
+
+.sk-panel--tr { left: auto; right: 12px; }
+.sk-panel--bl { top: auto; bottom: 12px; }
+.sk-panel--br { top: auto; left: auto; right: 12px; bottom: 12px; }
+
+/* Centered along the top/bottom edge. Centered with margin-inline:auto, not a
+   translate, because .sk-sticky already owns `transform` (its tilt). */
+.sk-panel--top,
+.sk-panel--bottom {
+  left: 0;
+  right: 0;
+  width: fit-content;
+  margin-inline: auto;
+  max-width: min(720px, calc(100% - 24px));
+  --sk-tilt: 0deg;
+}
+.sk-panel--bottom { top: auto; bottom: 12px; }
+
+/* For a panel that carries prose (a step explanation) rather than readouts. */
+.sk-panel--wide { max-width: min(340px, calc(100% - 24px)); }
+
+.sk-panel [hidden] { display: none !important; }
+
+/* Heading line — usually the equation or the one thing the sim is about.
+   Hand lettering, since it's the part that reads as "written on the page". */
+.sk-panel-title {
+  font-family: 'Caveat', 'Segoe Print', 'Bradley Hand', cursive;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--sk-ink-black);
+}
+
+/* For a sim whose title *is* the subject (e.g. a live equation). */
+.sk-panel-title--lg {
+  font-size: 24px;
+}
+
+/* The formula under the title; color it with an ink-* class. */
+.sk-panel-eq {
+  font-family: ui-monospace, 'Fira Code', SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+/* One short explanatory line. */
+.sk-panel-note {
+  margin: 0;
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: var(--sk-ink-pencil);
+}
+
+/* A group within the panel, divided from the one above by a hairline. */
+.sk-panel-section {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Label ....... value rows (no dots), one entry per two children. Can share
+   an element with .sk-panel-section to get the hairline above it. */
+.sk-readout {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  column-gap: 10px;
+  row-gap: 2px;
+}
+
+.sk-readout .sk-value {
+  justify-self: end;
+  text-align: right;
+}
+
+/* A section laid out in a row instead of a column (e.g. chip + note). */
+.sk-panel-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+/* A range inside a row takes the remaining width. */
+.sk-panel-row .sk-range {
+  flex: 1;
+  width: auto;
+  min-width: 60px;
+}
+
+/* Prose lines, e.g. a step-by-step explanation. Color lines with ink-*. */
+.sk-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+/* Legend / readout table: [dot] label ....... value, one entry per three
+   children. A dot-less entry needs an empty <span></span> in the first slot. */
+.sk-legend {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  align-items: center;
+  column-gap: 6px;
+  row-gap: 2px;
+}
+
+.sk-legend .sk-dot {
+  width: 8px;
+  height: 8px;
+}
+
+.sk-legend .sk-value {
+  justify-self: end;
+}
+
+/* Normal-case muted label (no uppercase/letter-spacing); an ink-* class
+   overrides the pencil color. */
+.sk-label {
+  font-weight: 600;
+}
+
+.sk-label:not([class*='ink-']) {
+  color: var(--sk-ink-pencil);
+}
+
+/* A computed number: monospace so digits don't jitter as they change.
+   Defaults to black ink; add an ink-* class to color it. */
+.sk-value {
+  font-family: ui-monospace, 'Fira Code', SFMono-Regular, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.sk-value:not([class*='ink-']) {
+  color: var(--sk-ink-black);
+}
+
+/* Short hand-lettered state line, usually after a .sk-dot in a .sk-badge
+   ("Valid", "Calculating"); color it with an ink-* class. */
+.sk-status {
+  font-family: 'Caveat', 'Segoe Print', 'Bradley Hand', cursive;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+/* Text/number input or <select>, sized to sit in a panel row. */
+.sk-input {
+  min-width: 0;
+  padding: 3px 6px;
+  border: 1px solid rgba(0, 0, 0, 0.16);
+  border-radius: 6px;
+  background: var(--sk-sticky-bg);
+  color: var(--sk-ink-black);
+  font: inherit;
+  font-size: 11px;
+}
+
+.sk-input:focus-visible {
+  outline: none;
+  border-color: var(--sk-ink-blue);
+}
+
+/* Label + control on one line (e.g. "Point P  [select]"). */
+.sk-control {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Labelled slider: a label/value row above an <input type="range">. */
+.sk-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sk-field-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.sk-range {
+  width: 100%;
+  height: 6px;
+  margin: 2px 0;
+  accent-color: var(--sk-ink-green);
+  cursor: pointer;
+}
+
+/* Underline tabs — a notebook divider, not an app segmented control. Give
+   each tab an ink-* class for its active color; JS toggles .is-active. */
+.sk-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  padding-bottom: 2px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.sk-tab {
+  margin-bottom: -3px;
+  padding: 0 0 2px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  font-family: 'Caveat', 'Segoe Print', 'Bradley Hand', cursive;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.sk-tab:not(.is-active) {
+  color: var(--sk-ink-pencil-light);
+}
+
+.sk-tab.is-active {
+  border-bottom-color: currentColor;
+}
+
+/* Small square state marker (e.g. the identity "O"); muted until .is-active,
+   then tinted with its ink-* class. */
+.sk-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 26px;
+  height: 24px;
+  padding: 0 6px;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  border-radius: 6px;
+  font-family: ui-monospace, 'Fira Code', SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.sk-chip:not(.is-active) {
+  color: var(--sk-ink-pencil-light);
+}
+
+.sk-chip.is-active {
+  border-color: currentColor;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+}
+
+/* One-line instruction, in the hand font so it reads as a margin note. */
+.sk-hint {
+  font-family: 'Caveat', 'Segoe Print', 'Bradley Hand', cursive;
+  font-size: 14px;
+  line-height: 1.1;
+  color: var(--sk-ink-pencil-light);
+}
+
+/* Toolbar: a row of actions along the bottom edge of the canvas, where
+   controls are expected, instead of stacked inside the readout panel. */
+.sk-toolbar {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-width: calc(100% - 24px);
+}
+
+.sk-toolbar--br { left: auto; right: 12px; justify-content: flex-end; }
+.sk-toolbar--center { left: 50%; transform: translateX(-50%); align-items: center; }
+
+/* Pill button; set its color with an ink-* class (text + hover border).
+   .sk-tag is the same pill as a non-interactive label (e.g. "Step 1/3"). */
+.sk-btn,
+.sk-tag {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 3px 10px;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  border-radius: 999px;
+  background: var(--sk-sticky-bg);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.sk-tag {
+  cursor: default;
+  font-family: ui-monospace, 'Fira Code', SFMono-Regular, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.sk-btn:hover,
+.sk-btn:focus-visible {
+  border-color: currentColor;
+  outline: none;
+}
+
+/* Secondary text inside a button, e.g. "P = Q  doubling". */
+.sk-btn-note {
+  font-weight: 400;
+  color: var(--sk-ink-pencil-light);
+}
+
+/* Icon-only pill button (e.g. prev/next chevrons); give it an aria-label. */
+.sk-btn--icon {
+  align-items: center;
+  padding: 4px;
+}
+
+.sk-btn--icon svg {
+  width: 14px;
+  height: 14px;
+}

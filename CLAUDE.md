@@ -175,6 +175,12 @@ dark-mode iframe's `#fcfcfc` backdrop edge is no longer hidden either — if it
 ever shows as a faint rectangle against the page, the filter math above has
 drifted.
 
+**`--sk-sticky-bg` (the HUD note-card background) is white, not yellow.**
+It was `#fdf9b8` (a yellow sticky-note color) — changed because it read as
+too much visual weight for what's usually a small equation/legend readout.
+White also composes correctly with the dark-mode invert above (flips to a
+near-black card) without any extra dark-mode-specific styling.
+
 **Sample count is a two-sided tradeoff, not "fewer is always smoother."**
 rough.js's `curve()` jitters every point you pass it *independently* (a fixed
 ~1-2px magnitude that scales with `roughness`), then fits a spline through the
@@ -256,7 +262,9 @@ Rollout plan:
 
 `paper-ui.css` also has `.sk-row` (label+value content row) and a `pink` ink
 (`--sk-ink-pink`/`.ink-pink`/`.bg-ink-pink`, mirrored in sketch.js's `theme.inks`)
-added when `ec_point_addition.html` needed a 6th distinct semantic color. Add
+added when `ec_point_addition.html` needed a 6th distinct semantic color, and an `amber`
+ink for legible text next to `highlight`-colored marks (it replaced two sims'
+hardcoded `#a56d18`). Add
 new ink colors to *both* files by hand when a sim genuinely needs one — don't
 reuse an existing color for two unrelated roles just to avoid the edit.
 

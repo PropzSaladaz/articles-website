@@ -55,6 +55,7 @@
       pink: '#b5548f',      // rose pen — distinct from red & purple, for a
                             // 6th semantic role (e.g. a "ghost"/intermediate
                             // point distinct from both an endpoint and a line)
+      amber: '#a56d18',     // dark highlighter — legible text for highlight-colored marks
       pencil: '#5f5b56',    // graphite
       pencilLight: '#a09b93',
       highlight: '#f2d95c', // highlighter (use as fill)
