@@ -33,7 +33,11 @@ const rehypeIframeWindow: Plugin<[], Root> = () => {
                             'overflow-hidden',
                             'rounded-xl',
                             'my-14',
-                            'bg-slate-900', // Fallback color visible briefly while the iframe loads
+                            // sim-lib simulations clear to a transparent canvas (see
+                            // sim-lib/v1/sketch.js), so this isn't just a load-flash
+                            // fallback anymore — it's the backdrop showing through a
+                            // transparent sim, and has to track the page theme.
+                            'bg-background',
                         ],
                     },
                     children: [node],

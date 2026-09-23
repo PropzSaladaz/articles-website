@@ -115,6 +115,66 @@ grid that visibly misaligned with the axes — that mode was removed. For a sim
 with a coordinate system: `sk.clear({paper:false})` then `sk.grid(...)` then
 `sk.axes(...)`, so there is exactly one grid on screen.
 
+**Simulations render on a transparent canvas, not a paper-colored one.**
+`paper()` used to `fillRect` a cream background (`theme.paper.bg`) before
+drawing anything — that fill was also doing double duty as the per-frame
+clear. It's gone now (replaced by `ctx.clearRect`, so animation loops still
+clear correctly): the goal is for a sim to look drawn directly on the article
+page, not on a card floating on top of it. `paper-ui.css`'s `body.sk-page`
+background is `transparent` for the same reason (the `--sk-paper-bg` token
+stays defined in case something wants to opt back in explicitly). The rule
+lines / margin line / `grid()` squares are unaffected — those still draw,
+just on transparent instead of cream.
+
+**The sim's own iframe box, not just its canvas, had to stop being opaque.**
+Because the sim itself can now be transparent, `lib/markdown/rehype/iframe-window.ts`'s
+wrapper div carries `bg-background` so a loading sim shows the page color
+instead of a hardcoded dark fallback. In
+*light* mode the `<iframe>` element itself (`styles/markdown.css`'s
+`.md-iframe-window iframe`) is `background: transparent`, letting that
+wrapper show through cleanly — no filter is involved there, so plain CSS
+transparency behaves exactly as expected.
+
+**Dark mode: invert the whole iframe, don't redesign the ink palette — but
+don't trust transparency to survive the filter untouched.** `theme.inks`
+(black, blue, green, purple, pencil, etc.) is tuned for contrast against
+light paper and has no dark-mode variants — against the site's dark
+background it would read as low-contrast, especially black and pencil.
+Rather than a second ink palette, `.dark .md-iframe-window iframe` gets the
+same `invert(0.9) hue-rotate(180deg) saturate(1.2) contrast(1.05)` filter
+already used on `.dark .md img`: light paper + dark ink flips to dark paper +
+light ink in one shot.
+
+The first version of this left the iframe `background: transparent` in dark
+mode too, reasoning that `invert()`/`hue-rotate()`/etc. only touch RGB, never
+alpha, so a fully transparent pixel should pass through unchanged and reveal
+the correctly-colored, unfiltered wrapper behind it. **That held up on paper
+but not in the browser** — confirmed visibly darker than the page's actual
+background. Rather than chase the exact cause (a GPU-compositing/color-space
+quirk from stacking `filter` + `mask-image` on a cross-document `<iframe>`
+is the leading suspect, but unconfirmed), `.dark .md-iframe-window iframe`
+now paints an explicit `#fcfcfc` background instead of relying on
+transparency. That value isn't arbitrary: solved backwards through the
+invert(0.9)/contrast(1.05) formulas from the CSS Filter Effects spec so that
+*after* the filter chain, it lands back on `hsl(0 0% 9%)` — this site's
+actual dark `--background`. If the filter values above ever change, this
+needs recomputing to match. Net effect: everything the sim renders (its own
+backdrop included) now goes through one uniform filtered raster instead of
+partly relying on cross-layer transparency, which is what made it fragile.
+
+**Edge fade applies to the background grid only, and lives in sketch.js.**
+`grid()` and `paper()`'s rule lines are fixed-pitch and boundary-unaware, so a
+line can land right at the canvas edge and read as a stray cropped stroke. The
+fix used to be a CSS `mask-image` fade on the whole `<iframe>`, which also faded
+curves, points and HUD panels near the edges. Now those two helpers draw onto an
+offscreen layer (`_edgeFaded()`), fade *that* layer's edges
+(`theme.paper.edgeFade`, 32px; per-call `fade: false | <px>`), and composite it
+in — everything else stays fully opaque to the edge. Sims that draw their own
+grid with raw `line()`/ctx calls don't get the fade. With the mask gone, the
+dark-mode iframe's `#fcfcfc` backdrop edge is no longer hidden either — if it
+ever shows as a faint rectangle against the page, the filter math above has
+drifted.
+
 **Sample count is a two-sided tradeoff, not "fewer is always smoother."**
 rough.js's `curve()` jitters every point you pass it *independently* (a fixed
 ~1-2px magnitude that scales with `roughness`), then fits a spline through the
@@ -207,8 +267,9 @@ dots were removed from the top bar, then the top bar and border were removed
 entirely). The play/pause button (injected by `components/MarkdownRenderer.tsx`)
 now floats as an absolutely-positioned pill over the top-right corner of the
 simulation itself, styled as a semi-transparent dark pill so it stays legible over
-any simulation background (dark or paper-cream). `styles/markdown.css`'s
+any simulation background (an un-migrated sim's own opaque canvas, or a migrated
+one's transparent canvas over the article page). `styles/markdown.css`'s
 `.md-iframe-window` gets a soft box-shadow instead of a border for separation from
 surrounding article text (light: `rgba(0,0,0,0.06)`, dark: `rgba(0,0,0,0.3)` — same
 convention as `.md-details`). This affects every simulation (old dark ones and new
-paper ones alike), not just migrated sims.
+transparent ones alike), not just migrated sims.

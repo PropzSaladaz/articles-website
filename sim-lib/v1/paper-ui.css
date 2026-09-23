@@ -30,8 +30,11 @@
   --sk-ink-pencil-light: #a09b93;
 }
 
+/* Transparent, not --sk-paper-bg: the simulation should look drawn directly
+   on the article page, not on a paper-colored card. The token stays defined
+   above in case a future sim wants to opt back into a paper card explicitly. */
 body.sk-page {
-  background: var(--sk-paper-bg);
+  background: transparent;
 }
 
 .sk-hand {

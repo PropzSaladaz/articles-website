@@ -850,25 +850,48 @@
   max-width: 100%;
   min-width: 0;
   overflow: hidden;
-  /* No border anymore (see rehype-iframe-window.ts) — a soft shadow keeps
-     just enough separation from the surrounding article text. */
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
 }
 
-/* The iframe itself */
+/* The iframe itself. sim-lib simulations are transparent (see
+   sim-lib/v1/sketch.js), so this shows through to whatever is behind the
+   iframe box. Background is transparent here on purpose, not bg-background:
+   the wrapper div behind it already carries that fill (see
+   rehype/iframe-window.ts), and this element gets `filter: invert(...)` in
+   dark mode below — an opaque color painted *inside* the filtered element
+   would get wrongly inverted, but a transparent pixel has no color to
+   invert, so the correct (unfiltered) wrapper color shows through cleanly.
+
+   No edge mask here: fading the whole iframe also faded curves, points and
+   HUD panels near the edges. The fade that hides hard-cropped grid lines now
+   lives in sim-lib's sketch.js (grid()/paper() draw on an edge-faded layer),
+   so only the background texture fades. */
 .md-iframe-window iframe {
   display: block;
   width: 100%;
   max-width: 100%;
   border: none;
   border-radius: 0.75rem;
-  background: #0b0e14;
+  background: transparent;
 }
 
-/* Dark mode adjustments: no border anymore (see rehype-iframe-window.ts), just
-   a soft shadow to separate the simulation from the surrounding page. */
-.dark .md-iframe-window {
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+/* sim-lib simulations are drawn for a light/paper backdrop (see CLAUDE.md's
+   sim-lib section) — the ink palette has no dark-mode variants. Same trick
+   already used above for .dark .md img: invert, then hue-rotate(180deg) to
+   undo the hue shift a naive invert introduces (blue ink would otherwise
+   read as orange), so light paper + dark ink becomes dark paper + light
+   ink instead of just looking broken.
+
+   Background is #fcfcfc here, not transparent: in testing, a transparent
+   iframe run through this filter chain came out visibly darker than the
+   page's actual dark background instead of matching it — relying on
+   "transparent pixels pass through invert() unchanged" didn't hold up in
+   practice. #fcfcfc is the near-white that, after this exact filter chain,
+   lands back on ~hsl(0 0% 9%) (the page's --background) — solved from the
+   invert()/contrast() formulas in the CSS Filter Effects spec, not eyeballed.
+   If the filter values below change, this needs recomputing. */
+.dark .md-iframe-window iframe {
+  background: #fcfcfc;
+  filter: invert(0.9) hue-rotate(180deg) saturate(1.2) contrast(1.05);
 }
 
 /* =============================

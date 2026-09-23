@@ -14,7 +14,7 @@
  * Typical simulation loop:
  *   const sk = Sketch.attach(canvas);
  *   function draw() {
- *     sk.clear();                                  // resets seeds + paints paper
+ *     sk.clear();                                  // resets seeds + clears to transparent
  *     sk.axes({ originX, originY, step: zoom });
  *     sk.plot(x => f(x), { from, to, toX, toY, ink: 'blue' });
  *     requestAnimationFrame(draw);
@@ -41,6 +41,7 @@
       margin: '#e2948d',    // red margin line
       lineHeight: 34,       // px between rule lines
       marginX: 64,          // px position of the margin line
+      edgeFade: 32,         // px over which grid/rule lines fade out at the canvas edges
     },
     // Ink palette. Names are the API ("ink: 'blue'"); values are what a pen
     // or pencil actually looks like on cream paper.
@@ -142,9 +143,12 @@
     }
 
     /**
-     * frame() + paint the notebook page. The usual first call of a draw loop.
-     * @param {object} [paperOpts] forwarded to paper(); pass {paper:false} to
-     *                             just clear to the plain cream background.
+     * frame() + clear the canvas. The usual first call of a draw loop. The
+     * canvas is always transparent — the simulation is meant to look drawn
+     * directly on the article page, not on a paper-colored card — so this
+     * also paints any requested rule lines (see paper()).
+     * @param {object} [paperOpts] forwarded to paper(); pass {paper:false}
+     *                             to skip the rule lines too (plain clear).
      */
     clear(paperOpts) {
       this.frame();
@@ -200,56 +204,142 @@
     // ── Paper background ────────────────────────────────────────────────
 
     /**
-     * Paint the notebook page: cream background + rule lines.
+     * Clear the canvas (always transparent — no paper-colored fill; the
+     * simulation should look drawn on the article page itself) and
+     * optionally paint notebook rule lines on top.
      *
-     * This is decorative page *texture* at a fixed pitch — it has no notion
-     * of a math origin. For sims with a coordinate system, pair this with
-     * {paper:false} (skip the texture) plus a separate grid() call using the
-     * same originX/originY/step as axes(), so there is exactly one grid on
-     * screen and it lines up with the axis ticks. Mixing this fixed-pitch
-     * texture with a math-aligned grid is what caused visible misalignment
-     * before this became two-mode: 'lines' (ruled paper) or nothing.
+     * The rule lines are decorative page *texture* at a fixed pitch — they
+     * have no notion of a math origin. For sims with a coordinate system,
+     * pair {paper:false} (skip the rule lines too) with a separate grid()
+     * call using the same originX/originY/step as axes(), so there is
+     * exactly one grid on screen and it lines up with the axis ticks. Mixing
+     * this fixed-pitch texture with a math-aligned grid is what caused
+     * visible misalignment before this became two-mode: 'lines' (ruled
+     * paper) or nothing.
      *
      * @param {object} [o]
+     * @param {boolean} [o.paper=true] false skips the rule lines entirely
+     *                                 (a plain transparent clear)
      * @param {'lines'|'blank'} [o.rules='lines']
      * @param {boolean} [o.margin]     red margin line (default true for 'lines')
      * @param {number}  [o.lineHeight] px between rules
+     * @param {number|boolean} [o.fade] edge fade in px for the rule lines
+     *                                  (default theme.paper.edgeFade; false = none)
      */
     paper(o = {}) {
+      const ctx = this.ctx;
       const w = this.width;
       const h = this.height;
-      if (o.paper === false) {
-        this.ctx.fillStyle = theme.paper.bg;
-        this.ctx.fillRect(0, 0, w, h);
-        return this;
-      }
-      const ctx = this.ctx;
+      ctx.clearRect(0, 0, w, h);
+
+      if (o.paper === false) return this;
+
       const rules = o.rules || 'lines';
       const lh = o.lineHeight || theme.paper.lineHeight;
-
-      ctx.fillStyle = theme.paper.bg;
-      ctx.fillRect(0, 0, w, h);
-
-      // Printed rules are machine-straight on real paper — plain ctx lines.
-      ctx.lineWidth = 1;
-      if (rules === 'lines') {
-        ctx.strokeStyle = theme.paper.rule;
-        ctx.beginPath();
-        for (let y = lh; y < h; y += lh) {
-          ctx.moveTo(0, y + 0.5);
-          ctx.lineTo(w, y + 0.5);
-        }
-        ctx.stroke();
-      }
       const margin = o.margin ?? (rules === 'lines');
-      if (margin) {
-        ctx.strokeStyle = theme.paper.margin;
-        ctx.beginPath();
-        ctx.moveTo(theme.paper.marginX + 0.5, 0);
-        ctx.lineTo(theme.paper.marginX + 0.5, h);
-        ctx.stroke();
-      }
+
+      this._edgeFaded(o.fade, () => {
+        const ctx = this.ctx; // the fade layer's context while inside _edgeFaded
+        // Printed rules are machine-straight on real paper — plain ctx lines.
+        ctx.lineWidth = 1;
+        if (rules === 'lines') {
+          ctx.strokeStyle = theme.paper.rule;
+          ctx.beginPath();
+          for (let y = lh; y < h; y += lh) {
+            ctx.moveTo(0, y + 0.5);
+            ctx.lineTo(w, y + 0.5);
+          }
+          ctx.stroke();
+        }
+        if (margin) {
+          ctx.strokeStyle = theme.paper.margin;
+          ctx.beginPath();
+          ctx.moveTo(theme.paper.marginX + 0.5, 0);
+          ctx.lineTo(theme.paper.marginX + 0.5, h);
+          ctx.stroke();
+        }
+      });
       return this;
+    }
+
+    /**
+     * Run `draw` against an offscreen layer, fade that layer to transparent
+     * near all four canvas edges, then composite it onto the canvas.
+     *
+     * Used for background texture only — grid() and paper()'s rule lines.
+     * Those are drawn at a fixed pitch with no awareness of the canvas
+     * boundary, so a line can land right at the edge and get hard-cropped
+     * (a stray cut-off stroke). Fading just this layer hides that while
+     * curves, points and labels stay fully visible up to the edge. (This
+     * used to be a CSS mask on the whole <iframe>, which faded everything.)
+     *
+     * While `draw` runs, this.ctx / this.rough point at the layer, so it can
+     * use either plain ctx calls or the sketch primitives.
+     *
+     * @param {number|boolean} [fade] px of fade; false/0 draws unfaded
+     *                                (default theme.paper.edgeFade)
+     * @param {Function} draw
+     */
+    _edgeFaded(fade, draw) {
+      const px = fade === false ? 0 : (typeof fade === 'number' ? fade : theme.paper.edgeFade);
+      if (!px || typeof document === 'undefined') {
+        draw();
+        return;
+      }
+
+      const main = this.ctx;
+      const mainRough = this.rough;
+      const W = this.canvas.width;
+      const H = this.canvas.height;
+
+      let layer = this._fadeLayer;
+      if (!layer) {
+        layer = this._fadeLayer = document.createElement('canvas');
+      }
+      if (layer.width !== W || layer.height !== H) {
+        layer.width = W;
+        layer.height = H;
+      }
+      if (!this._fadeRough) this._fadeRough = rough.canvas(layer);
+
+      const lctx = layer.getContext('2d');
+      lctx.setTransform(1, 0, 0, 1, 0, 0);
+      lctx.globalCompositeOperation = 'source-over';
+      lctx.clearRect(0, 0, W, H);
+      const t = main.getTransform();
+      lctx.setTransform(t);
+
+      this.ctx = lctx;
+      this.rough = this._fadeRough;
+      try {
+        draw();
+      } finally {
+        this.ctx = main;
+        this.rough = mainRough;
+      }
+
+      // Mask the layer in device pixels: keep alpha where both gradients are
+      // opaque (destination-in twice = the intersection of the two fades).
+      const f = Math.min(px * (t.a || 1), W / 2, H / 2);
+      lctx.setTransform(1, 0, 0, 1, 0, 0);
+      lctx.globalCompositeOperation = 'destination-in';
+      const fadeAlong = (x1, y1, len) => {
+        const g = lctx.createLinearGradient(0, 0, x1, y1);
+        g.addColorStop(0, 'rgba(0,0,0,0)');
+        g.addColorStop(f / len, 'rgba(0,0,0,1)');
+        g.addColorStop(1 - f / len, 'rgba(0,0,0,1)');
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        lctx.fillStyle = g;
+        lctx.fillRect(0, 0, W, H);
+      };
+      fadeAlong(W, 0, W);
+      fadeAlong(0, H, H);
+      lctx.globalCompositeOperation = 'source-over';
+
+      main.save();
+      main.setTransform(1, 0, 0, 1, 0, 0);
+      main.drawImage(layer, 0, 0);
+      main.restore();
     }
 
     // ── Primitives (screen-space pixels) ────────────────────────────────
@@ -500,6 +590,8 @@
     /**
      * Faint pencil grid aligned to the axes (drawn with plain straight lines —
      * grid paper is printed, not sketched; use rough:true to hand-draw it).
+     * Fades out near the canvas edges (see _edgeFaded); pass fade:false to
+     * turn that off or fade:<px> to change its width.
      */
     grid(o = {}) {
       const w = this.width;
@@ -508,27 +600,29 @@
       const oy = o.originY ?? h / 2;
       const step = o.step ?? 50;
 
-      if (o.rough) {
-        const style = { ink: o.ink ?? 'pencilLight', width: o.width ?? 0.7, boil: false };
-        for (let x = ox % step; x < w; x += step) this.line(x, 0, x, h, style);
-        for (let y = oy % step; y < h; y += step) this.line(0, y, w, y, style);
-        return this;
-      }
-      const ctx = this.ctx;
-      ctx.save();
-      ctx.strokeStyle = inkColor(o.ink, theme.paper.ruleFaint);
-      ctx.lineWidth = o.width ?? 1;
-      ctx.beginPath();
-      for (let x = ox % step; x < w; x += step) {
-        ctx.moveTo(x + 0.5, 0);
-        ctx.lineTo(x + 0.5, h);
-      }
-      for (let y = oy % step; y < h; y += step) {
-        ctx.moveTo(0, y + 0.5);
-        ctx.lineTo(w, y + 0.5);
-      }
-      ctx.stroke();
-      ctx.restore();
+      this._edgeFaded(o.fade, () => {
+        if (o.rough) {
+          const style = { ink: o.ink ?? 'pencilLight', width: o.width ?? 0.7, boil: false };
+          for (let x = ox % step; x < w; x += step) this.line(x, 0, x, h, style);
+          for (let y = oy % step; y < h; y += step) this.line(0, y, w, y, style);
+          return;
+        }
+        const ctx = this.ctx;
+        ctx.save();
+        ctx.strokeStyle = inkColor(o.ink, theme.paper.ruleFaint);
+        ctx.lineWidth = o.width ?? 1;
+        ctx.beginPath();
+        for (let x = ox % step; x < w; x += step) {
+          ctx.moveTo(x + 0.5, 0);
+          ctx.lineTo(x + 0.5, h);
+        }
+        for (let y = oy % step; y < h; y += step) {
+          ctx.moveTo(0, y + 0.5);
+          ctx.lineTo(w, y + 0.5);
+        }
+        ctx.stroke();
+        ctx.restore();
+      });
       return this;
     }
   }
