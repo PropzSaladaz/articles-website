@@ -1,0 +1,50 @@
+/* Giscus theme matching the site's light theme (styles/globals.css :root tokens).
+   See dark.css for why this exists and how it is wired up. */
+@import url('https://giscus.app/themes/light.css');
+
+main {
+  --color-canvas-default: #ffffff;   /* --background 0 0% 100% */
+  --color-canvas-overlay: #ffffff;   /* --card */
+  --color-canvas-inset: #fafafa;
+  --color-canvas-subtle: #f2f2f2;    /* --muted 0 0% 95% */
+  --color-border-default: #e3e3e3;   /* --border 0 0% 89% */
+  --color-border-muted: #ededed;
+  --color-neutral-muted: rgba(102, 102, 102, 0.15);
+
+  --color-fg-default: #171717;       /* --foreground 0 0% 9% */
+  --color-fg-muted: #666666;         /* --muted-foreground 0 0% 40% */
+  --color-fg-subtle: #858585;
+
+  --color-accent-fg: #096cae;        /* --link 204 90% 36% */
+  --color-accent-emphasis: #096cae;
+  --color-accent-muted: rgba(9, 108, 174, 0.4);
+  --color-accent-subtle: rgba(9, 108, 174, 0.08);
+
+  --color-btn-text: #171717;
+  --color-btn-bg: #f2f2f2;
+  --color-btn-border: #e3e3e3;
+  --color-btn-hover-bg: #ebebeb;
+  --color-btn-hover-border: #d4d4d4;
+  --color-btn-active-bg: #e3e3e3;
+  --color-btn-primary-text: #ffffff;
+  --color-btn-primary-bg: #096cae;
+  --color-btn-primary-border: transparent;
+  --color-btn-primary-hover-bg: #075a91;
+  --color-btn-primary-hover-border: transparent;
+  --color-btn-primary-selected-bg: #075a91;
+  --color-btn-primary-disabled-text: rgba(255, 255, 255, 0.8);
+  --color-btn-primary-disabled-bg: rgba(9, 108, 174, 0.45);
+  --color-btn-primary-disabled-border: transparent;
+
+  --color-action-list-item-default-hover-bg: #f2f2f2;
+  --color-segmented-control-bg: #f2f2f2;
+  --color-segmented-control-button-bg: #ffffff;
+  --color-segmented-control-button-selected-border: #d4d4d4;
+  --color-social-reaction-bg-hover: #f2f2f2;
+  --color-social-reaction-bg-reacted-hover: rgba(9, 108, 174, 0.15);
+}
+
+main,
+.gsc-main {
+  font-family: ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+}

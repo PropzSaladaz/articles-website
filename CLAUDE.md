@@ -79,6 +79,17 @@ via `next/font/google` (self-hosted at build, exposed as `--font-serif` / Tailwi
 article title only; nav, sidebar, and buttons stay on the default sans. Inline code sets
 its own monospace stack, so it is unaffected.
 
+**Comments (Giscus) use a custom theme served by the site.** Giscus renders in a
+giscus.app iframe the site's CSS can't reach, so `components/GiscusComments.tsx` passes it
+an absolute theme URL, `/giscus/{light,dark}.css`. Those files live in the committed
+`giscus/` folder (they `@import` Giscus's stock theme and override its GitHub color
+variables with the site's greys, `--link` blue, and UI sans font — literal hex values,
+kept in sync with `globals.css` by hand). `prepare-content.mjs` copies them into
+`public/giscus/` and writes `public/_headers` with `Access-Control-Allow-Origin: *` for
+`/giscus/*`, because giscus.app fetches them cross-origin; `next.config.js` adds the same
+header in dev only (`headers` is unsupported under `output: 'export'`). Page-level
+reactions are off by default and the comment box sits above the thread.
+
 ## sim-lib (hand-drawn simulation renderer)
 
 `sim-lib/v1/` is a shared "paper & pencil" rendering kit for simulations:

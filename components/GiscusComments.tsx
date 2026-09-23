@@ -13,12 +13,24 @@ const GISCUS_CATEGORY = process.env.NEXT_PUBLIC_GISCUS_CATEGORY;
 const GISCUS_CATEGORY_ID = process.env.NEXT_PUBLIC_GISCUS_CATEGORY_ID;
 const GISCUS_MAPPING = process.env.NEXT_PUBLIC_GISCUS_MAPPING ?? 'pathname';
 const GISCUS_STRICT = process.env.NEXT_PUBLIC_GISCUS_STRICT ?? '0';
-const GISCUS_REACTIONS_ENABLED = process.env.NEXT_PUBLIC_GISCUS_REACTIONS_ENABLED ?? '1';
+// Off by default: a page-level "0 reactions" block floats between the heading and
+// the thread and adds noise; readers can still react to individual comments.
+const GISCUS_REACTIONS_ENABLED = process.env.NEXT_PUBLIC_GISCUS_REACTIONS_ENABLED ?? '0';
 const GISCUS_EMIT_METADATA = process.env.NEXT_PUBLIC_GISCUS_EMIT_METADATA ?? '0';
-const GISCUS_INPUT_POSITION = process.env.NEXT_PUBLIC_GISCUS_INPUT_POSITION ?? 'bottom';
+const GISCUS_INPUT_POSITION = process.env.NEXT_PUBLIC_GISCUS_INPUT_POSITION ?? 'top';
 const GISCUS_LANG = process.env.NEXT_PUBLIC_GISCUS_LANG ?? 'en';
 const GISCUS_LOADING = process.env.NEXT_PUBLIC_GISCUS_LOADING ?? 'lazy';
-const GISCUS_THEME = process.env.NEXT_PUBLIC_GISCUS_THEME ?? 'preferred_color_scheme';
+
+/**
+ * Giscus runs in a giscus.app iframe, so the site's CSS can't style it. Instead it
+ * gets a custom theme by URL: giscus/{light,dark}.css, copied to public/giscus/ by
+ * scripts/prepare-content.mjs and served with a CORS header (giscus.app fetches it
+ * cross-origin). The URL must be absolute, hence window.location.origin.
+ */
+function giscusThemeUrl(resolvedTheme: string | undefined) {
+  const mode = resolvedTheme === 'dark' ? 'dark' : 'light';
+  return `${window.location.origin}/giscus/${mode}.css`;
+}
 
 function createScriptAttributes(discussionIdentifier: string, theme: string) {
   const attributes: Record<string, string> = {
@@ -87,8 +99,7 @@ export function GiscusComments({ discussionIdentifier }: GiscusCommentsProps) {
     }
 
     const script = document.createElement('script');
-    const theme = resolvedTheme === 'dark' ? 'dark' : 'light';
-    const attributes = createScriptAttributes(discussionIdentifier, theme);
+    const attributes = createScriptAttributes(discussionIdentifier, giscusThemeUrl(resolvedTheme));
     Object.entries(attributes).forEach(([key, value]) => {
       script.setAttribute(key, value);
     });
@@ -97,7 +108,7 @@ export function GiscusComments({ discussionIdentifier }: GiscusCommentsProps) {
   }, [discussionIdentifier, isConfigured]);
 
   useEffect(() => {
-    const giscusTheme = resolvedTheme === 'dark' ? 'dark' : 'light';
+    const giscusTheme = giscusThemeUrl(resolvedTheme);
     if (applyThemeToGiscus(giscusTheme)) {
       return;
     }
@@ -120,7 +131,7 @@ export function GiscusComments({ discussionIdentifier }: GiscusCommentsProps) {
   if (!isConfigured) {
     if (process.env.NODE_ENV === 'development') {
       return (
-        <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-400">
+        <p className="rounded-lg border border-dashed border-border bg-muted p-4 text-sm text-muted-foreground">
           Comments are disabled because the Giscus environment variables are not configured.
         </p>
       );

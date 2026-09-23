@@ -1,0 +1,55 @@
+/* Giscus theme matching the site's dark theme (styles/globals.css .dark tokens).
+   Giscus renders in a giscus.app iframe the site's CSS can't reach, so this file
+   is passed to it by URL (see components/GiscusComments.tsx). It starts from
+   Giscus's stock dark theme and overrides the GitHub color variables with the
+   site's neutral greys, --link blue, and UI sans font. Keep in sync with
+   globals.css by hand — Giscus needs literal colors, not the site's HSL tokens.
+   Copied to public/giscus/ by scripts/prepare-content.mjs. */
+@import url('https://giscus.app/themes/dark.css');
+
+main {
+  --color-canvas-default: #171717;   /* --background 0 0% 9% */
+  --color-canvas-overlay: #212121;   /* --card 0 0% 13% */
+  --color-canvas-inset: #171717;
+  --color-canvas-subtle: #212121;
+  --color-border-default: #383838;   /* --border 0 0% 22% */
+  --color-border-muted: #2b2b2b;     /* --muted 0 0% 17% */
+  --color-neutral-muted: rgba(163, 163, 163, 0.2);
+
+  --color-fg-default: #ededed;       /* --foreground 0 0% 93% */
+  --color-fg-muted: #a3a3a3;         /* --muted-foreground 0 0% 64% */
+  --color-fg-subtle: #8a8a8a;
+
+  --color-accent-fg: #70c6ff;        /* --link 204 100% 72% */
+  --color-accent-emphasis: #66c2ff;  /* --primary 204 100% 70% */
+  --color-accent-muted: rgba(112, 198, 255, 0.4);
+  --color-accent-subtle: rgba(112, 198, 255, 0.1);
+
+  --color-btn-text: #ededed;
+  --color-btn-bg: #212121;
+  --color-btn-border: #383838;
+  --color-btn-hover-bg: #2b2b2b;
+  --color-btn-hover-border: #4a4a4a;
+  --color-btn-active-bg: #2b2b2b;
+  --color-btn-primary-text: #171717;
+  --color-btn-primary-bg: #66c2ff;
+  --color-btn-primary-border: transparent;
+  --color-btn-primary-hover-bg: #8fd2ff;
+  --color-btn-primary-hover-border: transparent;
+  --color-btn-primary-selected-bg: #66c2ff;
+  --color-btn-primary-disabled-text: rgba(23, 23, 23, 0.6);
+  --color-btn-primary-disabled-bg: rgba(102, 194, 255, 0.4);
+  --color-btn-primary-disabled-border: transparent;
+
+  --color-action-list-item-default-hover-bg: #2b2b2b;
+  --color-segmented-control-bg: #2b2b2b;
+  --color-segmented-control-button-bg: #171717;
+  --color-segmented-control-button-selected-border: #4a4a4a;
+  --color-social-reaction-bg-hover: #2b2b2b;
+  --color-social-reaction-bg-reacted-hover: rgba(112, 198, 255, 0.2);
+}
+
+main,
+.gsc-main {
+  font-family: ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+}

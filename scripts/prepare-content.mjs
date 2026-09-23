@@ -23,6 +23,10 @@ const INCLUDE_DRAFTS = process.argv.includes('--include-drafts');
 const SIM_LIB_SRC = path.join(PROJECT_ROOT, 'sim-lib');
 const SIM_LIB_DEST = path.join(PUBLIC_ROOT, 'sim-lib');
 const SIM_LIB_VERSION = 'v1';
+// Custom Giscus comment themes (see components/GiscusComments.tsx). giscus.app
+// loads them cross-origin, so they also need a CORS header (writeHeaders()).
+const GISCUS_THEMES_SRC = path.join(PROJECT_ROOT, 'giscus');
+const GISCUS_THEMES_DEST = path.join(PUBLIC_ROOT, 'giscus');
 
 // Before the section restructure every page lived under /articles or /collections. All of
 // that content became the `notes` section with its slug unchanged, so both legacy prefixes
@@ -322,6 +326,26 @@ async function writeLegacyRedirects() {
   return dest;
 }
 
+/**
+ * Write public/_headers (Cloudflare Workers Static Assets reads it from the assets root,
+ * like _redirects). The Giscus iframe on giscus.app fetches the custom comment themes
+ * with CORS, so they must allow any origin.
+ */
+async function writeHeaders() {
+  const rules = ['/giscus/*', '  Access-Control-Allow-Origin: *'];
+  const dest = path.join(PUBLIC_ROOT, '_headers');
+  await fsp.mkdir(PUBLIC_ROOT, { recursive: true });
+  await fsp.writeFile(dest, `${rules.join('\n')}\n`);
+  return dest;
+}
+
+/** Copy the committed giscus/ comment themes into public/giscus/ (verbatim). */
+async function copyGiscusThemes() {
+  if (!fs.existsSync(GISCUS_THEMES_SRC)) return null;
+  await copyDirectory(GISCUS_THEMES_SRC, GISCUS_THEMES_DEST);
+  return { from: GISCUS_THEMES_SRC, to: GISCUS_THEMES_DEST };
+}
+
 /** Copy the committed sim-lib/ kit into public/sim-lib/ (verbatim, no injection). */
 async function copySimLib() {
   if (!fs.existsSync(SIM_LIB_SRC)) return null;
@@ -391,6 +415,12 @@ async function main() {
   }
 
   console.log(`Wrote legacy redirects to ${await writeLegacyRedirects()}`);
+
+  const giscusThemes = await copyGiscusThemes();
+  if (giscusThemes) {
+    console.log(`Copied Giscus themes from ${giscusThemes.from} to ${giscusThemes.to}`);
+  }
+  console.log(`Wrote headers to ${await writeHeaders()}`);
 
   for (const entry of entries) {
     const copied = await copyAssets(entry);
