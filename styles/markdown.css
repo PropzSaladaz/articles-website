@@ -715,9 +715,17 @@
   min-width: 0;
   margin: 2.5rem 0;
   padding: 0;
-  border-radius: 0.5rem;
-  border-left: 4px solid;
+  border-radius: 0 0.375rem 0.375rem 0;
+  border-left: 3px solid hsl(var(--callout));
+  background: hsl(var(--callout) / var(--callout-fill));
   overflow: hidden;
+  /* Each type below only picks a --callout color (theme tokens in globals.css);
+     the recipe is the same one md-definition uses: rule + light fill + label. */
+  --callout: var(--callout-neutral);
+}
+
+.md-alert .md-alert-title {
+  color: hsl(var(--callout));
 }
 
 /* Summary/title is clickable */
@@ -778,15 +786,15 @@
   padding-bottom: 1rem;
 }
 
-/* NOTE - Steel blue */
-.md-alert-note {
-  background: rgba(99, 155, 220, 0.06);
-  border-color: rgba(99, 155, 220, 0.5);
-}
-
-.md-alert-note .md-alert-title {
-  color: #7eafd9;
-}
+/* Type → color. Informational types stay neutral; color is kept for what
+   the reader should act on or notice. */
+.md-alert-note,
+.md-alert-example { --callout: var(--callout-neutral); }
+.md-alert-important { --callout: var(--callout-info); }
+.md-alert-tip { --callout: var(--callout-success); }
+.md-alert-exercise { --callout: var(--callout-violet); }
+.md-alert-warning { --callout: var(--callout-warning); }
+.md-alert-caution { --callout: var(--callout-danger); }
 
 .md-alert-note .md-alert-title::before {
   content: 'ℹ';
@@ -794,29 +802,9 @@
   font-size: 0.95rem;
 }
 
-/* TIP - Sage green */
-.md-alert-tip {
-  background: rgba(74, 172, 120, 0.06);
-  border-color: rgba(74, 172, 120, 0.5);
-}
-
-.md-alert-tip .md-alert-title {
-  color: #6abf90;
-}
-
 .md-alert-tip .md-alert-title::before {
   content: '✦';
   font-size: 0.8rem;
-}
-
-/* IMPORTANT - soft violet */
-.md-alert-important {
-  background: rgba(148, 100, 210, 0.06);
-  border-color: rgba(148, 100, 210, 0.5);
-}
-
-.md-alert-important .md-alert-title {
-  color: #b08ed8;
 }
 
 .md-alert-important .md-alert-title::before {
@@ -826,44 +814,14 @@
   font-size: 1rem;
 }
 
-/* WARNING - amber */
-.md-alert-warning {
-  background: rgba(200, 150, 50, 0.06);
-  border-color: rgba(200, 150, 50, 0.5);
-}
-
-.md-alert-warning .md-alert-title {
-  color: #c8a252;
-}
-
 .md-alert-warning .md-alert-title::before {
   content: '△';
   font-size: 0.9rem;
 }
 
-/* CAUTION - muted red */
-.md-alert-caution {
-  background: rgba(200, 80, 80, 0.06);
-  border-color: rgba(200, 80, 80, 0.5);
-}
-
-.md-alert-caution .md-alert-title {
-  color: #c47070;
-}
-
 .md-alert-caution .md-alert-title::before {
   content: '⊗';
   font-size: 0.95rem;
-}
-
-/* EXERCISE - workbook indigo */
-.md-alert-exercise {
-  background: rgba(79, 70, 229, 0.06);
-  border-color: rgba(79, 70, 229, 0.5);
-}
-
-.md-alert-exercise .md-alert-title {
-  color: #818cf8;
 }
 
 .md-alert-exercise .md-alert-title::before {
@@ -872,49 +830,10 @@
   font-size: 0.9rem;
 }
 
-/* EXAMPLE - muted teal */
-.md-alert-example {
-  background: rgba(20, 184, 166, 0.06);
-  border-color: rgba(20, 184, 166, 0.5);
-}
-
-.md-alert-example .md-alert-title {
-  color: #5eead4;
-}
-
 .md-alert-example .md-alert-title::before {
   content: '=';
   font-weight: 700;
   font-size: 0.95rem;
-}
-
-/* Dark mode - subtly increase bg opacity */
-.dark .md-alert-note {
-  background: rgba(99, 155, 220, 0.08);
-}
-
-.dark .md-alert-tip {
-  background: rgba(74, 172, 120, 0.08);
-}
-
-.dark .md-alert-important {
-  background: rgba(148, 100, 210, 0.08);
-}
-
-.dark .md-alert-warning {
-  background: rgba(200, 150, 50, 0.08);
-}
-
-.dark .md-alert-caution {
-  background: rgba(200, 80, 80, 0.08);
-}
-
-.dark .md-alert-exercise {
-  background: rgba(129, 140, 248, 0.09);
-}
-
-.dark .md-alert-example {
-  background: rgba(45, 212, 191, 0.09);
 }
 
 /* Content styling inside alerts */
