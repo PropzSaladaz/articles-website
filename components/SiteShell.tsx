@@ -20,8 +20,8 @@ import { SectionListNav } from './SectionListNav';
 import { ThemeToggle } from './ThemeToggle';
 import { PanelLeftClose, PanelLeft, Menu, X } from 'lucide-react';
 
-const DEFAULT_SIDEBAR_WIDTH = 288;
-const MIN_SIDEBAR_WIDTH = 224;
+const DEFAULT_SIDEBAR_WIDTH = 256;
+const MIN_SIDEBAR_WIDTH = 200;
 const MAX_SIDEBAR_WIDTH = 460;
 const COLLAPSE_THRESHOLD = 80;
 const HEADER_HEIGHT = 72;
@@ -183,11 +183,11 @@ export function SiteShell({ tree, sectionArticles, children }: SiteShellProps) {
   return (
     <div className="relative flex min-h-screen flex-col">
       <header
-        className="sticky top-0 z-30 dotted-bg"
+        className="sticky top-0 z-30 site-bar"
       >
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-5">
           <Link href="/" className="text-xl font-semibold tracking-tight">
-            Sid Makes Sense
+            ST
           </Link>
           <nav aria-label="Primary" className="hidden items-center gap-1 text-sm font-medium sm:flex">
             {SECTION_LIST.map((section) => (
@@ -224,7 +224,7 @@ export function SiteShell({ tree, sectionArticles, children }: SiteShellProps) {
       {hasSidebar && (
         <button
           onClick={handleToggleSidebar}
-          className="hidden lg:flex fixed left-0 z-40 items-center justify-center w-8 h-8 rounded-r-md border border-l-0 border-border bg-background/80 backdrop-blur-sm transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-background hover:w-10 shadow-sm opacity-60 hover:opacity-100"
+          className="hidden lg:flex fixed left-0 z-40 items-center justify-center w-8 h-8 rounded-r-md border border-l-0 border-border bg-background transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-background hover:w-10 shadow-sm opacity-60 hover:opacity-100"
           style={{ top: HEADER_HEIGHT + 16 }}
           aria-label={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           title={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
@@ -274,7 +274,7 @@ export function SiteShell({ tree, sectionArticles, children }: SiteShellProps) {
         {hasSidebar && (
           <aside
             className={cn(
-              'hidden shrink-0 overflow-hidden bg-background backdrop-blur transition-[width] duration-200 ease-out lg:flex sticky self-start'
+              'hidden shrink-0 overflow-hidden bg-background transition-[width] duration-200 ease-out lg:flex sticky self-start'
             )}
             style={{
               width: isSidebarCollapsed ? '0px' : `${sidebarWidth}px`,
@@ -286,7 +286,7 @@ export function SiteShell({ tree, sectionArticles, children }: SiteShellProps) {
           >
             <div
               className={cn(
-                'overflow-y-auto px-4 pb-6 pt-14 transition-opacity duration-200 w-full',
+                'overflow-y-auto px-3 pb-6 pt-14 transition-opacity duration-200 w-full',
                 isSidebarCollapsed ? 'pointer-events-none opacity-0' : 'opacity-100'
               )}
               style={{ maxHeight: `calc(100vh - ${HEADER_HEIGHT}px)` }}
@@ -313,16 +313,16 @@ export function SiteShell({ tree, sectionArticles, children }: SiteShellProps) {
           />
         )}
         <main className="flex-1 min-w-0">
-          <div className="mx-auto w-full max-w-7xl px-3 py-8 sm:px-4 sm:py-12 lg:py-16">{children}</div>
+          <div className="mx-auto w-full max-w-5xl px-3 py-8 sm:px-4 sm:py-12 lg:py-16">{children}</div>
         </main>
       </div>
 
-      <footer className="dotted-bg border-t border-border bg-background py-8 backdrop-blur-xl">
+      <footer className="border-t border-border bg-background py-8">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <span>© {new Date().getFullYear()} Sidnei Teixeira. All rights reserved.</span>
-          <span className="inline-flex items-center gap-1 text-xs uppercase tracking-[0.3em] text-muted-foreground/80">
-            Built with care
-          </span>
+          <span>© {new Date().getFullYear()} Sidnei Teixeira</span>
+          <a href="/rss.xml" className="transition-colors hover:text-foreground">
+            RSS
+          </a>
         </div>
       </footer>
     </div>

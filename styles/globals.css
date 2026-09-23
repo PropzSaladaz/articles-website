@@ -160,29 +160,11 @@
    Markdown styles
    ================================ */
 
-.dotted-bg {
-  border-bottom-width: 1px;
-  border-bottom-style: solid;
-  border-bottom-color: hsl(var(--border));
-
-  background-color: hsl(var(--background) / 0.8);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-}
-
-.dotted-bg::before {
-  content: "";
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-
-  background-image: radial-gradient(circle, rgba(0, 0, 0, 0.06) 1px, transparent 1px);
-  background-size: 12px 12px;
-}
-
-.dark .dotted-bg::before {
-  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+/* Site header bar: solid page background with a hairline rule. (This used to be
+   a translucent frosted-glass blur with a dot-grid texture.) */
+.site-bar {
+  border-bottom: 1px solid hsl(var(--border));
+  background-color: hsl(var(--background));
 }
 
 /* =============================
