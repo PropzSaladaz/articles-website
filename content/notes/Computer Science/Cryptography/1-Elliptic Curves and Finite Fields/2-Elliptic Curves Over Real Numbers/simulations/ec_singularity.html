@@ -20,66 +20,23 @@
   <!-- Fullscreen Canvas -->
   <canvas id="curveCanvas" class="absolute inset-0 w-full h-full block"></canvas>
 
-  <!-- Floating Interactive Case HUD: one sk-sticky card (tab selector + details)
-       instead of two separate floating panels — same component ec_introduction
-       uses, just with more content inside. -->
-  <div class="absolute top-4 left-4 right-4 md:right-auto md:top-6 md:left-6 z-10 max-w-sm sk-sticky flex flex-col gap-3">
-
-    <!-- Tab Selector: underline-style rather than a filled pill, closer to a
-         notebook divider than an app segmented control. -->
-    <div class="flex gap-4 border-b border-black/10 pb-2 sk-hand text-base">
-      <button onclick="selectCase('smooth')" id="tab-smooth" class="font-semibold pb-1 border-b-2 border-current ink-blue">
-        Smooth
-      </button>
-      <button onclick="selectCase('cusp')" id="tab-cusp" class="font-semibold pb-1 border-b-2 border-transparent ink-pencil-light">
-        Cusp
-      </button>
-      <button onclick="selectCase('node')" id="tab-node" class="font-semibold pb-1 border-b-2 border-transparent ink-pencil-light">
-        Node
-      </button>
+  <!-- Case HUD (shared sim-lib panel classes): tabs + status + live equation.
+       Used to also carry a case title/meaning line and a 3-block discriminant
+       walkthrough — dropped as redundant with the article prose (D = 4a³+27b²)
+       and with the selected tab + status badge. -->
+  <div class="sk-sticky sk-panel">
+    <div class="sk-tabs" role="group" aria-label="Curve case">
+      <button onclick="selectCase('smooth')" id="tab-smooth" class="sk-tab ink-blue is-active">Smooth</button>
+      <button onclick="selectCase('cusp')" id="tab-cusp" class="sk-tab ink-blue">Cusp</button>
+      <button onclick="selectCase('node')" id="tab-node" class="sk-tab ink-blue">Node</button>
     </div>
 
-    <!-- Meaning & Status Badge -->
-    <div class="flex items-start justify-between gap-3">
-      <div>
-        <span id="caseMeaning" class="text-xs ink-pencil font-medium block">Valid elliptic curve</span>
-        <h2 id="caseTitle" class="sk-hand text-2xl font-semibold ink-black tracking-tight mt-0.5">Smooth Curve</h2>
-      </div>
-      <span class="sk-badge">
-        <span id="statusDot" class="sk-dot bg-ink-green"></span>
-        <span id="statusBadge" class="sk-hand font-semibold text-sm ink-green">Valid</span>
-      </span>
-    </div>
+    <span class="sk-badge">
+      <span id="statusDot" class="sk-dot bg-ink-green"></span>
+      <span id="statusBadge" class="sk-status ink-green">Valid</span>
+    </span>
 
-    <!-- Current Equation Display -->
-    <div id="equationDisplay" class="text-lg font-mono font-bold tracking-wide ink-black py-1.5 border-y border-black/10">
-      y² = x³ - x + 1
-    </div>
-
-    <!-- Mathematical Discriminant Evaluation -->
-    <div class="space-y-2 font-mono text-xs">
-      <div>
-        <span class="ink-pencil-light block text-[10px] uppercase tracking-wider mb-1">Discriminant Formula</span>
-        <div class="ink-black bg-black/5 px-3 py-2 rounded">
-          D = 4a³ + 27b²
-        </div>
-      </div>
-
-      <div>
-        <span class="ink-pencil-light block text-[10px] uppercase tracking-wider mb-1">Calculated Evaluation</span>
-        <div id="discCalculation" class="ink-black bg-black/5 px-3 py-2 rounded">
-          D = 4(-1)³ + 27(1)² = 23
-        </div>
-      </div>
-
-      <div>
-        <span class="ink-pencil-light block text-[10px] uppercase tracking-wider mb-1">Geometric Condition</span>
-        <div id="conditionResult" class="px-3 py-2 rounded border border-current font-semibold ink-green">
-          D ≠ 0 → smooth / valid
-        </div>
-      </div>
-    </div>
-
+    <div id="equationDisplay" class="sk-panel-eq">y² = x³ - x + 1</div>
   </div>
 
   <script>
@@ -94,34 +51,22 @@
     // Case definitions
     const cases = {
       smooth: {
-        title: "Smooth Curve",
-        meaning: "Valid elliptic curve",
         a: -1.0,
         b: 1.0,
         equation: "y² = x³ - x + 1",
-        calc: "D = 4(-1)³ + 27(1)² = 23",
-        status: "Valid",
-        cond: "D ≠ 0 → smooth / valid"
+        status: "Valid"
       },
       cusp: {
-        title: "Cusp",
-        meaning: "Invalid: sharp singular point",
         a: 0.0,
         b: 0.0,
         equation: "y² = x³",
-        calc: "D = 4(0)³ + 27(0)² = 0",
-        status: "Invalid",
-        cond: "D = 0 → singular / invalid"
+        status: "Invalid"
       },
       node: {
-        title: "Self-Intersection / Node",
-        meaning: "Invalid: curve crosses itself",
         a: -3.0,
         b: 2.0,
         equation: "y² = x³ - 3x + 2",
-        calc: "D = 4(-3)³ + 27(2)² = 0",
-        status: "Invalid",
-        cond: "D = 0 → singular / invalid"
+        status: "Invalid"
       }
     };
 
@@ -197,31 +142,24 @@
       ['smooth', 'cusp', 'node'].forEach(k => {
         const tab = document.getElementById(`tab-${k}`);
         if (k === caseKey) {
-          tab.className = "font-semibold pb-1 border-b-2 border-current ink-blue";
+          tab.className = "sk-tab ink-blue is-active";
         } else {
-          tab.className = "font-semibold pb-1 border-b-2 border-transparent ink-pencil-light";
+          tab.className = "sk-tab ink-blue";
         }
       });
 
       // Update text details
-      document.getElementById('caseTitle').textContent = data.title;
-      document.getElementById('caseMeaning').textContent = data.meaning;
       document.getElementById('equationDisplay').textContent = data.equation;
-      document.getElementById('discCalculation').textContent = data.calc;
-      document.getElementById('conditionResult').textContent = data.cond;
 
       const badge = document.getElementById('statusBadge');
       const dot = document.getElementById('statusDot');
-      const condition = document.getElementById('conditionResult');
       badge.textContent = data.status;
       if (data.status === "Valid") {
-        badge.className = "sk-hand font-semibold text-sm ink-green";
+        badge.className = "sk-status ink-green";
         dot.className = "sk-dot bg-ink-green";
-        condition.className = "px-3 py-2 rounded border border-current font-semibold ink-green";
       } else {
-        badge.className = "sk-hand font-semibold text-sm ink-red";
+        badge.className = "sk-status ink-red";
         dot.className = "sk-dot bg-ink-red";
-        condition.className = "px-3 py-2 rounded border border-current font-semibold ink-red";
       }
 
       draw();

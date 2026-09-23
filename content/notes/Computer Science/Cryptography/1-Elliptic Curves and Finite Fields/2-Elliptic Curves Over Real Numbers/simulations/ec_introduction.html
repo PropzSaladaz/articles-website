@@ -20,28 +20,25 @@
   <!-- Fullscreen Interactive Canvas -->
   <canvas id="curveCanvas" class="absolute inset-0 w-full h-full block"></canvas>
 
-  <!-- Margin-note style HUD: sk-sticky/.ink-*/.sk-hand come from sim-lib's
-       paper-ui.css (injected via the sim-paper meta tag above), shared with
-       every other migrated simulation rather than hand-rolled here. -->
-  <div class="absolute top-4 left-4 md:top-6 md:left-6 z-10 max-w-sm sk-sticky sk-sticky--pointer-none">
-    <!-- Equation Display -->
-    <div id="equationDisplay" class="sk-hand text-2xl md:text-3xl font-semibold tracking-wide ink-black mb-2">
+  <!-- HUD built from sim-lib's shared panel classes (paper-ui.css). The live
+       equation is the subject, so it's the (large) title. -->
+  <div class="sk-sticky sk-panel sk-sticky--pointer-none">
+    <div id="equationDisplay" class="sk-panel-title sk-panel-title--lg">
       y² = x³ <span class="ink-blue">+ ax</span> <span class="ink-red">+ b</span>
     </div>
+    <div class="sk-legend">
+      <span class="sk-dot bg-ink-blue"></span>
+      <span class="sk-label">a</span>
+      <span id="val_a" class="sk-value">0.00</span>
 
-    <!-- Parameter Values -->
-    <div class="flex items-center gap-4 text-xs font-mono ink-pencil">
+      <span class="sk-dot bg-ink-red"></span>
+      <span class="sk-label">b</span>
+      <span id="val_b" class="sk-value">0.00</span>
+    </div>
+    <div class="sk-panel-section">
       <span class="sk-badge">
-        <span class="sk-dot bg-ink-blue"></span>
-        <span>a = <span id="val_a" class="ink-black font-bold">0.00</span></span>
-      </span>
-      <span class="sk-badge">
-        <span class="sk-dot bg-ink-red"></span>
-        <span>b = <span id="val_b" class="ink-black font-bold">0.00</span></span>
-      </span>
-      <span class="sk-badge border-l border-black/10 pl-4">
         <span id="badgeDot" class="sk-dot bg-ink-blue"></span>
-        <span id="badgeText" class="sk-hand font-semibold text-sm ink-blue">Calculating</span>
+        <span id="badgeText" class="sk-status ink-blue">Calculating</span>
       </span>
     </div>
   </div>
@@ -181,7 +178,7 @@
 
         // Update UI Indicator values
         document.getElementById('badgeText').textContent = "2 Components";
-        document.getElementById('badgeText').className = "sk-hand font-semibold text-sm ink-green";
+        document.getElementById('badgeText').className = "sk-status ink-green";
         document.getElementById('badgeDot').className = "sk-dot bg-ink-green";
 
       } else {
@@ -206,7 +203,7 @@
 
         // Update UI Indicator values
         document.getElementById('badgeText').textContent = "1 Component";
-        document.getElementById('badgeText').className = "sk-hand font-semibold text-sm ink-blue";
+        document.getElementById('badgeText').className = "sk-status ink-blue";
         document.getElementById('badgeDot').className = "sk-dot bg-ink-blue";
       }
 

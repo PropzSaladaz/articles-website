@@ -7,8 +7,6 @@
   <title>ECC Point Addition Visualizer</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap');
 
@@ -22,73 +20,36 @@
   <!-- Fullscreen Interactive Canvas (touch-action none ensures swipe dragging doesn't scroll page) -->
   <canvas id="curveCanvas" class="absolute inset-0 w-full h-full block" style="touch-action: none;"></canvas>
 
-  <!-- Floating HUD Panel: one sk-sticky card, same component as the other
-       migrated sims, just with more content (controls + coordinate list). -->
-  <div class="absolute left-4 top-4 md:left-6 md:top-6 z-10 w-[210px] sm:w-[230px] pointer-events-none">
+  <!-- HUD: readouts in a shared sk-panel, actions in a shared sk-toolbar
+       (sim-lib/v1/paper-ui.css). No per-sim sizing — the panel's compact
+       layout is shared across sims. -->
+  <div class="sk-sticky sk-panel">
+    <div class="sk-panel-title">y² = x³ − 3x + 3.5</div>
 
-    <div class="sk-sticky pointer-events-auto flex flex-col gap-2.5">
+    <div class="sk-legend">
+      <span class="sk-dot bg-ink-green"></span>
+      <span class="sk-label">P</span>
+      <span class="sk-value" id="coordP">–</span>
 
-      <!-- Title & State Controls -->
-      <div class="flex flex-col gap-1.5 border-b border-black/10 pb-2">
-        <div class="flex items-center justify-between">
-          <h1 class="sk-hand text-lg font-semibold ink-black tracking-tight">ECC Addition</h1>
-          <div class="flex items-center gap-1">
-            <!-- Animation Toggle Button -->
-            <button id="playPauseBtn" class="p-1 bg-black/5 hover:bg-black/10 rounded transition-colors flex items-center justify-center" title="Toggle Animation">
-              <i id="playPauseIcon" data-lucide="pause" class="w-3 h-3 ink-green"></i>
-            </button>
-            <!-- Reset button -->
-            <button id="resetBtn" class="p-1 bg-black/5 hover:bg-black/10 rounded transition-colors flex items-center justify-center ink-pencil" title="Reset Simulation">
-              <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
-            </button>
-          </div>
-        </div>
-        <span class="text-[10px] ink-pencil font-mono font-semibold">y² = x³ - 3x + 3.5</span>
-      </div>
+      <span class="sk-dot bg-ink-blue"></span>
+      <span class="sk-label">Q</span>
+      <span class="sk-value" id="coordQ">–</span>
 
-      <!-- Main Coordinates List (1 Item per Line) -->
-      <div class="flex flex-col gap-1 text-[10px] font-mono">
-        <div class="sk-row border border-current ink-green">
-          <span class="font-bold text-[9px] uppercase tracking-wider">P</span>
-          <span id="coordP" class="ink-black font-semibold text-[10px]">-</span>
-        </div>
-        <div class="sk-row border border-current ink-blue">
-          <span class="font-bold text-[9px] uppercase tracking-wider">Q</span>
-          <span id="coordQ" class="ink-black font-semibold text-[10px]">-</span>
-        </div>
-        <div class="sk-row border border-current ink-orange">
-          <span class="font-bold text-[9px] uppercase tracking-wider">P+Q</span>
-          <span id="coordSum" class="ink-black font-semibold text-[10px] text-right">-</span>
-        </div>
-      </div>
+      <span class="sk-dot bg-ink-orange"></span>
+      <span class="sk-label">P + Q</span>
+      <span class="sk-value" id="coordSum">–</span>
 
-      <!-- Slope HUD Row -->
-      <div class="border-t border-black/10 pt-2 font-mono text-[10px]">
-        <div class="sk-row">
-          <span class="ink-pencil-light text-[9px] uppercase tracking-wider font-semibold">Slope (m)</span>
-          <span id="calcSlope" class="ink-purple font-bold text-[10px]">-</span>
-        </div>
-      </div>
-
-      <!-- Special Cases Selector (1 Item per Line) -->
-      <div class="border-t border-black/10 pt-2 flex flex-col gap-1 font-mono">
-        <span class="ink-pencil-light text-[9px] uppercase tracking-wider font-semibold">Special Cases</span>
-        <div class="flex flex-col gap-1">
-          <button id="caseDoublingBtn" class="sk-row w-full border border-transparent hover:border-current ink-green font-medium transition-colors text-left">
-            <span class="font-bold text-[10px]">P = Q</span>
-            <span class="text-[9px] ink-pencil-light">Doubling</span>
-          </button>
-          <button id="caseInfinityBtn" class="sk-row w-full border border-transparent hover:border-current ink-orange font-medium transition-colors text-left">
-            <span class="font-bold text-[10px]">P = -Q</span>
-            <span class="text-[9px] ink-pencil-light">Vertical</span>
-          </button>
-        </div>
-      </div>
-
-      <div class="text-[9px] ink-pencil-light text-center italic mt-0.5 sk-hand">
-        Drag points or click curve to move manually
-      </div>
+      <span></span>
+      <span class="sk-label">slope m</span>
+      <span class="sk-value ink-purple" id="calcSlope">–</span>
     </div>
+
+    <div class="sk-hint">drag P or Q, or click the curve</div>
+  </div>
+
+  <div class="sk-toolbar">
+    <button id="caseDoublingBtn" class="sk-btn ink-green">P = Q <span class="sk-btn-note">doubling</span></button>
+    <button id="caseInfinityBtn" class="sk-btn ink-orange">P = −Q <span class="sk-btn-note">vertical line</span></button>
   </div>
 
   <script>
@@ -455,31 +416,11 @@
     window.addEventListener('pointerup', onPointerUp);
     window.addEventListener('pointercancel', onPointerUp);
 
-    // Play/Pause Action Toggle
+    // Dragging a point (or picking a special case below) pauses the automatic
+    // orbit so the manual position isn't immediately overwritten by it.
     function setAnimationState(play) {
       state.isAnimating = play;
-      const icon = document.getElementById('playPauseIcon');
-
-      if (play) {
-        icon.setAttribute('data-lucide', 'pause');
-        icon.className = 'w-3 h-3 ink-green';
-      } else {
-        icon.setAttribute('data-lucide', 'play');
-        icon.className = 'w-3 h-3 ink-blue';
-      }
-      lucide.createIcons();
     }
-
-    document.getElementById('playPauseBtn').addEventListener('click', () => {
-      setAnimationState(!state.isAnimating);
-    });
-
-    document.getElementById('resetBtn').addEventListener('click', () => {
-      state.timeP = 1.0;
-      state.timeQ = 4.2;
-      setAnimationState(true);
-      draw();
-    });
 
     // Handle Cases Triggering
     document.getElementById('caseDoublingBtn').addEventListener('click', () => {
