@@ -73,6 +73,12 @@ Summary (the review mode) and everything else in Full; a visitor's stored choice
 on the server and the visitor's in the browser — a hydration mismatch for anyone outside
 the build machine's locale.
 
+**Typography: serif for reading, sans for UI.** `app/layout.tsx` loads Source Serif 4
+via `next/font/google` (self-hosted at build, exposed as `--font-serif` / Tailwind
+`font-serif`). It is applied to rendered markdown (`.md` in `styles/markdown.css`) and the
+article title only; nav, sidebar, and buttons stay on the default sans. Inline code sets
+its own monospace stack, so it is unaffected.
+
 ## sim-lib (hand-drawn simulation renderer)
 
 `sim-lib/v1/` is a shared "paper & pencil" rendering kit for simulations:

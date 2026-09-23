@@ -10,6 +10,9 @@ const config: Config = {
 	],
 	theme: {
 		extend: {
+			fontFamily: {
+				serif: ['var(--font-serif)', 'Georgia', 'serif']
+			},
 			colors: {
 				border: 'hsl(var(--border) / <alpha-value>)',
 				input: 'hsl(var(--input) / <alpha-value>)',

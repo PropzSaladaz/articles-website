@@ -8,12 +8,16 @@
   max-width: 100%;
   min-width: 0;
   overflow-wrap: break-word;
+  /* Article text is set in a serif (Source Serif 4, loaded in app/layout.tsx);
+     code keeps its own monospace stack and KaTeX its own fonts. */
+  font-family: var(--font-serif), Georgia, serif;
+  font-optical-sizing: auto;
 }
 
 .md .md-p {
-  font-size: 17px;
+  font-size: 18px;
   margin: 1em 0;
-  line-height: 1.8;
+  line-height: 1.7;
 }
 
 .md .md-heading {
