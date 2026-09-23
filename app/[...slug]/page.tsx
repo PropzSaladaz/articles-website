@@ -156,17 +156,17 @@ function CollectionView({ collection }: { collection: LoadedCollection }) {
   const hasChildCollections = collection.totalCollections > 0;
   const headerCount = hasChildCollections ? collection.totalCollections : collection.totalArticles;
   const headerLabel = hasChildCollections
-    ? `${headerCount} ${headerCount === 1 ? 'collection' : 'collections'} inside this collection.`
-    : `${headerCount} ${headerCount === 1 ? 'article' : 'articles'} inside this collection.`;
+    ? `${headerCount} ${headerCount === 1 ? 'collection' : 'collections'}`
+    : `${headerCount} ${headerCount === 1 ? 'article' : 'articles'}`;
 
   return (
     <div className="space-y-12">
       <header className="space-y-4">
-        <span className="inline-flex w-fit items-center gap-2 rounded-full bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-primary">
+        <span className="text-sm text-muted-foreground">
           Collection
         </span>
         <div className="space-y-3">
-          <h1 className="text-4xl font-bold tracking-tight text-foreground">{collection.title}</h1>
+          <h1 className="font-serif text-4xl font-semibold tracking-tight text-foreground">{collection.title}</h1>
           <p className="text-sm font-medium text-muted-foreground">
             {headerLabel}
           </p>
@@ -178,78 +178,85 @@ function CollectionView({ collection }: { collection: LoadedCollection }) {
       </section>
 
       {collection.collections.length > 0 && (
-        <section className="space-y-6">
-          <div className="space-y-2">
-            <h2 className="text-2xl font-semibold text-foreground">Collections in this collection</h2>
-            <p className="text-base text-muted-foreground">
-              Explore nested collections to dive deeper into specific sub-topics.
-            </p>
-          </div>
-          <ol className="space-y-4">
+        <section className="space-y-4">
+          <h2 className="text-2xl font-semibold text-foreground">Collections</h2>
+          <ol className="divide-y divide-border border-y border-border">
             {collection.collections.map((child, index) => (
-              <li key={child.slug} className="list-none">
-                <div className="flex gap-4 rounded-2xl border border-border p-5 transition-colors hover:bg-card">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                    {String(index + 1).padStart(2, '0')}
-                  </span>
-                  <div className="flex-1 space-y-2">
-                    <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
-                      <Link
-                        href={collectionPath(child.slug)}
-                        className="text-lg font-semibold text-foreground transition-colors hover:text-primary"
-                      >
-                        {child.title}
-                      </Link>
-                      <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                        {child.totalCollections > 0 && `${child.totalCollections} collections`}
-                        {child.totalCollections > 0 && child.totalArticles > 0 && ' · '}
-                        {child.totalArticles > 0 && `${child.totalArticles} articles`}
-                      </span>
-                    </div>
-                    <p className="text-sm text-muted-foreground">{child.summary.text}</p>
-                  </div>
-                </div>
-              </li>
+              <ChapterRow
+                key={child.slug}
+                number={index + 1}
+                href={collectionPath(child.slug)}
+                title={child.title}
+                meta={[
+                  child.totalCollections > 0 && `${child.totalCollections} collections`,
+                  child.totalArticles > 0 && `${child.totalArticles} articles`,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+                description={child.summary.text}
+              />
             ))}
           </ol>
         </section>
       )}
 
       {collection.collections.length === 0 && collection.articles.length > 0 && (
-        <section className="space-y-6">
-          <div className="space-y-2">
-            <h2 className="text-2xl font-semibold text-foreground">Articles in this collection</h2>
-            <p className="text-base text-muted-foreground">
-              Browse every chapter in sequence or jump straight to the lessons that matter most to you.
-            </p>
-          </div>
-          <ol className="space-y-4">
+        <section className="space-y-4">
+          <h2 className="text-2xl font-semibold text-foreground">Articles</h2>
+          <ol className="divide-y divide-border border-y border-border">
             {collection.articles.map((article, index) => (
-              <li key={article.slug} className="list-none">
-                <div className="flex gap-4 rounded-2xl border border-border p-5 transition-colors hover:bg-card">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                    {String(index + 1).padStart(2, '0')}
-                  </span>
-                  <div className="flex-1 space-y-2">
-                    <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
-                      <Link
-                        href={articlePath(article)}
-                        className="text-lg font-semibold text-foreground transition-colors hover:text-primary"
-                      >
-                        {article.title}
-                      </Link>
-                      <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                        {formatDate(article.date)} · {article.readingTime.text}
-                      </span>
-                    </div>
-                    <p className="text-sm text-muted-foreground">{article.description}</p>
-                  </div>
-                </div>
-              </li>
+              <ChapterRow
+                key={article.slug}
+                number={index + 1}
+                href={articlePath(article)}
+                title={article.title}
+                meta={`${formatDate(article.date)} · ${article.readingTime.text}`}
+                description={article.description}
+              />
             ))}
           </ol>
         </section>
       )}
     </div>
+  );
+}
+
+/**
+ * One entry in a collection's contents, set like a book's table of contents:
+ * chapter number in the margin, a small date/length line above a serif title,
+ * then a one-line description, with hairline dividers between rows. Blue is used
+ * sparingly: the chapter numbers, and the title on hover (blue + underline). The whole row is the
+ * click target (the link's ::after covers it). The number's top padding (pt-5)
+ * skips the meta line (text-xs + mb-1) so it sits level with the title.
+ */
+function ChapterRow({
+  number,
+  href,
+  title,
+  meta,
+  description,
+}: {
+  number: number;
+  href: string;
+  title: string;
+  meta: string;
+  description: string;
+}) {
+  return (
+    <li className="group relative flex gap-4 py-5 sm:gap-6">
+      <span className="w-6 shrink-0 pt-5 text-right font-serif text-lg font-semibold tabular-nums text-[hsl(var(--link))]">
+        {number}
+      </span>
+      <div className="min-w-0 flex-1">
+        {meta && <p className="mb-1 text-xs text-muted-foreground">{meta}</p>}
+        <Link
+          href={href}
+          className="font-serif text-xl font-semibold text-foreground underline-offset-4 transition-colors after:absolute after:inset-0 group-hover:text-[hsl(var(--link))] group-hover:underline"
+        >
+          {title}
+        </Link>
+        {description && <p className="mt-1 text-muted-foreground">{description}</p>}
+      </div>
+    </li>
   );
 }
