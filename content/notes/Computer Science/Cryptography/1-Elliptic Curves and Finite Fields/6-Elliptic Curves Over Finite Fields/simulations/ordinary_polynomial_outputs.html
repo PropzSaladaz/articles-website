@@ -14,28 +14,22 @@
 <body class="sk-page w-screen h-screen overflow-hidden m-0 p-0 relative select-none">
   <canvas id="outputsCanvas" class="absolute inset-0 w-full h-full block" aria-label="Animation of ordinary polynomial outputs for discrete x values from zero to ten"></canvas>
 
-  <section class="absolute left-4 top-4 md:left-6 md:top-6 z-10 w-[218px] sm:w-[232px] sk-sticky pointer-events-auto" aria-label="Polynomial output information">
-    <div class="border-b border-black/10 pb-2.5">
-      <p class="sk-hand text-xl font-semibold ink-black leading-none">Choose discrete x values</p>
-      <p class="mt-2 text-[11px] font-bold ink-purple leading-relaxed">f(x) = x³ + x + 1</p>
-      <p class="mt-1 text-[9px] ink-pencil">The vertical values are ordinary integers—not reduced yet.</p>
+  <!-- HUD built from sim-lib's shared panel classes (paper-ui.css). -->
+  <section class="sk-sticky sk-panel" aria-label="Polynomial output information">
+    <div class="sk-panel-title">Choose discrete x values</div>
+    <div class="sk-panel-eq ink-purple">f(x) = x³ + x + 1</div>
+    <p class="sk-panel-note">The vertical values are ordinary integers—not reduced yet.</p>
+    <div class="sk-panel-section sk-readout">
+      <span class="sk-label">current input</span>
+      <span id="inputValue" class="sk-value ink-green">x = 0</span>
+      <span class="sk-label">ordinary output</span>
+      <span id="outputValue" class="sk-value ink-orange">f(x) = 1</span>
     </div>
-
-    <div class="mt-2.5 text-[10px] font-mono">
-      <div class="sk-row">
-        <span class="ink-pencil">current input</span>
-        <span id="inputValue" class="font-bold ink-green">x = 0</span>
-      </div>
-      <div class="sk-row mt-1">
-        <span class="ink-pencil">ordinary output</span>
-        <span id="outputValue" class="font-bold ink-orange">f(x) = 1</span>
-      </div>
-    </div>
-
-    <button id="replayButton" type="button" class="mt-2.5 w-full rounded-md border border-black/10 bg-black/5 px-2 py-1.5 text-[9px] font-semibold ink-pencil transition-colors hover:bg-black/10">
-      Replay inputs
-    </button>
   </section>
+
+  <div class="sk-toolbar">
+    <button id="replayButton" type="button" class="sk-btn ink-pencil">Replay inputs</button>
+  </div>
 
   <script>
     const canvas = document.getElementById('outputsCanvas');

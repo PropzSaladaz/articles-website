@@ -10,44 +10,37 @@
     @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap');
 
     body { font-family: 'Fira Code', monospace; }
-
-    input[type="range"] {
-      accent-color: #4a7c59;
-      cursor: pointer;
-    }
   </style>
 </head>
 <body class="sk-page w-screen h-screen overflow-hidden m-0 p-0 relative select-none">
   <canvas id="clockCanvas" class="absolute inset-0 w-full h-full block" style="touch-action: none;" aria-label="Animated modular arithmetic clock"></canvas>
 
-  <section class="absolute left-4 top-4 md:left-6 md:top-6 z-10 w-[218px] sm:w-[232px] sk-sticky pointer-events-auto" aria-label="Clock controls">
-    <div class="border-b border-black/10 pb-2.5">
-      <p class="sk-hand text-xl font-semibold ink-black leading-none">A clock is modulo 12</p>
-      <p id="equation" class="mt-2 text-[11px] font-bold ink-purple leading-relaxed">10 + 5 ≡ 3 (mod 12)</p>
-      <p id="calculation" class="mt-1 text-[9px] ink-pencil leading-relaxed">15 lands on the same place as 3</p>
+  <!-- HUD built from sim-lib's shared panel classes (paper-ui.css). -->
+  <section class="sk-sticky sk-panel" aria-label="Clock controls">
+    <div class="sk-panel-title">A clock is modulo 12</div>
+    <div id="equation" class="sk-panel-eq ink-purple">10 + 5 ≡ 3 (mod 12)</div>
+    <p id="calculation" class="sk-panel-note">15 lands on the same place as 3</p>
+
+    <div class="sk-panel-section">
+      <label class="sk-field" for="startRange">
+        <span class="sk-field-row"><span class="sk-label">Start at</span><strong id="startValue" class="sk-value ink-green">10</strong></span>
+        <input id="startRange" type="range" min="0" max="11" value="10" class="sk-range">
+      </label>
+      <label class="sk-field" for="stepsRange">
+        <span class="sk-field-row"><span class="sk-label">Move forward</span><strong id="stepsValue" class="sk-value ink-purple">+5</strong></span>
+        <input id="stepsRange" type="range" min="1" max="24" value="5" class="sk-range">
+      </label>
     </div>
 
-    <div class="pt-2.5 space-y-2.5 text-[10px] ink-pencil">
-      <label class="block" for="startRange">
-        <span class="flex justify-between mb-1"><span>Start at</span><strong id="startValue" class="ink-green">10</strong></span>
-        <input id="startRange" type="range" min="0" max="11" value="10" class="w-full h-1.5">
-      </label>
-      <label class="block" for="stepsRange">
-        <span class="flex justify-between mb-1"><span>Move forward</span><strong id="stepsValue" class="ink-purple">+5</strong></span>
-        <input id="stepsRange" type="range" min="1" max="24" value="5" class="w-full h-1.5">
-      </label>
-    </div>
-
-    <div class="mt-3 border-t border-black/10 pt-2.5">
-      <div class="sk-row text-[9px]">
-        <span id="motionLabel" class="ink-pencil">Waiting at 10</span>
-        <span id="stepCount" class="font-bold ink-black">0 / 5</span>
-      </div>
-      <button id="exampleButton" type="button" class="mt-2 w-full rounded-md border border-black/10 bg-black/5 px-2 py-1.5 text-[9px] font-semibold ink-pencil transition-colors hover:bg-black/10">
-        Replay 10 + 5
-      </button>
+    <div class="sk-panel-section sk-readout">
+      <span id="motionLabel" class="sk-label">Waiting at 10</span>
+      <span id="stepCount" class="sk-value">0 / 5</span>
     </div>
   </section>
+
+  <div class="sk-toolbar">
+    <button id="exampleButton" type="button" class="sk-btn ink-pencil">Replay 10 + 5</button>
+  </div>
 
   <script>
     const canvas = document.getElementById('clockCanvas');

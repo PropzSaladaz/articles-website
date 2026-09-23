@@ -14,32 +14,24 @@
 <body class="sk-page w-screen h-screen overflow-hidden m-0 p-0 relative select-none">
   <canvas id="residueCanvas" class="absolute inset-0 w-full h-full block" aria-label="Animation mapping each finite-field y value to its square modulo eleven"></canvas>
 
-  <section class="absolute left-4 top-4 md:left-6 md:top-6 z-10 w-[218px] sm:w-[232px] sk-sticky pointer-events-auto" aria-label="Quadratic residue information">
-    <div class="border-b border-black/10 pb-2.5">
-      <p class="sk-hand text-xl font-semibold ink-black leading-none">Which heights are squares?</p>
-      <p class="mt-2 text-[11px] font-bold ink-purple leading-relaxed">lhs(y) = y² mod 11</p>
-      <p class="mt-1 text-[9px] ink-pencil">Yellow dots are the values attainable as y².</p>
+  <!-- HUD built from sim-lib's shared panel classes (paper-ui.css). -->
+  <section class="sk-sticky sk-panel" aria-label="Quadratic residue information">
+    <div class="sk-panel-title">Which heights are squares?</div>
+    <div class="sk-panel-eq ink-purple">lhs(y) = y² mod 11</div>
+    <p class="sk-panel-note">Yellow dots are the values attainable as y².</p>
+    <div class="sk-panel-section sk-readout">
+      <span class="sk-label">current input</span>
+      <span id="inputValue" class="sk-value ink-green">y = 0</span>
+      <span class="sk-label">mapping</span>
+      <span id="mappingValue" class="sk-value ink-amber">0² mod 11 = 0</span>
+      <span id="residueLabel" class="sk-label">residue heights</span>
+      <span id="residueCount" class="sk-value ink-amber">0 / 6</span>
     </div>
-
-    <div class="mt-2.5 text-[10px] font-mono">
-      <div class="sk-row">
-        <span class="ink-pencil">current input</span>
-        <span id="inputValue" class="font-bold ink-green">y = 0</span>
-      </div>
-      <div class="sk-row mt-1">
-        <span class="ink-pencil">mapping</span>
-        <span id="mappingValue" class="font-bold text-[#a56d18]">0² mod 11 = 0</span>
-      </div>
-      <div class="sk-row mt-1">
-        <span id="residueLabel" class="ink-pencil">residue heights</span>
-        <span id="residueCount" class="font-bold text-[#a56d18]">0 / 6</span>
-      </div>
-    </div>
-
-    <button id="replayButton" type="button" class="mt-2.5 w-full rounded-md border border-black/10 bg-black/5 px-2 py-1.5 text-[9px] font-semibold ink-pencil transition-colors hover:bg-black/10">
-      Replay mappings
-    </button>
   </section>
+
+  <div class="sk-toolbar">
+    <button id="replayButton" type="button" class="sk-btn ink-pencil">Replay mappings</button>
+  </div>
 
   <script>
     const canvas = document.getElementById('residueCanvas');

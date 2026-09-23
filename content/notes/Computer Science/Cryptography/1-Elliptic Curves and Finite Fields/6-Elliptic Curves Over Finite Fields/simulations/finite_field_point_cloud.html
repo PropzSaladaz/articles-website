@@ -14,28 +14,22 @@
 <body class="sk-page w-screen h-screen overflow-hidden m-0 p-0 relative select-none">
   <canvas id="fieldCanvas" class="absolute inset-0 w-full h-full block" style="touch-action: none;" aria-label="Point cloud for an elliptic curve over the finite field F11"></canvas>
 
-  <section class="absolute left-4 top-4 md:left-6 md:top-6 z-10 w-[218px] sm:w-[232px] sk-sticky pointer-events-auto" aria-label="Finite-field curve information">
-    <div class="border-b border-black/10 pb-2.5">
-      <p class="sk-hand text-xl font-semibold ink-black leading-none">A finite-field curve</p>
-      <p class="mt-2 text-[11px] font-bold ink-blue leading-relaxed">y² ≡ x³ + x + 1 (mod 11)</p>
-      <p class="mt-1 text-[9px] ink-pencil">Every dot is one valid coordinate pair.</p>
+  <!-- HUD built from sim-lib's shared panel classes (paper-ui.css). -->
+  <section class="sk-sticky sk-panel" aria-label="Finite-field curve information">
+    <div class="sk-panel-title">A finite-field curve</div>
+    <div class="sk-panel-eq ink-blue">y² ≡ x³ + x + 1 (mod 11)</div>
+    <p class="sk-panel-note">Every dot is one valid coordinate pair.</p>
+    <div class="sk-panel-section sk-readout">
+      <span class="sk-label">field</span>
+      <span class="sk-value ink-green">F₁₁</span>
+      <span id="pointCount" class="sk-label">plotting pairs</span>
+      <span id="pointReadout" class="sk-value ink-blue">0 / 13</span>
     </div>
-
-    <div class="mt-2.5 text-[10px] font-mono">
-      <div class="sk-row">
-        <span class="ink-pencil">field</span>
-        <span class="font-bold ink-green">F₁₁</span>
-      </div>
-      <div class="sk-row mt-1">
-        <span id="pointCount" class="ink-pencil">plotting pairs</span>
-        <span id="pointReadout" class="font-bold ink-blue">0 / 13</span>
-      </div>
-    </div>
-
-    <button id="replayButton" type="button" class="mt-2.5 w-full rounded-md border border-black/10 bg-black/5 px-2 py-1.5 text-[9px] font-semibold ink-pencil transition-colors hover:bg-black/10">
-      Replay point cloud
-    </button>
   </section>
+
+  <div class="sk-toolbar">
+    <button id="replayButton" type="button" class="sk-btn ink-pencil">Replay point cloud</button>
+  </div>
 
   <script>
     const canvas = document.getElementById('fieldCanvas');

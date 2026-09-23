@@ -14,32 +14,24 @@
 <body class="sk-page w-screen h-screen overflow-hidden m-0 p-0 relative select-none">
   <canvas id="sampleCanvas" class="absolute inset-0 w-full h-full block" aria-label="A scaled sample of genuine points on the secp256k1 elliptic curve"></canvas>
 
-  <section class="absolute left-4 top-4 md:left-6 md:top-6 z-10 w-[222px] sm:w-[238px] sk-sticky pointer-events-auto" aria-label="secp256k1 point sample information">
-    <div class="border-b border-black/10 pb-2.5">
-      <p class="sk-hand text-xl font-semibold ink-black leading-none">A production-scale cloud</p>
-      <p class="mt-2 text-[11px] font-bold ink-purple leading-relaxed">y² ≡ x³ + 7 (mod p)</p>
-      <p class="mt-1 text-[9px] ink-pencil">Each blue dot is a genuine secp256k1 point, scaled to fit the square.</p>
+  <!-- HUD built from sim-lib's shared panel classes (paper-ui.css). -->
+  <section class="sk-sticky sk-panel" aria-label="secp256k1 point sample information">
+    <div class="sk-panel-title">A production-scale cloud</div>
+    <div class="sk-panel-eq ink-purple">y² ≡ x³ + 7 (mod p)</div>
+    <p class="sk-panel-note">Each blue dot is a genuine secp256k1 point, scaled to fit the square.</p>
+    <div class="sk-panel-section sk-readout">
+      <span class="sk-label">field size</span>
+      <span class="sk-value ink-green">256 bits</span>
+      <span class="sk-label">visible sample</span>
+      <span id="pointCount" class="sk-value ink-blue">0 / 96</span>
+      <span class="sk-label">full cloud</span>
+      <span class="sk-value ink-purple">about 2²⁵⁶ points</span>
     </div>
-
-    <div class="mt-2.5 text-[10px] font-mono">
-      <div class="sk-row">
-        <span class="ink-pencil">field size</span>
-        <span class="font-bold ink-green">256 bits</span>
-      </div>
-      <div class="sk-row mt-1">
-        <span class="ink-pencil">visible sample</span>
-        <span id="pointCount" class="font-bold ink-blue">0 / 96</span>
-      </div>
-      <div class="sk-row mt-1">
-        <span class="ink-pencil">full cloud</span>
-        <span class="font-bold ink-purple">about 2²⁵⁶ points</span>
-      </div>
-    </div>
-
-    <button id="replayButton" type="button" class="mt-2.5 w-full rounded-md border border-black/10 bg-black/5 px-2 py-1.5 text-[9px] font-semibold ink-pencil transition-colors hover:bg-black/10">
-      Replay sample
-    </button>
   </section>
+
+  <div class="sk-toolbar">
+    <button id="replayButton" type="button" class="sk-btn ink-pencil">Replay sample</button>
+  </div>
 
   <script>
     const canvas = document.getElementById('sampleCanvas');

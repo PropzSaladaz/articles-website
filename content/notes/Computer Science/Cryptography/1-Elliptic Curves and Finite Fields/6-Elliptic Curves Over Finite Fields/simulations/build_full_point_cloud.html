@@ -14,32 +14,24 @@
 <body class="sk-page w-screen h-screen overflow-hidden m-0 p-0 relative select-none">
   <canvas id="constructionCanvas" class="absolute inset-0 w-full h-full block" aria-label="Animation constructing every point on the elliptic curve over the finite field F11"></canvas>
 
-  <section class="absolute left-4 top-4 md:left-6 md:top-6 z-10 w-[218px] sm:w-[232px] sk-sticky pointer-events-auto" aria-label="Finite-field point construction information">
-    <div class="border-b border-black/10 pb-2.5">
-      <p class="sk-hand text-xl font-semibold ink-black leading-none">Build every curve point</p>
-      <p class="mt-2 text-[11px] font-bold ink-purple leading-relaxed">y² ≡ x³ + x + 1 (mod 11)</p>
-      <p class="mt-1 text-[9px] ink-pencil">A blue point appears whenever lhs(y) = rhs(x).</p>
+  <!-- HUD built from sim-lib's shared panel classes (paper-ui.css). -->
+  <section class="sk-sticky sk-panel" aria-label="Finite-field point construction information">
+    <div class="sk-panel-title">Build every curve point</div>
+    <div class="sk-panel-eq ink-purple">y² ≡ x³ + x + 1 (mod 11)</div>
+    <p class="sk-panel-note">A blue point appears whenever lhs(y) = rhs(x).</p>
+    <div class="sk-panel-section sk-readout">
+      <span class="sk-label">current column</span>
+      <span id="columnValue" class="sk-value ink-green">x = 0</span>
+      <span class="sk-label">green RHS value</span>
+      <span id="rhsValue" class="sk-value ink-green">rhs(0) = 1</span>
+      <span id="pointLabel" class="sk-label">blue points</span>
+      <span id="pointValue" class="sk-value ink-blue">0 / 13</span>
     </div>
-
-    <div class="mt-2.5 text-[10px] font-mono">
-      <div class="sk-row">
-        <span class="ink-pencil">current column</span>
-        <span id="columnValue" class="font-bold ink-green">x = 0</span>
-      </div>
-      <div class="sk-row mt-1">
-        <span class="ink-pencil">green RHS value</span>
-        <span id="rhsValue" class="font-bold ink-green">rhs(0) = 1</span>
-      </div>
-      <div class="sk-row mt-1">
-        <span id="pointLabel" class="ink-pencil">blue points</span>
-        <span id="pointValue" class="font-bold ink-blue">0 / 13</span>
-      </div>
-    </div>
-
-    <button id="replayButton" type="button" class="mt-2.5 w-full rounded-md border border-black/10 bg-black/5 px-2 py-1.5 text-[9px] font-semibold ink-pencil transition-colors hover:bg-black/10">
-      Replay construction
-    </button>
   </section>
+
+  <div class="sk-toolbar">
+    <button id="replayButton" type="button" class="sk-btn ink-pencil">Replay construction</button>
+  </div>
 
   <script>
     const canvas = document.getElementById('constructionCanvas');

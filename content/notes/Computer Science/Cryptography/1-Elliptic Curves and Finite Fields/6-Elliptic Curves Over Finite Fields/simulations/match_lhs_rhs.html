@@ -14,32 +14,24 @@
 <body class="sk-page w-screen h-screen overflow-hidden m-0 p-0 relative select-none">
   <canvas id="matchingCanvas" class="absolute inset-0 w-full h-full block" aria-label="Animation matching a right-hand-side value with square residues to create finite-field elliptic curve points"></canvas>
 
-  <section class="absolute left-4 top-4 md:left-6 md:top-6 z-10 w-[218px] sm:w-[232px] sk-sticky pointer-events-auto" aria-label="Left-hand and right-hand side match information">
-    <div class="border-b border-black/10 pb-2.5">
-      <p class="sk-hand text-xl font-semibold ink-black leading-none">Match one x-column</p>
-      <p class="mt-2 text-[11px] font-bold ink-purple leading-relaxed">lhs(y) = rhs(3) = 9</p>
-      <p class="mt-1 text-[9px] ink-pencil">Yellow lookup markers become blue curve points.</p>
+  <!-- HUD built from sim-lib's shared panel classes (paper-ui.css). -->
+  <section class="sk-sticky sk-panel" aria-label="Left-hand and right-hand side match information">
+    <div class="sk-panel-title">Match one x-column</div>
+    <div class="sk-panel-eq ink-purple">lhs(y) = rhs(3) = 9</div>
+    <p class="sk-panel-note">Yellow lookup markers become blue curve points.</p>
+    <div class="sk-panel-section sk-readout">
+      <span class="sk-label">selected column</span>
+      <span class="sk-value ink-green">x = 3</span>
+      <span class="sk-label">green RHS cross</span>
+      <span class="sk-value ink-green">(3, 9)</span>
+      <span id="matchLabel" class="sk-label">matching y-values</span>
+      <span id="matchValue" class="sk-value ink-amber">looking up squares</span>
     </div>
-
-    <div class="mt-2.5 text-[10px] font-mono">
-      <div class="sk-row">
-        <span class="ink-pencil">selected column</span>
-        <span class="font-bold ink-green">x = 3</span>
-      </div>
-      <div class="sk-row mt-1">
-        <span class="ink-pencil">green RHS cross</span>
-        <span class="font-bold ink-green">(3, 9)</span>
-      </div>
-      <div class="sk-row mt-1">
-        <span id="matchLabel" class="ink-pencil">matching y-values</span>
-        <span id="matchValue" class="font-bold text-[#a56d18]">looking up squares</span>
-      </div>
-    </div>
-
-    <button id="replayButton" type="button" class="mt-2.5 w-full rounded-md border border-black/10 bg-black/5 px-2 py-1.5 text-[9px] font-semibold ink-pencil transition-colors hover:bg-black/10">
-      Replay matching
-    </button>
   </section>
+
+  <div class="sk-toolbar">
+    <button id="replayButton" type="button" class="sk-btn ink-pencil">Replay matching</button>
+  </div>
 
   <script>
     const canvas = document.getElementById('matchingCanvas');

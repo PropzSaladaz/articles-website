@@ -126,6 +126,16 @@ stays defined in case something wants to opt back in explicitly). The rule
 lines / margin line / `grid()` squares are unaffected — those still draw,
 just on transparent instead of cream.
 
+**This only reaches sims that actually delegate to the shared mechanism.**
+A sim with `class="sk-page"` and no local `background` override gets all of
+this automatically. `doubling_over_f11.html` used to hand-roll an unclassed
+`<body>` with a hardcoded `background: #fbf6ea` — a plain `body {...}` rule the
+shared `body.sk-page` selector never matched; it now carries `sk-page` and the
+shared panel classes. Every sim-paper sim's HUD now goes through `paper-ui.css`,
+but a sim can still add local CSS. **Don't assume a `sim-lib/` or `paper-ui.css`
+edit reaches every sim** — grep the individual file for its own `background`
+rules before trusting a shared fix landed there.
+
 **The sim's own iframe box, not just its canvas, had to stop being opaque.**
 Because the sim itself can now be transparent, `lib/markdown/rehype/iframe-window.ts`'s
 wrapper div carries `bg-background` so a loading sim shows the page color
@@ -254,11 +264,9 @@ Rollout plan:
 3. migrate simulations one by one: add `<meta name="sim-paper" content="full">` and
    port draw calls to the Sketch API (12 of 13 are Canvas 2D; `face_culling.html` is
    CSS3DRenderer → CSS treatment instead; a future `sketch3d` variant is planned for
-   WebGL sims). Migrated so far: `ec_introduction.html`, `ec_singularity.html`
-   (both in .../2-Elliptic Curves Over Real Numbers/simulations/) and
-   `ec_point_addition.html` and `ec_point_doubling.html` (both in .../3-Point
-   Addition and the Elliptic Curve Group/simulations/) and `ec_3p_example.html`
-   (.../4-Scalar Multiplication/simulations/).
+   WebGL sims). This has moved fast enough that a hardcoded list of migrated
+   filenames here has already gone stale twice — check the live count instead:
+   `grep -rl 'name="sim-paper"' content/`.
 
 `paper-ui.css` also has `.sk-row` (label+value content row) and a `pink` ink
 (`--sk-ink-pink`/`.ink-pink`/`.bg-ink-pink`, mirrored in sketch.js's `theme.inks`)
@@ -267,6 +275,27 @@ ink for legible text next to `highlight`-colored marks (it replaced two sims'
 hardcoded `#a56d18`). Add
 new ink colors to *both* files by hand when a sim genuinely needs one — don't
 reuse an existing color for two unrelated roles just to avoid the edit.
+
+**HUD layout is shared too: build overlays from `paper-ui.css`'s panel classes, not
+utility classes.** `.sk-sticky.sk-panel` (compact readout card, top-left by default —
+the injected play/pause pill owns top-right), `.sk-panel-title`, `.sk-panel-section`,
+`.sk-legend` (dot / label / value grid), `.sk-label`, `.sk-value`, `.sk-hint`, and
+`.sk-toolbar` + `.sk-btn` for actions along the bottom edge. Before these existed,
+~11 sims each hand-built a near-identical panel with Tailwind classes and drifting fixed
+widths (`w-[218px]`, `w-[232px]`, `w-[258px]`…), so a style change meant editing every
+file. Every sim-paper sim with an HTML HUD is now built from them; the only local
+HUD CSS left is placement (e.g. a readout raised above a control bar) and
+`doubling_over_f11.html`'s one-off step navigator. Other shared pieces: `.sk-panel-eq`,
+`.sk-panel-note`, `.sk-readout` (label/value rows), `.sk-field` + `.sk-range`,
+`.sk-control` + `.sk-input`, `.sk-tabs`/`.sk-tab` and `.sk-chip` (JS toggles
+`.is-active`), `.sk-status`, `.sk-list`, `.sk-tag`, and the `--top`/`--bottom`/`--wide`
+panel modifiers.
+
+**A sim's local CSS loses ties with `paper-ui.css`.** `injectSimLib` inserts the shared
+`<link>` just before `</head>`, i.e. *after* the sim's own `<style>`, so a local rule with
+the same specificity as a shared one is silently overridden. Write local placement
+overrides as `.sk-panel.my-card { bottom: 84px }`, not `.my-card { … }` — the latter is
+how `doubling_over_f11`'s explanation card ended up pinned onto its step buttons.
 
 Shared iframe chrome (`lib/markdown/rehype/iframe-window.ts`) has no top bar and no border
 at all now — the simulation content is the whole visible surface, not framed as an

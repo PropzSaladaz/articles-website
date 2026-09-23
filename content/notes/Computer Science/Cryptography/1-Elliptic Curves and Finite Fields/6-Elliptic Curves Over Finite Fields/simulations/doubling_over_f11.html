@@ -6,146 +6,54 @@
   <meta name="sim-paper" content="full">
   <title>Elliptic-Curve Addition over F11</title>
   <style>
+    /* Panels come from sim-lib's shared paper-ui.css (.sk-panel & co).
+       Only what's unique to this sim lives here: page sizing, where the
+       explanation card sits (above the step nav), and the step navigator.
+       Overrides of shared classes are written as `.sk-panel.x`: paper-ui.css
+       is injected after this <style>, so an equally specific rule loses. */
     * { box-sizing: border-box; }
-    :root {
-      --paper: rgba(255, 252, 225, .93);
-      --ink: #2d2a26;
-      --muted: #5f5b56;
-      --border: rgba(45, 42, 38, .16);
-      --blue: #2f4f8f;
-    }
     body {
       margin: 0;
       overflow: hidden;
-      background: #fbf6ea;
-      color: var(--ink);
+      color: var(--sk-ink-black);
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     }
     canvas { display: block; width: 100vw; height: 100vh; }
 
-    .paper-card {
-      position: absolute;
-      z-index: 3;
-      padding: 12px 14px;
-      background: var(--paper);
-      border: 1px solid var(--border);
-      box-shadow: 2px 3px 9px rgba(45, 42, 38, .13);
-    }
-    .paper-card h1,
-    .paper-card h2 {
-      margin: 0;
-      font-family: Caveat, cursive;
-      line-height: 1.08;
-    }
-    .paper-card h1 { font-size: 20px; }
-    .paper-card h2 { font-size: 19px; color: var(--blue); }
-    .paper-card p { margin: 6px 0 0; font-size: 10px; line-height: 1.48; color: var(--muted); }
-
-    .hud {
-      left: 16px;
-      top: 16px;
-      width: min(300px, calc(100vw - 32px));
-      transform: rotate(-.25deg);
-    }
-    .explanation-card {
-      left: 16px;
-      bottom: 76px;
-      width: min(345px, calc(100vw - 32px));
-      transform: rotate(.18deg);
-    }
-    .explanation-card ul {
-      margin: 9px 0 0;
-      padding: 0;
-      list-style: none;
-    }
-    .explanation-card li {
-      margin: 5px 0 0;
-      font-size: 11px;
-      line-height: 1.45;
-    }
-    .explanation-card li.muted { color: var(--muted); }
-    .explanation-card li.accent { color: var(--blue); font-weight: 700; }
-
-    .mode-tabs,
-    .controls {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 7px;
-      margin-top: 10px;
-    }
-    button,
-    select {
-      border: 1px solid var(--border);
-      border-radius: 5px;
-      background: rgba(45, 42, 38, .05);
-      color: var(--ink);
-      font: 700 10px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    }
-    button {
-      padding: 7px 8px;
-      cursor: pointer;
-    }
-    button:hover { background: rgba(45, 42, 38, .1); }
-    button.active {
-      color: var(--blue);
-      border-color: rgba(47, 79, 143, .42);
-      background: rgba(47, 79, 143, .09);
-    }
-    select { width: 100%; padding: 6px 7px; }
-
-    .progress-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 8px;
-      margin-top: 10px;
-      padding-top: 8px;
-      border-top: 1px solid rgba(45, 42, 38, .12);
-      font-size: 9px;
-      text-transform: uppercase;
-      letter-spacing: .07em;
-      color: var(--muted);
-    }
-    .progress-row strong { color: var(--blue); text-align: right; }
-
-    .explorer-controls {
-      display: none;
-      margin-top: 10px;
-      padding-top: 9px;
-      border-top: 1px solid rgba(45, 42, 38, .12);
-    }
-    .field-row {
-      display: grid;
-      grid-template-columns: 72px 1fr;
-      align-items: center;
-      gap: 8px;
-      margin-top: 7px;
-    }
-    .field-row label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
-    .explorer-note { margin-top: 8px !important; font-size: 9px !important; }
+    .sk-panel.explanation-card { bottom: 84px; max-width: min(270px, calc(100% - 24px)); }
 
     .step-nav {
       position: absolute;
       z-index: 4;
-      left: 18px;
-      right: 18px;
-      bottom: 14px;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
       display: grid;
       grid-template-columns: repeat(6, 1fr);
       gap: 6px;
     }
+    .step-nav[hidden] { display: none; }
     .step-button {
       position: relative;
       min-width: 0;
-      padding: 7px 6px 9px;
+      padding: 5px 8px 7px;
       overflow: hidden;
-      background: rgba(255, 252, 225, .86);
+      border: 1px solid rgba(0, 0, 0, 0.14);
+      border-radius: 8px;
+      background: var(--sk-sticky-bg);
+      color: var(--sk-ink-black);
+      font: 600 10px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       text-align: left;
+      cursor: pointer;
+      transition: border-color 0.15s ease;
     }
+    .step-button:hover { border-color: currentColor; }
     .step-button .number {
       display: block;
-      color: var(--muted);
-      font-size: 8px;
-      margin-bottom: 2px;
+      margin-bottom: 1px;
+      color: var(--sk-ink-pencil-light);
+      font-size: 9px;
+      font-weight: 400;
     }
     .step-button .label {
       display: block;
@@ -158,84 +66,64 @@
       left: 0;
       bottom: 0;
       width: 0;
-      height: 3px;
-      background: var(--blue);
+      height: 2px;
+      background: var(--sk-ink-blue);
     }
-    .step-button.active { color: var(--blue); }
-
-    [hidden] { display: none !important; }
+    .step-button.is-active { color: var(--sk-ink-blue); }
 
     @media (max-width: 720px) {
-      .paper-card { padding: 9px 11px; }
-      .hud { left: 10px; top: 10px; width: 235px; }
-      .paper-card h1 { font-size: 18px; }
-      .paper-card h2 { font-size: 17px; }
-      .paper-card p { font-size: 8px; }
-      .explanation-card {
-        left: 10px;
-        right: 10px;
-        bottom: 66px;
-        width: auto;
-        max-height: 142px;
-        overflow: hidden;
-      }
-      .explanation-card li { font-size: 9px; margin-top: 3px; }
-      .mode-tabs, .controls { margin-top: 7px; }
-      button, select { font-size: 8px; }
-      button { padding: 6px; }
-      .field-row { grid-template-columns: 58px 1fr; margin-top: 5px; }
-      .field-row label { font-size: 8px; }
-      .step-nav { left: 10px; right: 10px; bottom: 9px; gap: 3px; }
-      .step-button { padding: 6px 4px 8px; font-size: 7px; }
+      .sk-panel.explanation-card { bottom: 64px; max-height: 142px; overflow: hidden; }
+      .step-nav { left: 8px; right: 8px; bottom: 8px; gap: 3px; }
+      .step-button { padding: 5px 4px 7px; font-size: 8px; }
       .step-button .number { display: none; }
     }
   </style>
 </head>
-<body>
+<body class="sk-page">
   <canvas id="canvas" aria-label="Interactive explanation of elliptic-curve point addition over F11"></canvas>
 
-  <aside class="paper-card hud" aria-label="Animation controls">
-    <h1 id="mainTitle">Doubling over F₁₁</h1>
-    <p id="mainSubtitle">See a modular tangent as a straight line on repeated copies of the field.</p>
+  <aside class="sk-sticky sk-panel" aria-label="Animation controls">
+    <div id="mainTitle" class="sk-panel-title">Doubling over F₁₁</div>
+    <p id="mainSubtitle" class="sk-panel-note">See a modular tangent as a straight line on repeated copies of the field.</p>
 
-    <div class="mode-tabs" aria-label="View mode">
-      <button id="guidedMode" class="active" type="button">Guided</button>
-      <button id="exploreMode" type="button">Explore points</button>
+    <div class="sk-tabs" role="group" aria-label="View mode">
+      <button id="guidedMode" class="sk-tab ink-blue is-active" type="button">Guided</button>
+      <button id="exploreMode" class="sk-tab ink-blue" type="button">Explore points</button>
     </div>
 
-    <div id="guidedProgress" class="progress-row">
-      <span id="sceneLabel">1 of 6</span>
-      <strong id="sceneName">the finite curve</strong>
+    <div id="guidedProgress" class="sk-readout">
+      <span id="sceneLabel" class="sk-label">1 of 6</span>
+      <span id="sceneName" class="sk-value ink-blue">the finite curve</span>
     </div>
 
-    <div id="explorerControls" class="explorer-controls">
-      <div class="field-row">
-        <label for="operation">Operation</label>
-        <select id="operation">
+    <div id="explorerControls" class="sk-panel-section" hidden>
+      <label class="sk-control">
+        <span class="sk-label">Operation</span>
+        <select id="operation" class="sk-input">
           <option value="double">Double P</option>
           <option value="add">Add P + Q</option>
         </select>
-      </div>
-      <div class="field-row">
-        <label for="pointP">Point P</label>
-        <select id="pointP"></select>
-      </div>
-      <div id="pointQRow" class="field-row" hidden>
-        <label for="pointQ">Point Q</label>
-        <select id="pointQ"></select>
-      </div>
-      <p class="explorer-note">You may also click a curve point to replace P.</p>
+      </label>
+      <label class="sk-control">
+        <span class="sk-label">Point P</span>
+        <select id="pointP" class="sk-input"></select>
+      </label>
+      <label id="pointQRow" class="sk-control" hidden>
+        <span class="sk-label">Point Q</span>
+        <select id="pointQ" class="sk-input"></select>
+      </label>
+      <p class="sk-panel-note">You may also click a curve point to replace P.</p>
     </div>
 
-    <div class="controls">
-      <button id="pause" type="button">Pause</button>
-      <button id="replay" type="button">Replay</button>
+    <div class="sk-panel-row">
+      <button id="pause" class="sk-btn ink-pencil" type="button">Pause</button>
+      <button id="replay" class="sk-btn ink-pencil" type="button">Replay</button>
     </div>
   </aside>
 
-  <aside class="paper-card explanation-card" aria-live="polite">
-    <h2 id="explanationTitle">1. The curve is a set of points</h2>
-    <ul id="explanationLines"></ul>
+  <aside class="sk-sticky sk-panel sk-panel--bl sk-panel--wide explanation-card" style="--sk-tilt: 0.4deg;" aria-live="polite">
+    <div id="explanationTitle" class="sk-panel-title ink-blue">1. The curve is a set of points</div>
+    <ul id="explanationLines" class="sk-list"></ul>
   </aside>
 
   <nav id="stepNav" class="step-nav" aria-label="Animation steps"></nav>
@@ -879,8 +767,8 @@
       data.lines.forEach(([text, style]) => {
         const item = document.createElement('li');
         item.textContent = text;
-        if (style === 'accent') item.className = 'accent';
-        if (style === 'muted') item.className = 'muted';
+        if (style === 'accent') item.className = 'ink-blue';
+        if (style === 'muted') item.className = 'ink-pencil';
         explanationLines.appendChild(item);
       });
     }
@@ -888,7 +776,7 @@
     function updateStepNav(scene, progress) {
       const buttons = stepNav.querySelectorAll('.step-button');
       buttons.forEach((button, index) => {
-        button.classList.toggle('active', index === scene);
+        button.classList.toggle('is-active', index === scene);
         const bar = button.querySelector('.bar');
         const amount = index < scene ? 100 : (index === scene ? progress * 100 : 0);
         bar.style.width = `${amount}%`;
@@ -958,10 +846,10 @@
       state.mode = mode;
       state.elapsed = 0;
       state.lastFrame = null;
-      guidedModeButton.classList.toggle('active', mode === 'guided');
-      exploreModeButton.classList.toggle('active', mode === 'explore');
+      guidedModeButton.classList.toggle('is-active', mode === 'guided');
+      exploreModeButton.classList.toggle('is-active', mode === 'explore');
       guidedProgress.hidden = mode !== 'guided';
-      explorerControls.style.display = mode === 'explore' ? 'block' : 'none';
+      explorerControls.hidden = mode !== 'explore';
       stepNav.hidden = mode !== 'guided';
       mainTitle.textContent = mode === 'guided' ? 'Doubling over F₁₁' : 'Explore E(F₁₁)';
       mainSubtitle.textContent = mode === 'guided'
