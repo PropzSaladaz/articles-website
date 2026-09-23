@@ -28,7 +28,7 @@ export default async function DevlogLandingPage() {
           ))}
         </div>
       ) : (
-        <p className="text-lg text-muted-foreground">No devlog entries published yet — check back soon.</p>
+        <p className="text-lg text-muted-foreground">No entries yet.</p>
       )}
     </div>
   );

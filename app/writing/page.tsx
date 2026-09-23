@@ -28,7 +28,7 @@ export default async function WritingLandingPage() {
           ))}
         </div>
       ) : (
-        <p className="text-lg text-muted-foreground">No essays published yet — check back soon.</p>
+        <p className="text-lg text-muted-foreground">No essays yet.</p>
       )}
     </div>
   );
