@@ -1,6 +1,6 @@
 # Articles Website
 
-A static knowledge-publishing platform built with **Next.js 14** (App Router, static export). Write articles and collections in Markdown, commit, and the site builds itself — with math, interactive simulations, syntax-highlighted code, and a responsive reading experience.
+A static Markdown site built with **Next.js 14** (App Router, static export). Organize content into Notes, Writing, and Devlog sections, then write articles and collections in Markdown. The site supports math, interactive simulations, syntax-highlighted code, and a responsive reading experience.
 
 ![](./assets/preview.png)
 
@@ -11,6 +11,7 @@ A static knowledge-publishing platform built with **Next.js 14** (App Router, st
 - [Project Architecture](#project-architecture)
 - [Directory Overview](#directory-overview)
 - [Content Structure](#content-structure)
+  - [Sections](#sections)
   - [Standalone Articles](#standalone-articles)
   - [Collections](#collections)
   - [Naming & Ordering](#naming--ordering)
@@ -50,29 +51,29 @@ public/
 
 ```
 content/
-  notes/                             # A section — never give it an index.md
-    Subject/
-      Sub-Subject/
-        My-Article/                  # Standalone article
-          index.md
-          summary.md                 # Rich summary (shown in Summary view)
-          images/
-          simulations/
-
-        My-Collection/               # Collection (multi-chapter)
-          index.md                   # Collection overview
-          1-Chapter-One/
-            index.md
-            summary.md
-            images/
-          2-Chapter-Two/
-            index.md
+  notes/                             # Section; no index.md
+    Subject/                         # Structural topic; no index.md
+      My-Article/
+        index.md                     # Standalone note
+        summary.md                   # Optional rich summary
+        images/
+        simulations/
+      My-Collection/
+        index.md                     # Collection overview
+        1-Chapter-One/
+          index.md                   # Article in the collection
+  devlog/                            # Section; no index.md
+    Unity Game/
+      index.md                       # Draft project collection example
+      1-Devlog Setup/
+        index.md                     # Draft dated entry
+  writing/                           # Add when publishing the first essay; no index.md
+    My-Essay/
+      index.md                       # Standalone essay
 
 lib/
-  md.ts                              # Markdown → HTML pipeline
-  content/                           # Content loading, builders, types
-  remark-*.ts                        # Custom remark plugins
-  rehype-*.ts                        # Custom rehype plugins
+  content/                           # Content walk, builders, metadata, types
+  markdown/                          # Markdown pipeline and remark/rehype plugins
 
 styles/
   globals.css                        # Tailwind base + CSS variables + themes
@@ -87,9 +88,23 @@ scripts/
 
 ## Content Structure
 
+### Sections
+
+The top-level folders under `content/` are sections: `notes/` for a topic-based knowledge
+base, `writing/` for dated essays, and `devlog/` for game development updates. Each section
+has its own landing page at `/notes/`, `/writing/`, or `/devlog/`. Section folders are
+structural and must not have an `index.md`. `content/writing/` can be created with the first
+essay; its landing page already exists.
+
+Below a section, folders without `index.md` can group topics. A folder with `index.md`
+becomes a page. Its direct indexed children determine whether it is an article or a
+collection. A page's URL always follows its folder path, regardless of its type.
+
 ### Standalone Articles
 
-A folder with an `index.md` is treated as a standalone article.
+A folder with an `index.md` and no direct child folders with `index.md` is a standalone
+article. Writing essays can live directly under `content/writing/`; Notes articles can
+sit below topic folders.
 
 ```
 My-Article/
@@ -108,19 +123,27 @@ title: "My article title" # optional display title; defaults to the folder name
 date: "2026-01-15"       # required ISO date for published/archived articles
 summary: "One-line description shown on article cards and in SEO metadata."
 coverImage: "./images/cover.png"   # optional
-featured: true            # optional: display this article in the home-page Featured slot
 ---
 ```
 
 > **Note:** The `summary` frontmatter field is a **short one-liner** for article cards and SEO. For a richer expandable summary shown when clicking the Summary button, create a `summary.md` file alongside `index.md`.
 
-The homepage always promotes the newest published standalone article. Add `featured: true` to one other published standalone article to fill its separate Featured slot. Highlighted articles are omitted from the chronological archive below, so they do not appear twice.
+Writing and Devlog articles can also include `tags: ["Unity", "Game Development"]` in their
+`index.md` frontmatter. Tags must be a list of non-empty strings; they appear on their
+section cards and on the article page. Notes uses its topic tree instead of tags.
+
+The homepage shows a card for each section and up to six recent articles. It includes the
+newest article from each section with visible articles, then fills the remaining slots
+with the next-newest distinct articles across sections. `featured:` is still accepted by
+the loader, but the current homepage does not use it.
 
 ---
 
 ### Collections
 
-A folder whose subfolders each contain an `index.md` is treated as a multi-chapter collection.
+A folder with its own `index.md` and at least one direct child folder with `index.md` is
+a collection. The parent `index.md` is its overview; each indexed child is an article or
+a nested collection. Notes uses this for multi-chapter subjects.
 
 ```
 My-Collection/
@@ -156,7 +179,14 @@ summary: "One-liner for this chapter's card."
 ```
 
 Published and archived articles require a real `YYYY-MM-DD` date. Drafts may omit
-it while they are being written.
+it while they are being written. Draft content appears in development and is hidden in
+production. A draft collection also hides its descendants in production.
+
+For a Devlog project, use `content/devlog/<Project>/index.md` for the project overview
+and `content/devlog/<Project>/<Entry>/index.md` for each dated update. The project is a
+collection, and `/devlog/` groups its entries under the project title. The existing
+`Unity Game` folder is a draft boilerplate example. A Writing essay can use
+`content/writing/<Essay>/index.md` without a collection parent.
 
 ---
 
@@ -167,20 +197,24 @@ it while they are being written.
 - Do not write section numbers into heading text. Article headings and their table
   of contents entries are numbered automatically when rendered.
 - Folder names accept numeric prefixes (`1-`, `01-`, `2-`) to control sort order.
-- Sorting priority: **numeric prefix → alphabetical**.
+- Notes and collection navigation follow folder order: **numeric prefix → alphabetical**.
+  Writing and Devlog article lists are ordered by date, newest first.
 - Folder names must produce a non-empty, unique URL slug after their numeric prefix and
   punctuation are removed.
-- Every content level needs its own `index.md`. Do not place an indexed article or
-  collection below an intermediate folder without one.
-- Article and collection titles default to the folder name (prefix stripped, hyphens → spaces, title-cased). Optional `title:` frontmatter overrides the display title without changing the URL.
-- Slugs are generated from the full filesystem path, so uniqueness is guaranteed by directory structure.
+- Section and topic folders can omit `index.md`. Once a folder has `index.md`, any
+  intermediate folder leading to another indexed page must also have `index.md`.
+- Article and collection titles default to the folder name (numeric prefix stripped,
+  hyphens/underscores → spaces, title-cased). Optional `title:` frontmatter overrides
+  the display title without changing the URL.
+- Slugs are generated from folder paths. If two paths produce the same slug, the loader
+  rejects the collision.
 
 **URL patterns:** a page's URL is its slug, and the slug is its folder path with numeric
 prefixes and punctuation removed — so `content/notes/Computer Science/Cryptography/…`
 is served at `/notes/computer-science/cryptography/…/`. The top-level folder is the
-*section* (`notes`; `writing` and `devlog` are planned). A folder's shape (article vs.
-collection) never changes its URL. Do not give a section folder its own `index.md` —
-that would make it a collection and break the build.
+*section* (`notes`, `writing`, or `devlog`). A folder's shape (article vs. collection)
+never changes its URL. Do not give a section folder its own `index.md` — that would
+make it a collection and break the build.
 
 Pages published before the section restructure lived under `/articles/…` and
 `/collections/…`; `public/_redirects` sends both to `/notes/…`.

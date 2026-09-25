@@ -8,9 +8,8 @@ import { PageContainer } from './PageContainer';
 import { PageHeader } from './PageHeader';
 
 /**
- * Landing page body for a date-ordered section (writing, devlog): header, then every
- * entry newest first as cards. Route files keep their own `metadata` export, which
- * Next requires per route.
+ * Landing page body for Writing: header, then every essay newest first as cards.
+ * The route file keeps its own `metadata` export, which Next requires per route.
  */
 export async function ChronologicalSectionPage({ sectionId, emptyText }: { sectionId: SectionId; emptyText: string }) {
   const section = SECTIONS[sectionId];
@@ -29,6 +28,7 @@ export async function ChronologicalSectionPage({ sectionId, emptyText }: { secti
               title={article.title}
               eyebrow={`${formatDate(article.date)} · ${article.readingTime.text}`}
               description={article.description}
+              tags={article.tags}
             />
           ))}
         </CardGrid>

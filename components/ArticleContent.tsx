@@ -8,9 +8,11 @@ import { MarkdownRenderer } from './MarkdownRenderer';
 import { ArticleViewToggle, useIsSummaryView } from './ArticleViewToggle';
 import { formatDate } from '../lib/format';
 import { collectionPath } from '../lib/content/urls';
+import { sectionOf } from '../lib/content/sections';
 import { GiscusComments } from './GiscusComments';
 import { ArticleNavigation, type SeriesPosition } from './ArticleNavigation';
 import { ReadingProgressBar, TableOfContents } from './ReadingProgress';
+import { TagList } from './TagList';
 
 /**
  * Check if the summary content is empty or minimal (just whitespace/short placeholder)
@@ -45,6 +47,7 @@ export function ArticleContent({
   const [revealDurationMs, setRevealDurationMs] = useState(450);
   const transitionRef = useRef<HTMLDivElement | null>(null);
   const collectionSlugSet = new Set(collectionSlugs);
+  const section = sectionOf(article.slug);
   // The path ends at the article itself, which the <h1> right below already
   // names — show only its ancestors.
   const breadcrumb =
@@ -127,6 +130,7 @@ export function ArticleContent({
                     <ArticleViewToggle />
                   </div>
                 </div>
+                {(section === 'writing' || section === 'devlog') && <TagList tags={article.tags} />}
               </div>
             </header>
             <div

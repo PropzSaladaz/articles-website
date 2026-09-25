@@ -13,6 +13,7 @@ type SharedFrontmatter = {
 export type ArticleFrontmatter = SharedFrontmatter & {
   date: string | null;
   featured: boolean;
+  tags: string[];
 };
 
 export type CollectionFrontmatter = SharedFrontmatter;
@@ -52,6 +53,22 @@ function parseFeatured(value: unknown, filePath: string): boolean {
   return value;
 }
 
+function parseTags(value: unknown, filePath: string): string[] {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value)) {
+    invalidField(filePath, 'tags', 'must be an array of non-empty strings');
+  }
+
+  const tags: string[] = [];
+  for (const tag of value) {
+    if (typeof tag !== 'string' || !tag.trim()) {
+      invalidField(filePath, 'tags', 'must be an array of non-empty strings');
+    }
+    tags.push(tag.trim());
+  }
+  return tags;
+}
+
 function parseSharedFrontmatter(data: Frontmatter, filePath: string): SharedFrontmatter {
   return {
     status: parseStatus(data.status, filePath),
@@ -78,6 +95,7 @@ export function parseArticleFrontmatter(data: Frontmatter, filePath: string): Ar
     ...shared,
     date,
     featured: parseFeatured(data.featured, filePath),
+    tags: parseTags(data.tags, filePath),
   };
 }
 

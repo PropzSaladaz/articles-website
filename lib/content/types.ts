@@ -79,8 +79,9 @@ export type Article = {
   title: string;
   status: ContentStatus;
   date: string;
-  /** Manually promote this article in the home-page featured slot. */
+  /** Legacy flag retained in content metadata; the current homepage does not use it. */
   featured: boolean;
+  tags: string[];
   description: string;
   summary: ArticleSummary;
   cover?: string | null;
@@ -123,6 +124,7 @@ export type ArticlePreview = Pick<
   | 'title'
   | 'date'
   | 'featured'
+  | 'tags'
   | 'description'
   | 'cover'
   | 'readingTime'

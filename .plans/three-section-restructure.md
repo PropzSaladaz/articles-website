@@ -3,9 +3,8 @@
 **Decided:** 2026-09-21
 **Status:** Phase 1 complete and verified on branch `three-section-restructure` (commits
 `2bb1ae0`, `0271215`) against a real `next build` on 2026-09-22. Phase 2 is implemented
-but was not verified against a real build. Phase 3 is partial (3.2–3.4 complete;
-3.1 remains). Phase 4 is partial (4.2 complete; 4.1 is not implemented). Not yet merged
-to `main`.
+but was not verified against a real build. Phase 3 is implemented (3.1–3.4 complete).
+Phase 4 is partial (4.2 complete; 4.1 is not implemented). Not yet merged to `main`.
 **Goal:** turn the site from a pure knowledge base into three editorial sections plus a
 personal page, and collapse the `/articles` vs `/collections` URL split in the process.
 
@@ -242,8 +241,9 @@ nearest linkable ones) in `app/notes/page.tsx`, grouping by the first *branching
 
 ## Phase 3 — New content types
 
-- [ ] **3.1 `tags?: string[]`** in `lib/content/frontmatter.ts`, for writing and devlog.
-      Notes does not need it — the tree is its taxonomy.
+- [x] **3.1 `tags?: string[]`** in `lib/content/frontmatter.ts`, for writing and devlog.
+      Article tags are validated, carried through previews, and displayed on Writing and
+      Devlog cards and article pages. Notes keeps its tree as the taxonomy.
 - [x] **3.2 Optional `title:` frontmatter.** Articles and collections use the trimmed
       `title:` value when present, falling back to `titleFromFolder` otherwise. Slugs and
       URLs still come from folder names, so changing a display title does not move a page.

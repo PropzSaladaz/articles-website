@@ -205,6 +205,7 @@ function CollectionView({ collection }: { collection: LoadedCollection }) {
               title={article.title}
               eyebrow={`${formatDate(article.date)} · ${article.readingTime.text}`}
               description={article.description}
+              tags={article.tags}
             />
           ))}
         </CardSection>

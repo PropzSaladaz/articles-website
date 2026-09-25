@@ -8,12 +8,13 @@ rAF interception injected by `components/MarkdownRenderer.tsx` (same-origin).
 
 ## Content loading, sitemap & RSS
 
-`lib/content/content.ts`'s `ensureLoaded()` memoizes the whole corpus in a module-level
-`cachePromise`. This matters: `loadAllFromDisk()` re-runs the full unified pipeline
+`lib/content/content.ts`'s `ensureLoaded()` memoizes the whole corpus in
+`contentCache.promise`. This matters: `loadAllFromDisk()` re-runs the full unified pipeline
 (remark/rehype + Shiki + KaTeX) over all ~45 `index.md` files, and every page funnels
 through it — `app/layout.tsx` alone pulls the nav tree on *every* page. It caches the
-*promise*, not the resolved value, so parallel builds share one load. Dev deliberately
-bypasses the cache (reload each request, paired with `watch-content.mjs`).
+*promise*, not the resolved value, so parallel builds share one load. In development, a
+content filesystem watcher invalidates the cached promise when files change;
+`watch-content.mjs` also keeps copied assets in sync.
 
 `app/sitemap.ts` and `app/rss.xml/route.ts` are static App Router routes. During a
 production export, Next writes their responses directly to `out/sitemap.xml` and
@@ -34,8 +35,9 @@ layer, and only `lib/content/builders.ts` imports the markdown pipeline — the
 dependency runs one way, content → markdown, and should stay that way.
 
 **The top-level folder under `content/` is the *section*, and a page's URL is its slug.**
-`notes/` is the knowledge base; `writing/` and `devlog/` are planned. A slug's first
-segment is therefore its section, and `lib/content/urls.ts`'s `contentPath()` (plus the
+`notes/` is the knowledge base; `writing/` holds dated essays and `devlog/` holds
+game development entries. All three section routes exist; `content/writing/` is added
+when the first essay is written. A slug's first segment is therefore its section, and `lib/content/urls.ts`'s `contentPath()` (plus the
 `articlePath` / `collectionPath` wrappers) is the single source of truth for turning a slug
 into a URL: `/${slug}/`. Everything builds its URLs through it — canonical URLs, sitemap,
 RSS, image `src` rewriting, every component href, and the Worker's asset probe. It is
@@ -49,12 +51,28 @@ nine places, and it drifted (images in collection pages pointed at nothing; the 
 stopped recording collection views). `prepare-content.mjs` now writes `public/_redirects`
 so links published under the old prefixes 301 to `/notes/…`.
 
-**Never give a section folder an `index.md`.** A folder with one is a *collection*, and
-`assertNoIndirectContentChildren` in `lib/content/tree.ts` throws on any child folder that
-lacks its own `index.md` — so `content/notes/index.md` would take the whole knowledge base
-out of the build. Sections are structural nodes; their landing pages are hand-written
-`app/<section>/page.tsx`. Don't create empty section folders ahead of content either: a
-childless node still renders as an empty entry in the sidebar tree.
+**Never give a section folder an `index.md`.** An indexed folder with direct indexed
+children is a collection; an indexed folder without them is a standalone article. Giving
+a section an `index.md` would make it a page instead of a structural node, and
+`assertNoIndirectContentChildren` in `lib/content/tree.ts` rejects indexed descendants
+through non-indexed folders below it. Sections and topic folders without `index.md` are
+structural nodes; section landing pages are hand-written `app/<section>/page.tsx`. Don't
+create empty section folders ahead of content either: a childless node still renders as
+an empty entry in the sidebar tree.
+
+**Authoring by section.** Notes groups pages under structural topic folders and indexed
+collections. A Writing essay is a dated standalone article at
+`content/writing/<Essay>/index.md`. A Devlog project is an indexed collection at
+`content/devlog/<Project>/index.md`, with dated entries in indexed child folders;
+`app/devlog/page.tsx` groups entries under their direct project collection. The
+`Unity Game` project and setup entry are draft boilerplate, visible in development.
+A draft collection and its descendants are hidden in production.
+
+**Display metadata.** Article and collection `index.md` files can set `title:`; the
+trimmed value overrides the folder-derived display title without changing the URL.
+Article `tags:` is an optional array of non-empty strings, validated by
+`lib/content/frontmatter.ts` and carried into previews. Tags appear on Writing and
+Devlog cards and article pages; Notes uses its topic tree for organization.
 
 **The one remaining copy of the URL rule is `scripts/prepare-content.mjs`'s
 `canonicalPathForEntry`.** It decides where files are actually *copied*, and it is plain
@@ -89,8 +107,8 @@ from `IconBadge` tints: subjects get theirs from `components/subjectIcons.ts` (k
 folder slug segment; `nearestSubjectStyle` lets a collection inherit its subject's), and
 sections from the map in `app/page.tsx` (not `sections.ts`, which must stay
 dependency-free). New listing pages should compose these rather than hand-roll cards.
-Writing and devlog share one body, `ChronologicalSectionPage`; their route files only keep
-the per-route `metadata` export. A `ContentCard` with no `href` renders as a static, dimmed
+Writing uses `ChronologicalSectionPage`; Devlog has its own project-grouped landing page
+in `app/devlog/page.tsx`. A `ContentCard` with no `href` renders as a static, dimmed
 box — home uses that for a section with no entries yet, rather than linking to an empty page.
 Ordered runs (a collection's chapters) use `CardSection ordered`: one card per row inside
 an `<ol>`, with `ContentCard number` drawing the chapter number in a circle (aria-hidden —

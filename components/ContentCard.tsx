@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { cn } from '../lib/utils';
 import { IconBadge } from './IconBadge';
+import { TagList } from './TagList';
 import type { IconStyle } from './subjectIcons';
 
 type ContentCardProps = {
@@ -11,6 +12,7 @@ type ContentCardProps = {
   /** Short meta line, e.g. "Collection · 5 chapters" or "May 2, 2026 · 6 min read". */
   eyebrow?: string;
   description?: string;
+  tags?: readonly string[];
   /**
    * Position in an ordered run (a collection's chapters). Switches to the row layout:
    * the number in a circle on the left, then title, summary and the meta line.
@@ -44,7 +46,7 @@ const titleClasses =
 const eyebrowClasses = 'text-xs font-medium uppercase tracking-wide text-muted-foreground';
 
 /** The site's one card: serif title and clamped summary, usually as a whole-card link. */
-export function ContentCard({ href, title, eyebrow, description, number, iconStyle, className }: ContentCardProps) {
+export function ContentCard({ href, title, eyebrow, description, tags, number, iconStyle, className }: ContentCardProps) {
   if (number !== undefined) {
     return (
       <CardShell href={href} className={cn('flex items-center gap-4', className)}>
@@ -55,11 +57,12 @@ export function ContentCard({ href, title, eyebrow, description, number, iconSty
         >
           {number}
         </span>
-        <span className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           <span className={titleClasses}>{title}</span>
           {description && <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">{description}</p>}
           {eyebrow && <span className={eyebrowClasses}>{eyebrow}</span>}
-        </span>
+          <TagList tags={tags} />
+        </div>
       </CardShell>
     );
   }
@@ -74,6 +77,7 @@ export function ContentCard({ href, title, eyebrow, description, number, iconSty
       )}
       <span className={titleClasses}>{title}</span>
       {description && <p className="line-clamp-3 text-sm leading-relaxed text-muted-foreground">{description}</p>}
+      <TagList tags={tags} />
     </CardShell>
   );
 }

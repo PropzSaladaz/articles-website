@@ -146,6 +146,7 @@ function toArticlePreview(article: Article): ArticlePreview {
     title: article.title,
     date: article.date,
     featured: article.featured,
+    tags: article.tags,
     description: article.description,
     cover: article.cover,
     readingTime: article.readingTime,

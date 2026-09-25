@@ -113,6 +113,7 @@ export async function buildArticleFromFolder({
     status: frontmatter.status,
     date: publishedAt,
     featured: frontmatter.featured,
+    tags: frontmatter.tags,
     description: descriptionRaw,
     summary: { text: summaryText, html: summaryHtml },
     cover: frontmatter.cover,

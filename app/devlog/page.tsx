@@ -69,6 +69,7 @@ export default async function DevlogLandingPage() {
                   title={entry.title}
                   eyebrow={`${formatDate(entry.date)} · ${entry.readingTime.text}`}
                   description={entry.description}
+                  tags={entry.tags}
                 />
               ))}
             </CardGrid>
@@ -87,6 +88,7 @@ export default async function DevlogLandingPage() {
                 title={entry.title}
                 eyebrow={`${formatDate(entry.date)} · ${entry.readingTime.text}`}
                 description={entry.description}
+                tags={entry.tags}
               />
             ))}
           </CardGrid>
