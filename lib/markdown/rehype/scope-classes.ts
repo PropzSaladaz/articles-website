@@ -28,6 +28,14 @@ const rehypeScopeClasses: Plugin<[Options?], Root> = (opts) => {
     visit(tree, 'element', (node: Element, _idx, parent) => {
       const tag = node.tagName;
       const props = (node.properties ??= {});
+      // Shiki builds its hast by hand with `class` as a plain string, not
+      // `className`. Fold it in: otherwise the serializer emits two class
+      // attributes and the browser silently drops the second (md-*) one.
+      if (typeof props.class === 'string') {
+        const existing = Array.isArray(props.className) ? (props.className as string[]) : [];
+        props.className = [...props.class.split(/\s+/).filter(Boolean), ...existing];
+        delete props.class;
+      }
       const className = (props.className ??= []) as Array<string>;
 
       // helper to append a class (avoid duplicates)

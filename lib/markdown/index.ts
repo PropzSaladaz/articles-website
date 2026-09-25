@@ -54,6 +54,19 @@ const rehypeShikiOptions = {
   // not belong in `langs`. It remains the fallback for unknown or plain-text
   // fences, so adding e.g. ```haskell degrades gracefully instead of throwing.
   fallbackLanguage: 'text',
+  // Fences with no language at all would otherwise skip Shiki and come out as a
+  // bare <pre> without the theme's colors, unlike every other code block.
+  defaultLanguage: 'text',
+  transformers: [
+    {
+      // Record the resolved language on <pre> (data-lang="js") for the code
+      // block header's label (rehype/code-block-copy.ts).
+      name: 'pre-data-lang',
+      pre(node) {
+        node.properties['data-lang'] = this.options.lang;
+      },
+    },
+  ],
 } satisfies RehypeShikiOptions;
 
 interface MarkdownOptions {

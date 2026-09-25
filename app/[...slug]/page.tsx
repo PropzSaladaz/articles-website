@@ -6,6 +6,11 @@ import { ArticleContent } from '../../components/ArticleContent';
 import { ArticleViewTracker } from '../../components/ArticleViewTracker';
 import { CopyCodeButtons } from '../../components/CopyCodeButtons';
 import { MarkdownRenderer } from '../../components/MarkdownRenderer';
+import { CardSection } from '../../components/CardSection';
+import { ContentCard } from '../../components/ContentCard';
+import { PageContainer } from '../../components/PageContainer';
+import { PageHeader } from '../../components/PageHeader';
+import { nearestSubjectStyle } from '../../components/subjectIcons';
 import {
   getAllArticles,
   getArticleBySlug,
@@ -15,7 +20,7 @@ import {
   getCollections,
   getKnowledgePathForSlug,
 } from '../../lib/content/content';
-import { formatDate } from '../../lib/format';
+import { formatDate, pluralize } from '../../lib/format';
 import { articlePath, collectionPath } from '../../lib/content/urls';
 
 export const runtime = 'nodejs';
@@ -154,109 +159,56 @@ function CollectionView({ collection }: { collection: LoadedCollection }) {
   if (!collection) return null;
 
   const hasChildCollections = collection.totalCollections > 0;
-  const headerCount = hasChildCollections ? collection.totalCollections : collection.totalArticles;
   const headerLabel = hasChildCollections
-    ? `${headerCount} ${headerCount === 1 ? 'collection' : 'collections'}`
-    : `${headerCount} ${headerCount === 1 ? 'article' : 'articles'}`;
+    ? pluralize(collection.totalCollections, 'collection')
+    : pluralize(collection.totalArticles, 'chapter');
 
   return (
-    <div className="space-y-12">
-      <header className="space-y-4">
-        <span className="text-sm text-muted-foreground">
-          Collection
-        </span>
-        <div className="space-y-3">
-          <h1 className="font-serif text-4xl font-semibold tracking-tight text-foreground">{collection.title}</h1>
-          <p className="text-sm font-medium text-muted-foreground">
-            {headerLabel}
-          </p>
-        </div>
-      </header>
+    <PageContainer>
+      <PageHeader
+        title={collection.title}
+        eyebrow={`Collection · ${headerLabel}`}
+        iconStyle={nearestSubjectStyle(collection.slug)}
+      />
 
       <section className="prose prose-lg max-w-none text-muted-foreground dark:prose-invert">
         <MarkdownRenderer html={collection.html} />
       </section>
 
       {collection.collections.length > 0 && (
-        <section className="space-y-4">
-          <h2 className="text-2xl font-semibold text-foreground">Collections</h2>
-          <ol className="divide-y divide-border border-y border-border">
-            {collection.collections.map((child, index) => (
-              <ChapterRow
-                key={child.slug}
-                number={index + 1}
-                href={collectionPath(child.slug)}
-                title={child.title}
-                meta={[
-                  child.totalCollections > 0 && `${child.totalCollections} collections`,
-                  child.totalArticles > 0 && `${child.totalArticles} articles`,
-                ]
-                  .filter(Boolean)
-                  .join(' · ')}
-                description={child.summary.text}
-              />
-            ))}
-          </ol>
-        </section>
+        <CardSection title="Collections" ordered>
+          {collection.collections.map((child, index) => (
+            <ContentCard
+              key={child.slug}
+              number={index + 1}
+              href={collectionPath(child.slug)}
+              title={child.title}
+              eyebrow={[
+                child.totalCollections > 0 && pluralize(child.totalCollections, 'collection'),
+                child.totalArticles > 0 && pluralize(child.totalArticles, 'chapter'),
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+              description={child.summary.text}
+            />
+          ))}
+        </CardSection>
       )}
 
       {collection.collections.length === 0 && collection.articles.length > 0 && (
-        <section className="space-y-4">
-          <h2 className="text-2xl font-semibold text-foreground">Articles</h2>
-          <ol className="divide-y divide-border border-y border-border">
-            {collection.articles.map((article, index) => (
-              <ChapterRow
-                key={article.slug}
-                number={index + 1}
-                href={articlePath(article)}
-                title={article.title}
-                meta={`${formatDate(article.date)} · ${article.readingTime.text}`}
-                description={article.description}
-              />
-            ))}
-          </ol>
-        </section>
+        <CardSection title="Chapters" ordered>
+          {collection.articles.map((article, index) => (
+            <ContentCard
+              key={article.slug}
+              number={index + 1}
+              href={articlePath(article)}
+              title={article.title}
+              eyebrow={`${formatDate(article.date)} · ${article.readingTime.text}`}
+              description={article.description}
+            />
+          ))}
+        </CardSection>
       )}
-    </div>
-  );
-}
-
-/**
- * One entry in a collection's contents, set like a book's table of contents:
- * chapter number in the margin, a small date/length line above a serif title,
- * then a one-line description, with hairline dividers between rows. Blue is used
- * sparingly: the chapter numbers, and the title on hover (blue + underline). The whole row is the
- * click target (the link's ::after covers it). The number's top padding (pt-5)
- * skips the meta line (text-xs + mb-1) so it sits level with the title.
- */
-function ChapterRow({
-  number,
-  href,
-  title,
-  meta,
-  description,
-}: {
-  number: number;
-  href: string;
-  title: string;
-  meta: string;
-  description: string;
-}) {
-  return (
-    <li className="group relative flex gap-4 py-5 sm:gap-6">
-      <span className="w-6 shrink-0 pt-5 text-right font-serif text-lg font-semibold tabular-nums text-[hsl(var(--link))]">
-        {number}
-      </span>
-      <div className="min-w-0 flex-1">
-        {meta && <p className="mb-1 text-xs text-muted-foreground">{meta}</p>}
-        <Link
-          href={href}
-          className="font-serif text-xl font-semibold text-foreground underline-offset-4 transition-colors after:absolute after:inset-0 group-hover:text-[hsl(var(--link))] group-hover:underline"
-        >
-          {title}
-        </Link>
-        {description && <p className="mt-1 text-muted-foreground">{description}</p>}
-      </div>
-    </li>
+    </PageContainer>
   );
 }

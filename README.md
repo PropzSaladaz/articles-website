@@ -104,6 +104,7 @@ My-Article/
 ```yaml
 ---
 status: "published"      # draft | published | archived
+title: "My article title" # optional display title; defaults to the folder name
 date: "2026-01-15"       # required ISO date for published/archived articles
 summary: "One-line description shown on article cards and in SEO metadata."
 coverImage: "./images/cover.png"   # optional
@@ -138,6 +139,7 @@ My-Collection/
 ```yaml
 ---
 status: "published"
+title: "My collection title" # optional display title
 summary: "Short description used in collection cards."
 coverImage: "./images/cover.png"
 ---
@@ -170,7 +172,7 @@ it while they are being written.
   punctuation are removed.
 - Every content level needs its own `index.md`. Do not place an indexed article or
   collection below an intermediate folder without one.
-- The article/chapter title is automatically derived from the folder name (prefix stripped, hyphens → spaces, title-cased).
+- Article and collection titles default to the folder name (prefix stripped, hyphens → spaces, title-cased). Optional `title:` frontmatter overrides the display title without changing the URL.
 - Slugs are generated from the full filesystem path, so uniqueness is guaranteed by directory structure.
 
 **URL patterns:** a page's URL is its slug, and the slug is its folder path with numeric

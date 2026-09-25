@@ -25,7 +25,9 @@ const MIN_SIDEBAR_WIDTH = 200;
 const MAX_SIDEBAR_WIDTH = 460;
 const COLLAPSE_THRESHOLD = 80;
 const HEADER_HEIGHT = 72;
-const AUTO_COLLAPSE_BREAKPOINT = 1280;
+// The sidebar overlays the page, so it only starts open where it clears the centered
+// content column (max-w-5xl = 1024px, plus a sidebar's width on each side).
+const AUTO_COLLAPSE_BREAKPOINT = 1024 + 2 * DEFAULT_SIDEBAR_WIDTH;
 
 type SiteShellProps = {
   tree: SubjectNode;
@@ -36,6 +38,9 @@ type SiteShellProps = {
 export function SiteShell({ tree, sectionArticles, children }: SiteShellProps) {
   const pathname = usePathname();
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const sidebarRef = useRef<HTMLElement | null>(null);
+  const toggleButtonRef = useRef<HTMLButtonElement | null>(null);
+  const sidebarPanelRef = useRef<HTMLDivElement | null>(null);
 
   // sectionOf reads the first non-empty path segment, so it works directly on a
   // pathname ("/notes/x/") as well as a bare content slug.
@@ -152,11 +157,18 @@ export function SiteShell({ tree, sectionArticles, children }: SiteShellProps) {
     setIsMobileNavOpen(false);
   }, [pathname]);
 
+  // Collapse on load below the breakpoint, and again only when a resize *crosses* it —
+  // not on every resize, or zooming / opening devtools would close a sidebar the
+  // reader just opened by hand.
   useEffect(() => {
+    let wasWide: boolean | null = null;
     const syncSidebarForViewport = () => {
-      if (window.innerWidth >= AUTO_COLLAPSE_BREAKPOINT) return;
-      setIsSidebarCollapsed(true);
-      setSidebarWidth(0);
+      const isWide = window.innerWidth >= AUTO_COLLAPSE_BREAKPOINT;
+      if (!isWide && wasWide !== false) {
+        setIsSidebarCollapsed(true);
+        setSidebarWidth(0);
+      }
+      wasWide = isWide;
     };
 
     syncSidebarForViewport();
@@ -166,6 +178,40 @@ export function SiteShell({ tree, sectionArticles, children }: SiteShellProps) {
       window.removeEventListener('resize', syncSidebarForViewport);
     };
   }, []);
+
+  // A collapsed panel is only faded out, so `inert` takes its links out of the tab
+  // order (and the accessibility tree). Set on the node: React 18 has no `inert` prop.
+  useEffect(() => {
+    if (sidebarPanelRef.current) sidebarPanelRef.current.inert = isSidebarCollapsed;
+  }, [isSidebarCollapsed, hasSidebar]);
+
+  // Light dismiss: Esc always closes the overlay; a click on the page closes it only
+  // where the viewport is narrow enough for it to be covering content.
+  useEffect(() => {
+    if (!hasSidebar || isSidebarCollapsed) return;
+
+    const collapse = () => {
+      lastExpandedWidthRef.current = sidebarWidth || DEFAULT_SIDEBAR_WIDTH;
+      setIsSidebarCollapsed(true);
+      setSidebarWidth(0);
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') collapse();
+    };
+    const handlePointerDownOutside = (event: PointerEvent) => {
+      if (window.innerWidth >= AUTO_COLLAPSE_BREAKPOINT) return;
+      const target = event.target as Node;
+      if (sidebarRef.current?.contains(target) || toggleButtonRef.current?.contains(target)) return;
+      collapse();
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('pointerdown', handlePointerDownOutside);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('pointerdown', handlePointerDownOutside);
+    };
+  }, [hasSidebar, isSidebarCollapsed, sidebarWidth]);
 
   useEffect(() => {
     if (!isDragging) return;
@@ -223,6 +269,7 @@ export function SiteShell({ tree, sectionArticles, children }: SiteShellProps) {
       {/* Floating sidebar toggle button */}
       {hasSidebar && (
         <button
+          ref={toggleButtonRef}
           onClick={handleToggleSidebar}
           className="hidden lg:flex fixed left-0 z-40 items-center justify-center w-8 h-8 rounded-r-md border border-l-0 border-border bg-background transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-background hover:w-10 shadow-sm opacity-60 hover:opacity-100"
           style={{ top: HEADER_HEIGHT + 16 }}
@@ -271,46 +318,46 @@ export function SiteShell({ tree, sectionArticles, children }: SiteShellProps) {
       )}
 
       <div className="flex flex-1 items-stretch" ref={containerRef}>
+        {/* Overlay: fixed under the header, so opening it never reflows the page body. */}
         {hasSidebar && (
           <aside
+            ref={sidebarRef}
             className={cn(
-              'hidden shrink-0 overflow-hidden bg-background transition-[width] duration-200 ease-out lg:flex sticky self-start'
+              'fixed left-0 z-20 hidden overflow-hidden bg-background lg:flex',
+              !isSidebarCollapsed && 'border-r border-border shadow-xl'
             )}
             style={{
               width: isSidebarCollapsed ? '0px' : `${sidebarWidth}px`,
-              minWidth: isSidebarCollapsed ? '0px' : `${sidebarWidth}px`,
               transition: isDragging ? 'none' : 'width 0.2s ease',
               top: HEADER_HEIGHT,
-              maxHeight: `calc(100vh - ${HEADER_HEIGHT}px)`,
+              height: `calc(100vh - ${HEADER_HEIGHT}px)`,
             }}
           >
             <div
+              ref={sidebarPanelRef}
               className={cn(
-                'overflow-y-auto px-3 pb-6 pt-14 transition-opacity duration-200 w-full',
+                'w-full overflow-y-auto px-3 pb-6 pt-14 transition-opacity duration-200',
                 isSidebarCollapsed ? 'pointer-events-none opacity-0' : 'opacity-100'
               )}
-              style={{ maxHeight: `calc(100vh - ${HEADER_HEIGHT}px)` }}
-              aria-hidden={isSidebarCollapsed}
             >
               {sidebarContent}
             </div>
-          </aside>
-        )}
-        {hasSidebar && (
-          <div
-            role="separator"
-            aria-orientation="vertical"
-            aria-label="Resize navigation"
-            tabIndex={-1}
-            className={cn(
-              'hidden w-2 cursor-col-resize select-none transition-colors duration-150 lg:block self-stretch',
-              isSidebarCollapsed ? 'border-l border-transparent' : 'border-l border-border/25',
-              isDragging ? 'bg-border' : 'bg-transparent hover:bg-border/60'
+            {!isSidebarCollapsed && (
+              <div
+                role="separator"
+                aria-orientation="vertical"
+                aria-label="Resize navigation"
+                tabIndex={-1}
+                className={cn(
+                  'absolute inset-y-0 right-0 w-2 cursor-col-resize select-none transition-colors duration-150',
+                  isDragging ? 'bg-border' : 'bg-transparent hover:bg-border/60'
+                )}
+                style={{ touchAction: 'none' }}
+                onPointerDown={handlePointerDown}
+                onDoubleClick={handleDoubleClick}
+              />
             )}
-            style={{ touchAction: 'none' }}
-            onPointerDown={handlePointerDown}
-            onDoubleClick={handleDoubleClick}
-          />
+          </aside>
         )}
         <main className="flex-1 min-w-0">
           <div className="mx-auto w-full max-w-5xl px-3 py-8 sm:px-4 sm:py-12 lg:py-16">{children}</div>

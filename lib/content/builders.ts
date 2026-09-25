@@ -84,7 +84,7 @@ export async function buildArticleFromFolder({
 
   const { data, content } = loadMarkdown(indexPath);
   const frontmatter = parseArticleFrontmatter(data, indexPath);
-  const title = titleFromFolder(path.basename(folderAbs));
+  const title = frontmatter.title ?? titleFromFolder(path.basename(folderAbs));
   const slug = slugPieces.join('/');
 
   // Short description for cards (from frontmatter summary or first paragraph)
@@ -137,7 +137,7 @@ export async function buildCollectionFromFolder({
 
   const { data, content } = loadMarkdown(indexPath);
   const frontmatter = parseCollectionFrontmatter(data, indexPath);
-  const title = titleFromFolder(path.basename(folderAbs));
+  const title = frontmatter.title ?? titleFromFolder(path.basename(folderAbs));
   const slug = slugPieces.join('/');
 
   const summaryRaw = descriptionSource(frontmatter.summary, content);

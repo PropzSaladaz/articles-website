@@ -1,14 +1,19 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { BookOpen, Hammer, PenLine } from 'lucide-react';
 import { getLatestBySection } from '../lib/content/content';
-import { SECTIONS, SECTION_LIST, sectionOf } from '../lib/content/sections';
+import { SECTIONS, SECTION_LIST, sectionOf, type SectionId } from '../lib/content/sections';
 import { articlePath, contentPath } from '../lib/content/urls';
-import { formatDate } from '../lib/format';
+import { formatDate, pluralize } from '../lib/format';
+import { CardSection } from '../components/CardSection';
+import { ContentCard } from '../components/ContentCard';
+import { PageContainer } from '../components/PageContainer';
+import { PageHeader } from '../components/PageHeader';
+import type { IconStyle } from '../components/subjectIcons';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-static';
 
-const RECENT_LIMIT = 8;
+const RECENT_LIMIT = 6;
 
 const bio =
   "Hi, I'm Sidnei Teixeira — a software engineer working through graphics, cryptography, " +
@@ -19,66 +24,74 @@ export const metadata: Metadata = {
   description: bio,
 };
 
+/**
+ * Icon, tint and entry noun per section. Lives here rather than in `sections.ts`,
+ * which must stay dependency-free for the Worker bundle.
+ */
+const SECTION_STYLES: Record<SectionId, IconStyle & { noun: [string, string] }> = {
+  notes: { icon: BookOpen, accent: 'bg-blue-500/10 text-blue-600 dark:text-blue-400', noun: ['note', 'notes'] },
+  writing: {
+    icon: PenLine,
+    accent: 'bg-rose-500/10 text-rose-600 dark:text-rose-400',
+    noun: ['essay', 'essays'],
+  },
+  devlog: {
+    icon: Hammer,
+    accent: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+    noun: ['entry', 'entries'],
+  },
+};
+
 export default async function HomePage() {
   const perSection = await Promise.all(SECTION_LIST.map((section) => getLatestBySection(section.id)));
-  const recent = perSection
+  const sectionLatest = perSection.flatMap((articles) => articles.slice(0, 1));
+  const includedSlugs = new Set(sectionLatest.map((article) => article.slug));
+  const remainingRecent = perSection
     .flat()
+    .filter((article) => !includedSlugs.has(article.slug))
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, RECENT_LIMIT);
+    .slice(0, Math.max(0, RECENT_LIMIT - sectionLatest.length));
+  const recent = [...sectionLatest, ...remainingRecent].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
 
   return (
-    <div className="max-w-2xl space-y-14">
-      <header className="space-y-4">
-        <h1 className="font-serif text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
-          Sid Makes Sense
-        </h1>
-        <p className="font-serif text-lg leading-relaxed text-muted-foreground">{bio}</p>
-      </header>
+    <PageContainer>
+      <PageHeader title="Sid Makes Sense" description={bio} size="large" />
 
-      <section>
-        <dl className="space-y-3">
-          {SECTION_LIST.map((section) => (
-            <div key={section.id} className="sm:flex sm:gap-4">
-              <dt className="shrink-0 sm:w-24">
-                <Link
-                  href={contentPath(section.id)}
-                  className="font-semibold text-foreground underline-offset-4 hover:underline"
-                >
-                  {section.label}
-                </Link>
-              </dt>
-              <dd className="text-muted-foreground">{section.tagline}</dd>
-            </div>
-          ))}
-        </dl>
-      </section>
+      <CardSection title="Sections" columns={3}>
+        {SECTION_LIST.map((section, index) => {
+          const style = SECTION_STYLES[section.id];
+          const count = perSection[index].length;
+          return (
+            <ContentCard
+              key={section.id}
+              href={count > 0 ? contentPath(section.id) : undefined}
+              title={section.label}
+              eyebrow={count > 0 ? pluralize(count, ...style.noun) : 'Coming soon'}
+              description={section.tagline}
+              iconStyle={style}
+            />
+          );
+        })}
+      </CardSection>
 
       {recent.length > 0 && (
-        <section className="space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Recent</h2>
-          <ul className="divide-y divide-border border-y border-border">
-            {recent.map((article) => {
-              const section = sectionOf(article.slug);
-              return (
-                <li key={article.slug} className="flex flex-col gap-1 py-3 sm:flex-row sm:items-baseline sm:gap-4">
-                  <time dateTime={article.date} className="shrink-0 text-sm tabular-nums text-muted-foreground sm:w-28">
-                    {formatDate(article.date)}
-                  </time>
-                  <Link
-                    href={articlePath(article)}
-                    className="flex-1 font-serif text-lg text-foreground underline-offset-4 hover:underline"
-                  >
-                    {article.title}
-                  </Link>
-                  {section && (
-                    <span className="shrink-0 text-sm text-muted-foreground">{SECTIONS[section].label}</span>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        </section>
+        <CardSection title="Recent">
+          {recent.map((article) => {
+            const section = sectionOf(article.slug);
+            return (
+              <ContentCard
+                key={article.slug}
+                href={articlePath(article)}
+                title={article.title}
+                eyebrow={[formatDate(article.date), section && SECTIONS[section].label].filter(Boolean).join(' · ')}
+                description={article.description}
+              />
+            );
+          })}
+        </CardSection>
       )}
-    </div>
+    </PageContainer>
   );
 }

@@ -5,6 +5,7 @@ export type Frontmatter = Record<string, unknown>;
 
 type SharedFrontmatter = {
   status: ContentStatus;
+  title: string | null;
   summary: string | null;
   cover: string | null;
 };
@@ -54,6 +55,7 @@ function parseFeatured(value: unknown, filePath: string): boolean {
 function parseSharedFrontmatter(data: Frontmatter, filePath: string): SharedFrontmatter {
   return {
     status: parseStatus(data.status, filePath),
+    title: parseOptionalString(data.title, 'title', filePath),
     summary: parseOptionalString(data.summary, 'summary', filePath),
     // Keep the existing coverImage-over-cover precedence while validating both
     // authored values when they are present.

@@ -1,11 +1,19 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
-import { getLatestBySection, getSubjectTree } from '../../lib/content/content';
+import {
+  getArticleBySlug,
+  getCollectionBySlug,
+  getLatestBySection,
+  getSubjectTree,
+} from '../../lib/content/content';
 import { SECTIONS } from '../../lib/content/sections';
-import { contentPath } from '../../lib/content/urls';
+import { articlePath, contentPath } from '../../lib/content/urls';
 import { NodeKind, type SubjectNode } from '../../lib/content/types';
-import { SectionHeader } from '../../components/SectionHeader';
-import { ArticlePreviewCard } from '../../components/ArticlePreviewCard';
+import { formatDate, pluralize } from '../../lib/format';
+import { CardSection } from '../../components/CardSection';
+import { ContentCard } from '../../components/ContentCard';
+import { PageContainer } from '../../components/PageContainer';
+import { PageHeader } from '../../components/PageHeader';
+import { subjectStyle } from '../../components/subjectIcons';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-static';
@@ -18,6 +26,29 @@ export const metadata: Metadata = {
 };
 
 type TopicGroup = { title: string; slug: string; items: SubjectNode[] };
+
+type TopicCard = { slug: string; title: string; eyebrow: string; description?: string };
+
+/** Summary + size for one navigable node, read from the full content models. */
+async function toTopicCard(node: SubjectNode): Promise<TopicCard> {
+  if (node.kind === NodeKind.CollectionArticle) {
+    const collection = await getCollectionBySlug(node.slug);
+    const chapters = collection?.totalArticles ?? node.articlesCount ?? 0;
+    return {
+      slug: node.slug,
+      title: node.title,
+      eyebrow: `Collection · ${pluralize(chapters, 'chapter')}`,
+      description: collection?.summary.text,
+    };
+  }
+  const article = await getArticleBySlug(node.slug);
+  return {
+    slug: node.slug,
+    title: node.title,
+    eyebrow: article ? `Note · ${article.readingTime.text}` : 'Note',
+    description: article?.description,
+  };
+}
 
 /**
  * A structural `Node` has no page of its own (see CLAUDE.md: sections are structural
@@ -56,46 +87,49 @@ function buildTopicGroups(sectionRoot: SubjectNode): TopicGroup[] {
 export default async function NotesLandingPage() {
   const [tree, latest] = await Promise.all([getSubjectTree(), getLatestBySection('notes', 4)]);
   const notesNode = tree.children?.find((child) => child.slug === 'notes');
-  const topicGroups = notesNode ? buildTopicGroups(notesNode) : [];
+  const topicGroups = await Promise.all(
+    (notesNode ? buildTopicGroups(notesNode) : []).map(async (group) => ({
+      ...group,
+      cards: await Promise.all(group.items.map(toTopicCard)),
+    }))
+  );
 
   return (
-    <div className="space-y-12">
-      <SectionHeader section={section} />
+    <PageContainer>
+      <PageHeader title={section.label} description={section.tagline} />
 
-      {topicGroups.length > 0 && (
-        <section className="space-y-6">
-          <h2 className="text-2xl font-semibold text-foreground">Topics</h2>
-          <div className="grid gap-6 sm:grid-cols-2">
-            {topicGroups.map((group) => (
-              <div key={group.slug} className="space-y-3 rounded-2xl border border-border p-5">
-                <h3 className="text-lg font-semibold text-foreground">{group.title}</h3>
-                <div className="flex flex-wrap gap-2">
-                  {group.items.map((item) => (
-                    <Link
-                      key={item.slug}
-                      href={contentPath(item.slug)}
-                      className="rounded-full border border-border px-3 py-1 text-sm text-muted-foreground transition-colors hover:border-primary hover:text-primary"
-                    >
-                      {item.title}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+      {topicGroups.map((group) => (
+        <CardSection
+          key={group.slug}
+          title={group.title}
+          caption={pluralize(group.cards.length, 'topic')}
+          iconStyle={subjectStyle(group.slug)}
+        >
+          {group.cards.map((card) => (
+            <ContentCard
+              key={card.slug}
+              href={contentPath(card.slug)}
+              title={card.title}
+              eyebrow={card.eyebrow}
+              description={card.description}
+            />
+          ))}
+        </CardSection>
+      ))}
 
       {latest.length > 0 && (
-        <section className="space-y-6">
-          <h2 className="text-2xl font-semibold text-foreground">Latest notes</h2>
-          <div className="grid gap-6 sm:grid-cols-2">
-            {latest.map((article) => (
-              <ArticlePreviewCard key={article.slug} article={article} variant="compact" />
-            ))}
-          </div>
-        </section>
+        <CardSection title="Latest notes">
+          {latest.map((article) => (
+            <ContentCard
+              key={article.slug}
+              href={articlePath(article)}
+              title={article.title}
+              eyebrow={`${formatDate(article.date)} · ${article.readingTime.text}`}
+              description={article.description}
+            />
+          ))}
+        </CardSection>
       )}
-    </div>
+    </PageContainer>
   );
 }

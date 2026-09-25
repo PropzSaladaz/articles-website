@@ -59,8 +59,16 @@
 
     /* Misc */
     --radius: 0.5rem;
-    --code-border: 0 0% 89%;
-    --code-bg: 0 0% 22%;
+
+    /* Code blocks are dark in both themes (Shiki renders github-dark for
+       both), set on the dark theme's own greys: --card for the surface,
+       --muted-foreground for the label and icons. Only the edge differs by
+       theme — against white the dark surface is its own edge. */
+    --code-bg: 0 0% 13%;
+    --code-fg: 0 0% 93%;
+    --code-muted: 0 0% 64%;
+    --code-divider: 0 0% 20%;
+    --code-border: 0 0% 13%;
 
     /* Callouts (note/tip/warning/…). Darker, lower-lightness values than the
        dark theme's so the colored titles stay readable on white. */
@@ -124,9 +132,9 @@
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
 
-    /* Misc */
+    /* Code blocks: same surface as light (see :root); on the dark page the
+       block needs a visible edge, the theme's --border. */
     --code-border: 0 0% 22%;
-    --code-bg: 0 0% 6%;
 
     /* Callouts: lighter tints of the same hues for contrast on dark grey. */
     --callout-neutral: 0 0% 64%;

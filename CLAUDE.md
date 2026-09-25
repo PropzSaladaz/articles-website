@@ -79,6 +79,32 @@ via `next/font/google` (self-hosted at build, exposed as `--font-serif` / Tailwi
 article title only; nav, sidebar, and buttons stay on the default sans. Inline code sets
 its own monospace stack, so it is unaffected.
 
+**Non-article pages share one card-based visual identity.** Home, the section landings
+(notes/writing/devlog), about and the collection view (`CollectionView` in
+`app/[...slug]/page.tsx`) are all built from `PageContainer` (centered column: `wide` =
+`max-w-4xl` for card grids, `narrow` = `max-w-2xl` for prose), `PageHeader` (serif title,
+optional icon badge + eyebrow), `CardSection`/`CardGrid`, and `ContentCard` (the one card:
+optional icon or chapter number, eyebrow, serif title, clamped summary). Color comes only
+from `IconBadge` tints: subjects get theirs from `components/subjectIcons.ts` (keyed by
+folder slug segment; `nearestSubjectStyle` lets a collection inherit its subject's), and
+sections from the map in `app/page.tsx` (not `sections.ts`, which must stay
+dependency-free). New listing pages should compose these rather than hand-roll cards.
+Writing and devlog share one body, `ChronologicalSectionPage`; their route files only keep
+the per-route `metadata` export. A `ContentCard` with no `href` renders as a static, dimmed
+box — home uses that for a section with no entries yet, rather than linking to an empty page.
+Ordered runs (a collection's chapters) use `CardSection ordered`: one card per row inside
+an `<ol>`, with `ContentCard number` drawing the chapter number in a circle (aria-hidden —
+the list carries position). `ArticleNavigation`'s previous/next links deliberately do
+*not* use these cards — they stay quiet arrow buttons, since they're controls, not a list.
+
+**The desktop sidebar is an overlay** (`components/SiteShell.tsx`): fixed under the header,
+so opening it never reflows the page. It only starts open at
+`AUTO_COLLAPSE_BREAKPOINT` (content column + a sidebar width each side), where it can't
+cover content; Esc closes it, and below that breakpoint so does a click outside it.
+Resizes collapse it only when they *cross* the breakpoint (so zoom/devtools don't close a
+sidebar opened by hand). When collapsed it is only faded out, so its panel is set `inert`
+from an effect (React 18 has no `inert` prop) to keep its links out of the tab order.
+
 **Comments (Giscus) use a custom theme served by the site.** Giscus renders in a
 giscus.app iframe the site's CSS can't reach, so `components/GiscusComments.tsx` passes it
 an absolute theme URL, `/giscus/{light,dark}.css`. Those files live in the committed
@@ -89,6 +115,20 @@ kept in sync with `globals.css` by hand). `prepare-content.mjs` copies them into
 `/giscus/*`, because giscus.app fetches them cross-origin; `next.config.js` adds the same
 header in dev only (`headers` is unsupported under `output: 'export'`). Page-level
 reactions are off by default and the comment box sits above the thread.
+
+**Code blocks are dark in both themes, on the dark theme's greys.** Shiki renders every
+fence with `github-dark` (`lib/markdown/index.ts`), and `.code-block` in
+`styles/markdown.css` paints the `--code-*` tokens from `globals.css` (surface = the dark
+`--card`, 13% grey); only `--code-border` differs by theme. Shiki writes its own blue-grey
+`#24292e` inline on `<pre>`, so `.code-block pre` overrides it with
+`background: transparent !important`. `rehype/code-block-copy.ts` builds the header
+(Mac traffic-light dots — kept on purpose, unlike the sims' — plus a language label and
+copy button); the label comes from `data-lang`, which a Shiki transformer sets on `<pre>`;
+`defaultLanguage: 'text'` routes language-less fences through Shiki too (they used to come
+out as a bare, unthemed `<pre>`). **Shiki's hast uses a `class` string, not `className`:**
+`rehype/scope-classes.ts` folds it in, because otherwise the serializer emits two `class`
+attributes and the browser keeps only the first, dropping every `md-*` class on Shiki
+output.
 
 ## sim-lib (hand-drawn simulation renderer)
 
