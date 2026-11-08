@@ -2,15 +2,15 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
-import { ArticleContent } from '../../components/ArticleContent';
-import { ArticleViewTracker } from '../../components/ArticleViewTracker';
-import { CopyCodeButtons } from '../../components/CopyCodeButtons';
-import { MarkdownRenderer } from '../../components/MarkdownRenderer';
-import { CardSection } from '../../components/CardSection';
-import { ContentCard } from '../../components/ContentCard';
-import { PageContainer } from '../../components/PageContainer';
-import { PageHeader } from '../../components/PageHeader';
-import { nearestSubjectStyle } from '../../components/subjectIcons';
+import { ArticleContent } from '../../components/article/ArticleContent';
+import { ArticleViewTracker } from '../../components/article/ArticleViewTracker';
+import { CopyCodeButtons } from '../../components/article/CopyCodeButtons';
+import { MarkdownRenderer } from '../../components/article/MarkdownRenderer';
+import { CardSection } from '../../components/page/CardSection';
+import { ContentCard } from '../../components/page/ContentCard';
+import { PageContainer } from '../../components/page/PageContainer';
+import { PageHeader } from '../../components/page/PageHeader';
+import { nearestSubjectStyle } from '../../components/page/subjectIcons';
 import {
   getAllArticles,
   getArticleBySlug,

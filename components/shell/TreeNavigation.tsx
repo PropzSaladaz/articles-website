@@ -4,11 +4,11 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ChevronRight } from 'lucide-react';
-import { collectionPath, contentPath } from '../lib/content/urls';
-import { cn } from '../lib/utils';
-import { SubjectNode, NodeKind, StandaloneArticle } from '../lib/content/types';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
-import { subjectIcon } from './subjectIcons';
+import { collectionPath, contentPath } from '../../lib/content/urls';
+import { cn } from '../../lib/utils';
+import { SubjectNode, NodeKind, StandaloneArticle } from '../../lib/content/types';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
+import { subjectIcon } from '../page/subjectIcons';
 
 // Leaves have no disclosure toggle; this indent lines their titles up with
 // sibling branch titles (4px row padding + 20px toggle + 6px gap).

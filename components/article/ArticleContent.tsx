@@ -1,18 +1,18 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
-import { Article, KnowledgePathItem } from '../lib/content/types';
+import { Article, KnowledgePathItem } from '../../lib/content/types';
 import Image from 'next/image';
 import Link from 'next/link';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { ArticleViewToggle, useIsSummaryView } from './ArticleViewToggle';
-import { formatDate } from '../lib/format';
-import { collectionPath } from '../lib/content/urls';
-import { sectionOf } from '../lib/content/sections';
+import { formatDate } from '../../lib/format';
+import { collectionPath } from '../../lib/content/urls';
+import { sectionOf } from '../../lib/content/sections';
 import { GiscusComments } from './GiscusComments';
 import { ArticleNavigation, type SeriesPosition } from './ArticleNavigation';
 import { ReadingProgressBar, TableOfContents } from './ReadingProgress';
-import { TagList } from './TagList';
+import { TagList } from '../page/TagList';
 
 /**
  * Check if the summary content is empty or minimal (just whitespace/short placeholder)

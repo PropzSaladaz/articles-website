@@ -1,9 +1,7 @@
-import { getLatestBySection } from '../lib/content/content';
-import { SECTIONS, type SectionId } from '../lib/content/sections';
-import { articlePath } from '../lib/content/urls';
-import { formatDate } from '../lib/format';
+import { getLatestBySection } from '../../lib/content/content';
+import { SECTIONS, type SectionId } from '../../lib/content/sections';
+import { ArticleCard } from './ArticleCard';
 import { CardGrid } from './CardGrid';
-import { ContentCard } from './ContentCard';
 import { PageContainer } from './PageContainer';
 import { PageHeader } from './PageHeader';
 
@@ -22,14 +20,7 @@ export async function ChronologicalSectionPage({ sectionId, emptyText }: { secti
       {articles.length > 0 ? (
         <CardGrid>
           {articles.map((article) => (
-            <ContentCard
-              key={article.slug}
-              href={articlePath(article)}
-              title={article.title}
-              eyebrow={`${formatDate(article.date)} · ${article.readingTime.text}`}
-              description={article.description}
-              tags={article.tags}
-            />
+            <ArticleCard key={article.slug} article={article} />
           ))}
         </CardGrid>
       ) : (

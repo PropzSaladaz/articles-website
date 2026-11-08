@@ -2,10 +2,10 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import type { ArticlePreview } from '../lib/content/types';
-import { articlePath } from '../lib/content/urls';
-import { formatDate } from '../lib/format';
-import { cn } from '../lib/utils';
+import type { ArticlePreview } from '../../lib/content/types';
+import { articlePath } from '../../lib/content/urls';
+import { formatDate } from '../../lib/format';
+import { cn } from '../../lib/utils';
 
 type SectionListNavProps = {
   label: string;

@@ -23,7 +23,7 @@ const INCLUDE_DRAFTS = process.argv.includes('--include-drafts');
 const SIM_LIB_SRC = path.join(PROJECT_ROOT, 'sim-lib');
 const SIM_LIB_DEST = path.join(PUBLIC_ROOT, 'sim-lib');
 const SIM_LIB_VERSION = 'v1';
-// Custom Giscus comment themes (see components/GiscusComments.tsx). giscus.app
+// Custom Giscus comment themes (see components/article/GiscusComments.tsx). giscus.app
 // loads them cross-origin, so they also need a CORS header (writeHeaders()).
 const GISCUS_THEMES_SRC = path.join(PROJECT_ROOT, 'giscus');
 const GISCUS_THEMES_DEST = path.join(PUBLIC_ROOT, 'giscus');

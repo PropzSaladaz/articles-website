@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef, useSyncExternalStore } from 'react';
-import { cn } from '../lib/utils';
-import type { Heading } from '../lib/content/types';
+import { cn } from '../../lib/utils';
+import type { Heading } from '../../lib/content/types';
 
 // Store for scroll state - avoids re-rendering parent components
 let scrollListeners: Set<() => void> = new Set();

@@ -11,10 +11,10 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react';
-import type { ArticlePreview, SubjectNode } from '../lib/content/types';
-import { SECTION_LIST, sectionOf, type SectionId } from '../lib/content/sections';
-import { contentPath } from '../lib/content/urls';
-import { cn } from '../lib/utils';
+import type { ArticlePreview, SubjectNode } from '../../lib/content/types';
+import { SECTION_LIST, sectionOf, type SectionId } from '../../lib/content/sections';
+import { contentPath } from '../../lib/content/urls';
+import { cn } from '../../lib/utils';
 import { TreeNavigation } from './TreeNavigation';
 import { SectionListNav } from './SectionListNav';
 import { ThemeToggle } from './ThemeToggle';

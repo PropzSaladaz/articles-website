@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
-import { collectionPath, contentPath } from '../lib/content/urls';
+import { collectionPath, contentPath } from '../../lib/content/urls';
 
 type SiblingArticle = {
     slug: string;

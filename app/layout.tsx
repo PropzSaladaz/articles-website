@@ -3,8 +3,8 @@ import '../styles/markdown.css';
 import '../styles/content-diagrams.css';
 import Script from 'next/script';
 import { Source_Serif_4 } from 'next/font/google';
-import { AppProviders } from '../components/AppProviders';
-import { SiteShell } from '../components/SiteShell';
+import { AppProviders } from '../components/shell/AppProviders';
+import { SiteShell } from '../components/shell/SiteShell';
 import { getLatestBySection, getSubjectTree } from '../lib/content/content';
 import 'katex/dist/katex.min.css';
 

@@ -1,11 +1,12 @@
-import type { ReactNode } from 'react';
+import { Children, type ReactNode } from 'react';
 import { CardGrid } from './CardGrid';
 import { IconBadge } from './IconBadge';
 import type { IconStyle } from './subjectIcons';
 
 type CardSectionProps = {
-  title: string;
-  /** Small line under the title, e.g. "3 topics". */
+  /** Usually a string; pass a node (e.g. a `<Link>`) when the heading itself should link. */
+  title: ReactNode;
+  /** Small line under the title, e.g. "3 topics" or a project summary. */
   caption?: string;
   iconStyle?: IconStyle;
   columns?: 2 | 3;
@@ -14,7 +15,7 @@ type CardSectionProps = {
   children: ReactNode;
 };
 
-/** A titled group of `<ContentCard>`s: optional icon badge, heading + caption, then the grid. */
+/** A titled group of `<ContentCard>`s: optional icon badge, heading + caption, then the grid (omitted when there are no cards). */
 export function CardSection({ title, caption, iconStyle, columns, ordered, children }: CardSectionProps) {
   return (
     <section className="space-y-5">
@@ -25,7 +26,9 @@ export function CardSection({ title, caption, iconStyle, columns, ordered, child
           {caption && <p className="text-sm text-muted-foreground">{caption}</p>}
         </div>
       </div>
-      <CardGrid columns={columns} ordered={ordered}>{children}</CardGrid>
+      {Children.toArray(children).length > 0 && (
+        <CardGrid columns={columns} ordered={ordered}>{children}</CardGrid>
+      )}
     </section>
   );
 }

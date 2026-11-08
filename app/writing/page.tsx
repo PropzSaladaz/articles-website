@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { SECTIONS } from '../../lib/content/sections';
-import { ChronologicalSectionPage } from '../../components/ChronologicalSectionPage';
+import { ChronologicalSectionPage } from '../../components/page/ChronologicalSectionPage';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-static';

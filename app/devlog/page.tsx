@@ -1,13 +1,12 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { CardGrid } from '../../components/CardGrid';
-import { ContentCard } from '../../components/ContentCard';
-import { PageContainer } from '../../components/PageContainer';
-import { PageHeader } from '../../components/PageHeader';
+import { ArticleCard } from '../../components/page/ArticleCard';
+import { CardSection } from '../../components/page/CardSection';
+import { PageContainer } from '../../components/page/PageContainer';
+import { PageHeader } from '../../components/page/PageHeader';
 import { getCollections, getLatestBySection } from '../../lib/content/content';
-import { collectionPath, articlePath } from '../../lib/content/urls';
+import { collectionPath } from '../../lib/content/urls';
 import { SECTIONS } from '../../lib/content/sections';
-import { formatDate } from '../../lib/format';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-static';
@@ -47,52 +46,27 @@ export default async function DevlogLandingPage() {
       <PageHeader title={section.label} description={section.tagline} />
 
       {projects.map(({ project, entries }) => (
-        <section key={project.slug} className="space-y-5">
-          <div className="space-y-1">
-            <h2 className="text-xl font-semibold text-foreground">
-              <Link href={collectionPath(project.slug)} className="underline-offset-4 hover:underline">
-                {project.title}
-              </Link>
-            </h2>
-            {project.summary.text && (
-              <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
-                {project.summary.text}
-              </p>
-            )}
-          </div>
-          {entries.length > 0 && (
-            <CardGrid>
-              {entries.map((entry) => (
-                <ContentCard
-                  key={entry.slug}
-                  href={articlePath(entry)}
-                  title={entry.title}
-                  eyebrow={`${formatDate(entry.date)} · ${entry.readingTime.text}`}
-                  description={entry.description}
-                  tags={entry.tags}
-                />
-              ))}
-            </CardGrid>
-          )}
-        </section>
+        <CardSection
+          key={project.slug}
+          title={
+            <Link href={collectionPath(project.slug)} className="underline-offset-4 hover:underline">
+              {project.title}
+            </Link>
+          }
+          caption={project.summary.text || undefined}
+        >
+          {entries.map((entry) => (
+            <ArticleCard key={entry.slug} article={entry} />
+          ))}
+        </CardSection>
       ))}
 
       {otherEntries.length > 0 && (
-        <section className="space-y-5">
-          <h2 className="text-xl font-semibold text-foreground">Other entries</h2>
-          <CardGrid>
-            {otherEntries.map((entry) => (
-              <ContentCard
-                key={entry.slug}
-                href={articlePath(entry)}
-                title={entry.title}
-                eyebrow={`${formatDate(entry.date)} · ${entry.readingTime.text}`}
-                description={entry.description}
-                tags={entry.tags}
-              />
-            ))}
-          </CardGrid>
-        </section>
+        <CardSection title="Other entries">
+          {otherEntries.map((entry) => (
+            <ArticleCard key={entry.slug} article={entry} />
+          ))}
+        </CardSection>
       )}
 
       {articles.length === 0 && <p className="text-lg text-muted-foreground">No entries yet.</p>}

@@ -9,11 +9,11 @@ import { SECTIONS } from '../../lib/content/sections';
 import { articlePath, contentPath } from '../../lib/content/urls';
 import { NodeKind, type SubjectNode } from '../../lib/content/types';
 import { formatDate, pluralize } from '../../lib/format';
-import { CardSection } from '../../components/CardSection';
-import { ContentCard } from '../../components/ContentCard';
-import { PageContainer } from '../../components/PageContainer';
-import { PageHeader } from '../../components/PageHeader';
-import { subjectStyle } from '../../components/subjectIcons';
+import { CardSection } from '../../components/page/CardSection';
+import { ContentCard } from '../../components/page/ContentCard';
+import { PageContainer } from '../../components/page/PageContainer';
+import { PageHeader } from '../../components/page/PageHeader';
+import { subjectStyle } from '../../components/page/subjectIcons';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-static';

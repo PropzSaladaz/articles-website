@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import clsx from 'clsx';
-import { useViewPreference } from './ViewPreferenceContext';
+import { useViewPreference } from '../shell/ViewPreferenceContext';
 
 const options = [
   { value: 'summary', label: 'Summary' },

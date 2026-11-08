@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
-import { PageContainer } from '../../components/PageContainer';
-import { PageHeader } from '../../components/PageHeader';
+import { PageContainer } from '../../components/page/PageContainer';
+import { PageHeader } from '../../components/page/PageHeader';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-static';
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <PageContainer width="narrow">
+    <PageContainer>
       <PageHeader
         title="About"
         description={
