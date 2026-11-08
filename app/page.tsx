@@ -20,7 +20,7 @@ const bio =
   'and DSP one concept at a time.';
 
 export const metadata: Metadata = {
-  title: 'Sid Makes Sense',
+  title: 'Sidnei Teixeira',
   description: bio,
 };
 
@@ -57,7 +57,7 @@ export default async function HomePage() {
 
   return (
     <PageContainer>
-      <PageHeader title="Sid Makes Sense" description={bio} size="large" />
+      <PageHeader title="Sidnei Teixeira" description={bio} size="large" />
 
       <CardSection title="Sections" columns={3}>
         {SECTION_LIST.map((section, index) => {
