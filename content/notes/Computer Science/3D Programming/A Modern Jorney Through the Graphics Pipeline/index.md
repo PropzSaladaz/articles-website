@@ -1,5 +1,5 @@
 ---
-status: "published"
+status: "draft"
 date: "2025-12-15"
 summary: "A comprehensive journey through how GPUs render 3D worlds. Covers vertex processing, rasterization, shading, and the complete transformation pipeline from triangles to pixels."
 coverImage: "./images/cover.png"

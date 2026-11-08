@@ -1,5 +1,5 @@
 ---
-status: "published"
+status: "draft"
 date: "2025-12-15"
 summary: "A practical route through the coordinate transformations that take a world-space vertex to its final screen position."
 ---
