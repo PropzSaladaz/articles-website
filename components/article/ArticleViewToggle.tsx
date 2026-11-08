@@ -5,8 +5,8 @@ import clsx from 'clsx';
 import { useViewPreference } from '../shell/ViewPreferenceContext';
 
 const options = [
-  { value: 'summary', label: 'Summary' },
   { value: 'full', label: 'Full' },
+  { value: 'summary', label: 'Summary' },
 ] as const;
 
 export function ArticleViewToggle({ fullWidth = false }: { fullWidth?: boolean } = {}) {

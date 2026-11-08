@@ -13,6 +13,7 @@ type ViewPreferenceContextValue = {
 const ViewPreferenceContext = createContext<ViewPreferenceContextValue | undefined>(undefined);
 
 const STORAGE_KEY = 'articles-site:view-mode';
+const DEFAULT_VIEW: ViewMode = 'full';
 
 function normalizeView(value: string | null, fallback: ViewMode): ViewMode {
   return value === 'summary' || value === 'full' ? value : fallback;
@@ -33,11 +34,8 @@ export function ViewPreferenceProvider({ children }: { children: React.ReactNode
     }
   }, []);
 
-  // Summary is the review mode of the notes section. Essays and devlog entries have no
-  // summary to show, so everything outside /notes/ opens in full.
-  const fallbackView = pathname?.startsWith('/notes/') ? 'summary' : 'full';
-  // set paramView as: search param 'view' > stored value > fallback
-  const paramView = normalizeView(searchParams?.get('view'), stored ?? fallbackView);
+  // set paramView as: search param 'view' > stored value > full
+  const paramView = normalizeView(searchParams?.get('view'), stored ?? DEFAULT_VIEW);
 
   const [view, setViewState] = useState<ViewMode>(paramView);
   const pendingRef = useRef<ViewMode | null>(null);
