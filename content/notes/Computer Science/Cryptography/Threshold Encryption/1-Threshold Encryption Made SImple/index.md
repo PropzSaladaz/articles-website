@@ -97,11 +97,11 @@ If they encrypt the split parts however, no one will be able to see anything fro
 1. **Symmetric Key** - If everyone shares the same key, then anyone can both encrypt and decrypt messages. That means Paul can decrypt Carl's share without his permission… Doesn't seem right! Paul could go to their homes in secret and decrypt everyone's share without them even knowing… 
    What if each friend had a unique shared key with every other friend? That is, Paul and Carl would have a P-C key, Andrew and Paul would share an A-P key, and so on. Well, that would prevent a single key from unlocking all messages, but now, how to choose the right key to cipher Paul's key? should it be P-C? or P-A? or maybe P-B? This doesn't seem to work.
 
-2. **Asymmetric Key** - What if each grandson held a pair of keys - a public one and a private one? Each coordinate share would be encrypted with each friend's public key - meaning only that friend could decrypt it. Everyone agrees to only decrypt their share at the meetup. Looks promising!
+2. **Asymmetric Key** - What if each friend held a pair of keys - a public one and a private one? Each coordinate share would be encrypted with each friend's public key - meaning only that friend could decrypt it. Everyone agrees to only decrypt their share at the meetup. Looks promising!
 
-   But hold on - Paul can still immediately see its coordinate share… What if he joins with Bob? Then they could both still join their shares and get the longitudinal coordinate.. What if 3 of them join? We cannot simply trust each grandson to keep their promise of not decrypting until they are all together. This won't work!
+   But hold on - Paul can still immediately see its coordinate share… What if he joins with Bob? Then they could both still join their shares and get the longitudinal coordinate.. What if 3 of them join? We cannot simply trust each friend to keep their promise of not decrypting until they are all together. This won't work!
 
-Clearly, solution (2) is better than (1), since the power of showing a coordinate share now belongs to each grandson. But we can do better. What if I told you, we could ensure all shares are kept secret until everyone gets together for Edna's birthday?
+Clearly, solution (2) is better than (1), since the power of showing a coordinate share now belongs to each friend. But we can do better. What if I told you, we could ensure all shares are kept secret until the whole group is back together?
 
 This is what Threshold Encryption is all about - encryption controlled by the group.
 

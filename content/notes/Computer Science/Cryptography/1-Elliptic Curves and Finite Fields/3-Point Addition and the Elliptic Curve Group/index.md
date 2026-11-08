@@ -16,6 +16,18 @@ $$
 
 This may look strange at first. We are not adding numbers. We are adding **points**.
 
+You may think—why is this strange? Don't we already add points in normal 2D geometry?
+
+Well, not exactly. We add vectors, not points.
+
+A point represents a position in space, while a vector represents a displacement—a direction and distance from one position to another.
+
+We can certainly add the coordinates of two points, but when we do that, we're effectively treating them as vectors relative to an origin.
+
+Vectors naturally support addition because displacements can be combined. Points, on the other hand, simply represent positions, so adding two points doesn't have an obvious meaning.
+
+Elliptic curves are different: they define a special way of adding two points to produce another point on the same curve.
+
 The useful part is that when we add two valid points on the curve, the result is also another valid point on the same curve. This gives elliptic curves a structure that we can use for cryptography.
 
 Before discussing keys, signatures, or encryption, we first need to understand this point addition operation.
@@ -205,27 +217,27 @@ So $\mathcal{O}$ is the identity element of elliptic curve addition.
 >
 > This matches the geometry too: the tangent line at a point on the x-axis is vertical, exactly like the line through `P` and `-P` — the same case we defined above as producing $\mathcal{O}$.
 
-At this point, we have the full basic point addition rule.
+At this point (no pun intended xD), we have the full basic point addition rule.
 
-For normal point addition:
+For normal **point addition**:
 
 $$
 P + Q = R
 $$
 
-For point doubling:
+For **point doubling**:
 
 $$
 P + P = 2P
 $$
 
-For inverse points:
+For **inverse points**:
 
 $$
 P + (-P) = \mathcal{O}
 $$
 
-For the identity point:
+For the **identity point**:
 
 $$
 P + \mathcal{O} = P
